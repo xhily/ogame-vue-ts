@@ -1,0 +1,82 @@
+name: 构建多平台可执行程序
+
+on:
+  push:
+    branches: [ main ]
+    tags:
+      - 'v*' # 当推送 v1.0.0 等标签时触发
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build for ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            artifact_name: ogame-windows
+            asset_name: ogame-windows.zip
+            executable: ogame.exe
+          - os: ubuntu-latest
+            artifact_name: ogame-linux
+            asset_name: ogame-linux.tar.gz
+            executable: ogame
+          - os: macos-latest
+            artifact_name: ogame-macos
+            asset_name: ogame-macos.tar.gz
+            executable: ogame
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install Dependencies
+        run: bun install
+
+      # 1. Vue 构建流程
+      - name: Build Vue Frontend
+        run: bun run build # 假设你的 package.json 中 build 命令是 vite build 或 vue-cli-service build
+
+      # 2. Bun 编译后端
+      - name: Compile Executable
+        run: bun build ./server.js --compile --outfile ${{ matrix.executable }}
+
+      # 3. 打包静态资源与可执行程序 (关键步骤)
+      - name: Package Assets (Windows)
+        if: matrix.os == 'windows-latest'
+        run: Compress-Archive -Path "${{ matrix.executable }}", "dist" -DestinationPath "${{ matrix.asset_name }}"
+
+      - name: Package Assets (Linux/macOS)
+        if: matrix.os != 'windows-latest'
+        run: tar -czvf ${{ matrix.asset_name }} ${{ matrix.executable }} dist/
+
+      # 4. 上传到构建产物 (用于下一步 Release)
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: ${{ matrix.asset_name }}
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            ogame-windows/ogame-windows.zip
+            ogame-linux/ogame-linux.tar.gz
+            ogame-macos/ogame-macos.tar.gz
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
