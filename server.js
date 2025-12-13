@@ -27,7 +27,7 @@ function getLocalIp() {
 }
 
 // 3. 核心：静态资源拦截器（实现单文件嵌入的关键）
-app.get('*', async (req, res) => {
+app.get('/*', async (req, res) => {
     // 处理请求路径，默认为 index.html
     let reqPath = req.path === '/' ? '/index.html' : req.path;
 
