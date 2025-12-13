@@ -73,11 +73,16 @@ jobs:
         env:
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
+        shell: bash # 强制指定使用 bash，解决 Windows 下的语法错误
         run: |
           # 初始化 go.mod (如果不存在)
           if [ ! -f go.mod ]; then
             go mod init ogame-app
           fi
+          
+          # 整理依赖（确保编译环境干净）
+          go mod tidy
+          
           # 编译命令，保留控制台
           go build -ldflags="-s -w" -o ${{ matrix.executable }} main.go
 
