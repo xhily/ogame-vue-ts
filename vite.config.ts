@@ -2,6 +2,7 @@ import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import tailwindcss from '@tailwindcss/vite'
 import path from 'node:path'
+import electron from 'vite-plugin-electron/simple'
 
 export default defineConfig({
   base: './',
@@ -44,7 +45,18 @@ export default defineConfig({
       }
     }
   },
-  plugins: [vue(), tailwindcss()],
+  plugins: [
+      vue(),
+    tailwindcss(),
+    electron({
+      main: {
+        // Shortcut of `build.lib.entry`
+        entry: 'electron/main.ts',
+      },
+      // Optional: Use Node.js API in the Renderer process
+      renderer: {},
+    }),
+  ],
   resolve: { alias: { '@': path.resolve(__dirname, './src') } },
   // 优化依赖预构建
   optimizeDeps: { include: ['vue', 'vue-router', 'pinia', 'reka-ui', '@vueuse/core', 'lucide-vue-next', 'crypto-js', 'file-saver'] }

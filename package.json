@@ -3,15 +3,21 @@
   "title": "OGame-Vue-Ts",
   "qq": "920930589",
   "id": "2zBlHPUA6E",
-  "author": "setube",
+  "author": {
+    "name": "setube",
+    "email": "1962257451@qq.com"
+  },
   "private": true,
   "version": "1.1.0",
-  "buildDate": "2025/12/13 11:11:17",
+  "buildDate": "2025/12/14 13:13:07",
+  "main": "dist-electron/main.js",
   "type": "module",
   "scripts": {
     "dev": "vite --port 25121",
     "build": "vue-tsc -b && vite build && node update-build-date.js",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "build:server": "pnpm run build && go build",
+    "build:electron": "pnpm run build && electron-builder"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.17",
@@ -21,10 +27,12 @@
     "clsx": "^2.1.1",
     "crypto-js": "^4.2.0",
     "file-saver": "^2.0.5",
+    "finalhandler": "^2.1.1",
     "lucide-vue-next": "^0.556.0",
     "pinia": "^3.0.4",
     "pinia-plugin-persistedstate": "^4.7.1",
     "reka-ui": "^2.6.1",
+    "serve-static": "^2.2.0",
     "tailwind-merge": "^3.4.0",
     "tailwindcss": "^4.1.17",
     "vue": "^3.5.24",
@@ -37,15 +45,46 @@
     "@types/node": "^24.10.2",
     "@vitejs/plugin-vue": "^6.0.1",
     "@vue/tsconfig": "^0.8.1",
+    "electron": "^39.2.7",
+    "electron-builder": "^26.0.12",
+    "electron-vite": "^5.0.0",
     "tw-animate-css": "^1.4.0",
     "typescript": "~5.9.3",
     "vite": "npm:rolldown-vite@7.2.5",
+    "vite-plugin-electron": "^0.29.0",
+    "vite-plugin-electron-renderer": "^0.14.6",
     "vue-tsc": "^3.1.4"
   },
   "pnpm": {
     "overrides": {
       "vite": "npm:rolldown-vite@7.2.5"
-    }
+    },
+    "onlyBuiltDependencies": [
+      "electron-winstaller",
+      "esbuild",
+      "vue-demi"
+    ]
   },
-  "packageManager": "pnpm@10.13.1+sha512.37ebf1a5c7a30d5fabe0c5df44ee8da4c965ca0c5af3dbab28c3a1681b70a256218d05c81c9c0dcf767ef6b8551eb5b960042b9ed4300c59242336377e01cfad"
+  "packageManager": "pnpm@10.13.1+sha512.37ebf1a5c7a30d5fabe0c5df44ee8da4c965ca0c5af3dbab28c3a1681b70a256218d05c81c9c0dcf767ef6b8551eb5b960042b9ed4300c59242336377e01cfad",
+  "build": {
+    "appId": "games.wenzi.ogame",
+    "productName": "OGame",
+    "directories": {
+      "output": "pkg"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "public/favicon.ico",
+      "verifyUpdateCodeSignature": false,
+      "artifactName": "${productName}-Setup.${ext}"
+    },
+    "mac": {
+      "target": ["dmg", "zip"],
+      "artifactName": "${productName}-mac.${ext}"
+    },
+    "linux": {
+      "target": ["AppImage", "deb"],
+      "artifactName": "${productName}-linux.${ext}"
+    }
+  }
 }

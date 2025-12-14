@@ -9,6 +9,8 @@
   [![Vue 3](https://img.shields.io/badge/Vue-3.5-brightgreen.svg)](https://vuejs.org/)
   [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue.svg)](https://www.typescriptlang.org/)
   [![Vite](https://img.shields.io/badge/Vite-7.2-646CFF.svg)](https://vitejs.dev/)
+  [![Go](https://img.shields.io/badge/Go-1.25-79D4FD.svg)](https://golang.org/)
+
   [简体中文](README.md) | English
 
 </div>
@@ -36,7 +38,7 @@ OGame Vue TS is a single-player, browser-based space strategy game inspired by t
 
 - **Frontend Framework:** [Vue 3](https://vuejs.org/) with Composition API (`<script setup>`)
 - **Language:** [TypeScript](https://www.typescriptlang.org/) with strict type checking
-- **Build Tool:** [Vite](https://vitejs.dev/) (Custom Rolldown-Vite 7.2.5)
+- **Build Tool:** [Vite](https://vitejs.dev/) (Custom Rolldown-Vite 7.2.5)、[Golang](https://golang.org/)(Building cross-platform Web server.)、[Electron](https://www.electronjs.org/)(Building cross-platform visual interfaces)
 - **State Management:** [Pinia](https://pinia.vuejs.org/) with persisted state plugin
 - **Routing:** [Vue Router 4](https://router.vuejs.org/)
 - **UI Components:** [shadcn-vue](https://www.shadcn-vue.com/) (New York style)
@@ -47,10 +49,33 @@ OGame Vue TS is a single-player, browser-based space strategy game inspired by t
 
 ## Quick Start
 
+### Download Build Product
+
+#### Server version
+
+[Windows](https://github.com/coolxitech/ogame-vue-ts/releases/latest/download/ogame-windows-amd64.exe)
+
+[Linux amd64](https://github.com/coolxitech/ogame-vue-ts/releases/latest/download/ogame-linux-amd64)
+
+[Linux arm64](https://github.com/coolxitech/ogame-vue-ts/releases/latest/download/ogame-linux-arm64)
+
+[MacOS Intel](https://github.com/coolxitech/ogame-vue-ts/releases/latest/download/ogame-macos-amd64)
+
+[MacOS](https://github.com/coolxitech/ogame-vue-ts/releases/latest/download/ogame-macos-arm64)
+
+#### Desktop version
+
+[Windows](https://github.com/coolxitech/ogame-vue-ts/releases/latest/download/OGame.Setup.exe)
+
+[Ubuntu](https://github.com/coolxitech/ogame-vue-ts/releases/latest/download/OGame.AppImage)
+
+[MacOS](https://github.com/coolxitech/ogame-vue-ts/releases/latest/download/OGame-mac.dmg)
+
 ### Prerequisites
 
 - [Node.js](https://nodejs.org/) (version 18 or higher recommended)
 - [pnpm](https://pnpm.io/) (version 10.13.1 or higher)
+- [Go](https://golang.org/) (version 1.21 or higher recommended) (optional for binary builds)
 
 ### Installation
 
