@@ -91,39 +91,53 @@ jobs:
             pkg/*.exe
             pkg/*.dmg
             pkg/*.AppImage
-            pkg/*.zip
 
   # 3. 发布 Release
   release:
-    needs: [build-server, build-electron]
+    needs: [ build-server, build-electron ]
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
       - uses: actions/checkout@v4
 
+      # 1. 获取版本号
       - name: Get Version
         id: get_version
         run: echo "VERSION=v$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
 
+      # 2. 下载所有 Artifact (注意这里会平铺所有文件)
       - name: Download All Artifacts
         uses: actions/download-artifact@v4
         with:
-          path: ./release-assets
-          merge-multiple: true
+          path: ./release-dir
+          merge-multiple: true # 关键：将所有构建出的 .exe, .dmg 平铺到 release-dir 根目录
 
-      - name: Create GitHub Release
+      # 3. 清理不需要的中间产物 (排除 unpacked 等目录)
+      - name: Prepare Assets
+        shell: bash
+        run: |
+          cd ./release-dir
+          # 只保留安装程序后缀，删除所有文件夹和杂质文件
+          # 这样能确保不上传 electron 产生的 win-unpacked 等目录
+          find . -maxdepth 1 -type d -not -path '.' -exec rm -rf {} +
+          # 查看一下最终要上传的文件列表，方便调试
+          ls -R
+
+      # 4. 上传到 GitHub Release
+      - name: Create and Upload Release
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ steps.get_version.outputs.VERSION }}
           name: Release ${{ steps.get_version.outputs.VERSION }}
-          # 【核心修复】精确指定文件后缀，避免上传 package.json 或 unpacked 目录
+          # 核心修复：直接上传目录下的所有安装包，不再手动写死文件名避免 404
           files: |
-            ./release-assets/*.exe
-            ./release-assets/*.dmg
-            ./release-assets/*.AppImage
-            ./release-assets/*.zip
-            ./release-assets/ogame-server-*
+            ./release-dir/*.exe
+            ./release-dir/*.dmg
+            ./release-dir/*.AppImage
+            ./release-dir/*.zip
+            ./release-dir/server-*
+            ./release-dir/ogame-*
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
