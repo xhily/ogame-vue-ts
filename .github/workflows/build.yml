@@ -1,0 +1,142 @@
+name: 构建多平台程序 (Go Server & Electron Client)
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  # 1. 构建 Go 服务端
+  build-server:
+    name: Build Server (${{ matrix.goos }}-${{ matrix.goarch }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - goos: windows
+            goarch: amd64
+            executable: ogame-server-win.exe
+          - goos: linux
+            goarch: amd64
+            executable: ogame-server-linux
+          - goos: linux
+            goarch: arm64
+            executable: ogame-server-linux-arm64
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 8
+      - name: Setup Node & Go
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.25'
+
+      - name: Build Frontend & Server
+        run: |
+          pnpm install
+          pnpm run build
+          go mod tidy
+          GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} go build -ldflags="-s -w" -o ${{ matrix.executable }} main.go
+
+      - name: Upload Server Binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: server-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: ${{ matrix.executable }}
+
+  # 2. 构建 Electron 客户端
+  build-electron:
+    name: Build Electron (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            platform: win
+          - os: macos-latest
+            platform: mac
+          - os: ubuntu-latest
+            platform: linux
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 8
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Build Electron
+        run: |
+          pnpm install
+          pnpm run build
+          pnpm run build:electron --${{ matrix.platform }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # 【关键点】这里只上传安装包后缀，不上传文件夹
+      - name: Upload Electron Installers
+        uses: actions/upload-artifact@v4
+        with:
+          name: electron-${{ matrix.platform }}
+          path: |
+            pkg/*.exe
+            pkg/*.dmg
+            pkg/*.AppImage
+
+  # 3. 发布 Release
+  release:
+    needs: [ build-server, build-electron ]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get Version
+        id: get_version
+        run: echo "VERSION=v$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
+
+      # 1. 下载时，不使用 merge-multiple，防止覆盖冲突
+      - name: Download Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ./raw-assets
+
+      # 2. 核心步骤：手动移动文件到一个扁平目录，并强制重命名
+      - name: Flatten and Rename Assets
+        run: |
+          mkdir -p ./final-release
+          
+          # 移动 Server 文件并确保名字唯一
+          # 注意：根据你之前的附件，Artifact 名字是 server-windows-amd64
+          cp ./raw-assets/server-windows-amd64/ogame-server-win.exe ./final-release/ogame-server-win.exe || cp ./raw-assets/server-windows-amd64/server-windows-amd64.exe ./final-release/ogame-server-win.exe || true
+          cp ./raw-assets/server-linux-amd64/ogame-server-linux ./final-release/ogame-server-linux || true
+          cp ./raw-assets/server-linux-arm64/ogame-server-linux-arm64 ./final-release/ogame-server-linux-arm64 || true
+          
+          # 移动 Electron 安装包 (排除 unpacked 目录)
+          find ./raw-assets/electron-* -type f \( -name "*.exe" -o -name "*.dmg" -o -name "*.AppImage" -o -name "*.zip" \) -exec cp {} ./final-release/ \;
+          
+          # 检查结果
+          echo "Final assets to upload:"
+          ls -R ./final-release
+
+      # 3. 一次性上传，禁止重复匹配
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.get_version.outputs.VERSION }}
+          name: Release ${{ steps.get_version.outputs.VERSION }}
+          # 重点：只上传这个干净目录下的所有文件，不要再写具体的通配符防止重复
+          files: ./final-release/*
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

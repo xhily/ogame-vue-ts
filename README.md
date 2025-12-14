@@ -9,6 +9,7 @@
   [![Vue 3](https://img.shields.io/badge/Vue-3.5-brightgreen.svg)](https://vuejs.org/)
   [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue.svg)](https://www.typescriptlang.org/)
   [![Vite](https://img.shields.io/badge/Vite-7.2-646CFF.svg)](https://vitejs.dev/)
+  [![Go](https://img.shields.io/badge/Go-1.25-79D4FD.svg)](https://golang.org/)
 
   [English](README-EN.md) | 简体中文
 
@@ -37,7 +38,7 @@ OGame Vue TS 是一款受经典 OGame 游戏启发的单机版、基于浏览器
 
 - **前端框架:** [Vue 3](https://vuejs.org/) + Composition API (`<script setup>` 语法)
 - **开发语言:** [TypeScript](https://www.typescriptlang.org/) (启用严格类型检查)
-- **构建工具:** [Vite](https://vitejs.dev/) (自定义 Rolldown-Vite 7.2.5)
+- **构建工具:** [Vite](https://vitejs.dev/) (自定义 Rolldown-Vite 7.2.5)、[Golang](https://golang.org/)(构建跨平台的Web服务端)、[Electron](https://www.electronjs.org/)(构建跨平台可视化界面)
 - **状态管理:** [Pinia](https://pinia.vuejs.org/) + 持久化插件
 - **路由管理:** [Vue Router 4](https://router.vuejs.org/)
 - **UI 组件:** [shadcn-vue](https://www.shadcn-vue.com/) (New York 风格)
@@ -48,10 +49,33 @@ OGame Vue TS 是一款受经典 OGame 游戏启发的单机版、基于浏览器
 
 ## 快速开始
 
+### 下载构建版本
+
+#### 服务端
+
+[Windows](https://github.com/coolxitech/ogame-vue-ts/releases/latest/download/ogame-windows-amd64.exe)
+
+[Linux amd64](https://github.com/coolxitech/ogame-vue-ts/releases/latest/download/ogame-linux-amd64)
+
+[Linux arm64](https://github.com/coolxitech/ogame-vue-ts/releases/latest/download/ogame-linux-arm64)
+
+[MacOS Intel](https://github.com/coolxitech/ogame-vue-ts/releases/latest/download/ogame-macos-amd64)
+
+[MacOS](https://github.com/coolxitech/ogame-vue-ts/releases/latest/download/ogame-macos-arm64)
+
+#### 桌面版
+
+[Windows](https://github.com/coolxitech/ogame-vue-ts/releases/latest/download/OGame.Setup.exe)
+
+[Ubuntu](https://github.com/coolxitech/ogame-vue-ts/releases/latest/download/OGame.AppImage)
+
+[MacOS](https://github.com/coolxitech/ogame-vue-ts/releases/latest/download/OGame-mac.dmg)
+
 ### 环境要求
 
 - [Node.js](https://nodejs.org/) (推荐 18 或更高版本)
 - [pnpm](https://pnpm.io/) (版本 10.13.1 或更高)
+- [Go](https://golang.org/) (版本 1.21 或更高版本)(可选)
 
 ### 安装
 
