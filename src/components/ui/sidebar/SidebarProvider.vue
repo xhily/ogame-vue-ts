@@ -53,19 +53,19 @@
     passive: (props.open === undefined) as false
   }) as Ref<boolean>
 
-  function setOpen(value: boolean) {
+  const setOpen = (value: boolean) => {
     open.value = value // emits('update:open', value)
 
     // This sets the cookie to keep the sidebar state.
     document.cookie = `${SIDEBAR_COOKIE_NAME}=${open.value}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`
   }
 
-  function setOpenMobile(value: boolean) {
+  const setOpenMobile = (value: boolean) => {
     openMobile.value = value
   }
 
   // Helper to toggle the sidebar.
-  function toggleSidebar() {
+  const toggleSidebar = () => {
     return isMobile.value ? setOpenMobile(!openMobile.value) : setOpen(!open.value)
   }
 

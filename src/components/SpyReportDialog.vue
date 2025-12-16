@@ -1,25 +1,27 @@
 <template>
   <Dialog v-model:open="isOpen">
-    <DialogContent class="max-w-2xl max-h-[90vh] overflow-y-auto">
-      <DialogHeader>
-        <DialogTitle class="flex items-center gap-2">
-          <Eye class="h-5 w-5" />
-          {{ t('messagesView.spyReport') }}
-        </DialogTitle>
-        <DialogDescription v-if="report">
-          {{ formatDate(report.timestamp) }}
-        </DialogDescription>
-      </DialogHeader>
+    <ScrollableDialogContent container-class="sm:max-w-2xl max-h-[90vh]">
+      <template #header>
+        <DialogHeader>
+          <DialogTitle class="flex items-center gap-2">
+            <Eye class="h-5 w-5" />
+            {{ t('messagesView.spyReport') }}
+          </DialogTitle>
+          <DialogDescription v-if="report">
+            {{ formatDate(report.timestamp) }}
+          </DialogDescription>
+        </DialogHeader>
+      </template>
+
       <div v-if="report" class="space-y-4">
         <!-- 目标星球信息 -->
         <div class="p-3 bg-muted rounded-lg">
           <p class="text-sm font-medium mb-2">{{ t('messagesView.targetPlanet') }}</p>
-          <p v-if="targetPlanet" class="text-xs text-muted-foreground">
-            {{ targetPlanet.name }} [{{ targetPlanet.position.galaxy }}:{{ targetPlanet.position.system }}:{{
-              targetPlanet.position.position
+          <p class="text-xs text-muted-foreground">
+            {{ report.targetPlanetName }} [{{ report.targetPosition.galaxy }}:{{ report.targetPosition.system }}:{{
+              report.targetPosition.position
             }}]
           </p>
-          <p v-else class="text-xs text-muted-foreground">{{ report.targetPlanetId }}</p>
         </div>
 
         <!-- 资源 -->
@@ -80,17 +82,15 @@
           </div>
         </div>
       </div>
-    </DialogContent>
+    </ScrollableDialogContent>
   </Dialog>
 </template>
 
 <script setup lang="ts">
-  import { ref, watch, computed } from 'vue'
-  import { useGameStore } from '@/stores/gameStore'
-  import { useUniverseStore } from '@/stores/universeStore'
+  import { ref, watch } from 'vue'
   import { useI18n } from '@/composables/useI18n'
   import { useGameConfig } from '@/composables/useGameConfig'
-  import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+  import { Dialog, ScrollableDialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
   import ResourceIcon from '@/components/ResourceIcon.vue'
   import { formatNumber, formatDate } from '@/utils/format'
   import { Eye } from 'lucide-vue-next'
@@ -105,22 +105,10 @@
     (e: 'update:open', value: boolean): void
   }>()
 
-  const gameStore = useGameStore()
-  const universeStore = useUniverseStore()
   const { t } = useI18n()
   const { SHIPS, DEFENSES, BUILDINGS } = useGameConfig()
 
   const isOpen = ref(props.open)
-
-  // 获取目标星球信息
-  const targetPlanet = computed(() => {
-    if (!props.report) return null
-    // 先从玩家星球中查找
-    const playerPlanet = gameStore.player.planets.find(p => p.id === props.report!.targetPlanetId)
-    if (playerPlanet) return playerPlanet
-    // 再从宇宙星球地图中查找
-    return Object.values(universeStore.planets).find(p => p.id === props.report!.targetPlanetId)
-  })
 
   watch(
     () => props.open,

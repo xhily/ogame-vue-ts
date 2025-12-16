@@ -9,54 +9,44 @@
       <Card v-for="techType in Object.values(TechnologyType)" :key="techType" class="relative">
         <CardUnlockOverlay :requirements="TECHNOLOGIES[techType].requirements" :currentLevel="getTechLevel(techType)" />
         <CardHeader>
-          <div class="flex justify-between items-start gap-2">
-            <div class="min-w-0 flex-1">
+          <div class="mb-2">
+            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2">
               <CardTitle
-                class="text-base sm:text-lg cursor-pointer hover:text-primary transition-colors"
+                class="text-sm sm:text-base lg:text-lg cursor-pointer hover:text-primary transition-colors underline decoration-dotted underline-offset-4 order-2 sm:order-1"
                 @click="detailDialog.openTechnology(techType, getTechLevel(techType))"
               >
                 {{ TECHNOLOGIES[techType].name }}
               </CardTitle>
-              <CardDescription class="text-xs sm:text-sm">{{ TECHNOLOGIES[techType].description }}</CardDescription>
+              <Badge variant="secondary" class="text-xs whitespace-nowrap self-start order-1 sm:order-2">
+                Lv {{ getTechLevel(techType) }}
+              </Badge>
             </div>
-            <Badge variant="secondary" class="text-xs whitespace-nowrap flex-shrink-0">Lv {{ getTechLevel(techType) }}</Badge>
           </div>
+          <CardDescription class="text-xs sm:text-sm">{{ TECHNOLOGIES[techType].description }}</CardDescription>
         </CardHeader>
         <CardContent>
           <div class="space-y-2.5 sm:space-y-3">
             <div class="text-xs sm:text-sm space-y-1.5 sm:space-y-2">
               <p class="text-muted-foreground mb-1 sm:mb-2">{{ t('researchView.researchCost') }}:</p>
               <div class="space-y-1 sm:space-y-1.5">
-                <div class="flex items-center gap-1.5 sm:gap-2">
-                  <ResourceIcon type="metal" size="sm" />
-                  <span class="text-xs">{{ t('resources.metal') }}:</span>
-                  <span
-                    class="font-medium text-xs sm:text-sm"
-                    :class="getResourceCostColor(planet.resources.metal, getTechnologyCost(techType, getTechLevel(techType) + 1).metal)"
-                  >
-                    {{ formatNumber(getTechnologyCost(techType, getTechLevel(techType) + 1).metal) }}
-                  </span>
-                </div>
-                <div class="flex items-center gap-1.5 sm:gap-2">
-                  <ResourceIcon type="crystal" size="sm" />
-                  <span class="text-xs">{{ t('resources.crystal') }}:</span>
-                  <span
-                    class="font-medium text-xs sm:text-sm"
-                    :class="getResourceCostColor(planet.resources.crystal, getTechnologyCost(techType, getTechLevel(techType) + 1).crystal)"
-                  >
-                    {{ formatNumber(getTechnologyCost(techType, getTechLevel(techType) + 1).crystal) }}
-                  </span>
-                </div>
-                <div class="flex items-center gap-1.5 sm:gap-2">
-                  <ResourceIcon type="deuterium" size="sm" />
-                  <span class="text-xs">{{ t('resources.deuterium') }}:</span>
+                <div
+                  v-for="resourceType in costResourceTypes"
+                  :key="resourceType.key"
+                  v-show="resourceType.key !== 'darkMatter' || getTechnologyCost(techType, getTechLevel(techType) + 1).darkMatter > 0"
+                  class="flex items-center gap-1.5 sm:gap-2"
+                >
+                  <ResourceIcon :type="resourceType.key" size="sm" />
+                  <span class="text-xs">{{ t(`resources.${resourceType.key}`) }}:</span>
                   <span
                     class="font-medium text-xs sm:text-sm"
                     :class="
-                      getResourceCostColor(planet.resources.deuterium, getTechnologyCost(techType, getTechLevel(techType) + 1).deuterium)
+                      getResourceCostColor(
+                        planet.resources[resourceType.key],
+                        getTechnologyCost(techType, getTechLevel(techType) + 1)[resourceType.key]
+                      )
                     "
                   >
-                    {{ formatNumber(getTechnologyCost(techType, getTechLevel(techType) + 1).deuterium) }}
+                    {{ formatNumber(getTechnologyCost(techType, getTechLevel(techType) + 1)[resourceType.key]) }}
                   </span>
                 </div>
               </div>
@@ -71,7 +61,19 @@
     </div>
 
     <!-- 提示对话框 -->
-    <AlertDialog ref="alertDialog" />
+    <AlertDialog :open="alertDialogOpen" @update:open="alertDialogOpen = $event">
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{{ alertDialogTitle }}</AlertDialogTitle>
+          <AlertDialogDescription class="whitespace-pre-line">
+            {{ alertDialogMessage }}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogAction>{{ t('common.confirm') }}</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   </div>
 </template>
 
@@ -87,7 +89,15 @@
   import { Button } from '@/components/ui/button'
   import { Badge } from '@/components/ui/badge'
   import ResourceIcon from '@/components/ResourceIcon.vue'
-  import AlertDialog from '@/components/AlertDialog.vue'
+  import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle
+  } from '@/components/ui/alert-dialog'
   import UnlockRequirement from '@/components/UnlockRequirement.vue'
   import CardUnlockOverlay from '@/components/CardUnlockOverlay.vue'
   import { formatNumber, getResourceCostColor } from '@/utils/format'
@@ -101,7 +111,19 @@
   const { TECHNOLOGIES, BUILDINGS } = useGameConfig()
   const planet = computed(() => gameStore.currentPlanet)
   const player = computed(() => gameStore.player)
-  const alertDialog = ref<InstanceType<typeof AlertDialog> | null>(null)
+
+  // AlertDialog 状态
+  const alertDialogOpen = ref(false)
+  const alertDialogTitle = ref('')
+  const alertDialogMessage = ref('')
+
+  // 资源类型配置（用于成本显示）
+  const costResourceTypes = [
+    { key: 'metal' as const },
+    { key: 'crystal' as const },
+    { key: 'deuterium' as const },
+    { key: 'darkMatter' as const }
+  ]
 
   const researchTechnology = (techType: TechnologyType): boolean => {
     if (!gameStore.currentPlanet) return false
@@ -117,7 +139,8 @@
       gameStore.currentPlanet,
       techType,
       currentLevel,
-      gameStore.player.officers
+      gameStore.player.officers,
+      gameStore.player.technologies
     )
     gameStore.player.researchQueue.push(queueItem)
     return true
@@ -149,7 +172,11 @@
       return t('researchView.maxLevelReached') // "等级已满"
     }
 
-    if (player.value.researchQueue.length > 0) return t('researchView.research')
+    // 检查研究队列是否已满
+    const maxQueue = publicLogic.getMaxResearchQueue(gameStore.player.technologies)
+    if (player.value.researchQueue.length >= maxQueue) {
+      return t('researchView.research')
+    }
 
     // 检查前置条件
     if (!checkUpgradeRequirements(techType)) {
@@ -196,19 +223,17 @@
   const handleResearch = (techType: TechnologyType) => {
     // 检查前置条件
     if (!checkUpgradeRequirements(techType)) {
-      alertDialog.value?.show({
-        title: t('common.requirementsNotMet'),
-        message: getRequirementsList(techType)
-      })
+      alertDialogTitle.value = t('common.requirementsNotMet')
+      alertDialogMessage.value = getRequirementsList(techType)
+      alertDialogOpen.value = true
       return
     }
 
     const success = researchTechnology(techType)
     if (!success) {
-      alertDialog.value?.show({
-        title: t('researchView.researchFailed'),
-        message: t('researchView.researchFailedMessage')
-      })
+      alertDialogTitle.value = t('researchView.researchFailed')
+      alertDialogMessage.value = t('researchView.researchFailedMessage')
+      alertDialogOpen.value = true
     }
   }
 
@@ -229,7 +254,11 @@
       return false
     }
 
-    if (player.value.researchQueue.length > 0) return false
+    // 检查研究队列是否已满
+    const maxQueue = publicLogic.getMaxResearchQueue(gameStore.player.technologies)
+    if (player.value.researchQueue.length >= maxQueue) {
+      return false
+    }
 
     const cost = getTechnologyCost(techType, currentLevel + 1)
 
@@ -237,7 +266,8 @@
       publicLogic.checkRequirements(planet.value, gameStore.player.technologies, config.requirements) &&
       planet.value.resources.metal >= cost.metal &&
       planet.value.resources.crystal >= cost.crystal &&
-      planet.value.resources.deuterium >= cost.deuterium
+      planet.value.resources.deuterium >= cost.deuterium &&
+      planet.value.resources.darkMatter >= cost.darkMatter
     )
   }
 

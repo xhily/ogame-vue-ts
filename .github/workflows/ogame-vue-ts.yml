@@ -57,3 +57,4 @@ jobs:
             ${{ vars.DOCKERHUB_USERNAME != '' && format('docker.io/{0}/ogame-vue-ts:{1}', vars.DOCKERHUB_USERNAME, github.sha) || '' }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          outputs: type=image,name=target,annotation-index.org.opencontainers.image.description=OGame Vue

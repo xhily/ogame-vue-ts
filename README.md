@@ -53,23 +53,23 @@ OGame Vue TS 是一款受经典 OGame 游戏启发的单机版、基于浏览器
 
 #### 服务端
 
-[Windows](https://github.com/coolxitech/ogame-vue-ts/releases/latest/download/ogame-windows-amd64.exe)
+[Windows](/releases/latest/download/ogame-windows-amd64.exe)
 
-[Linux amd64](https://github.com/coolxitech/ogame-vue-ts/releases/latest/download/ogame-linux-amd64)
+[Linux amd64](/releases/latest/download/ogame-linux-amd64)
 
-[Linux arm64](https://github.com/coolxitech/ogame-vue-ts/releases/latest/download/ogame-linux-arm64)
+[Linux arm64](/releases/latest/download/ogame-linux-arm64)
 
-[MacOS Intel](https://github.com/coolxitech/ogame-vue-ts/releases/latest/download/ogame-macos-amd64)
+[MacOS Intel](/releases/latest/download/ogame-macos-amd64)
 
-[MacOS](https://github.com/coolxitech/ogame-vue-ts/releases/latest/download/ogame-macos-arm64)
+[MacOS](/releases/latest/download/ogame-macos-arm64)
 
 #### 桌面版
 
-[Windows](https://github.com/coolxitech/ogame-vue-ts/releases/latest/download/OGame.Setup.exe)
+[Windows](/releases/latest/download/OGame.Setup.exe)
 
-[Ubuntu](https://github.com/coolxitech/ogame-vue-ts/releases/latest/download/OGame.AppImage)
+[Ubuntu](/releases/latest/download/OGame.AppImage)
 
-[MacOS](https://github.com/coolxitech/ogame-vue-ts/releases/latest/download/OGame-mac.dmg)
+[MacOS](/releases/latest/download/OGame-mac.dmg)
 
 ### 环境要求
 

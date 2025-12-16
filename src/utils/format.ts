@@ -1,11 +1,16 @@
+
 /**
- * 格式化数字为英文单位（K, M, B）
+ * 格式化数字为英文单位（K, M, B, T, Q）
  * @param num 数字
  * @param decimals 小数位数，默认2
  * @returns 格式化后的字符串
  */
 export const formatNumber = (num: number, decimals: number = 2): string => {
-  if (num >= 1_000_000_000) {
+  if (num >= 1_000_000_000_000_000) {
+    return (num / 1_000_000_000_000_000).toFixed(decimals) + 'Q'
+  } else if (num >= 1_000_000_000_000) {
+    return (num / 1_000_000_000_000).toFixed(decimals) + 'T'
+  } else if (num >= 1_000_000_000) {
     return (num / 1_000_000_000).toFixed(decimals) + 'B'
   } else if (num >= 1_000_000) {
     return (num / 1_000_000).toFixed(decimals) + 'M'
@@ -27,22 +32,35 @@ export const getResourceColor = (current: number, max: number): string => {
   if (ratio >= 0.7) return 'text-yellow-600 dark:text-yellow-400'
   return ''
 }
-
 /**
- * 格式化时间（秒转为天时分秒）
+ * 格式化时间（秒转为 年:天:时:分:秒）
  * @param seconds 秒数
- * @returns 格式化后的时间字符串（例如 2d 05:30:15 或 05:30:15）
+ * @returns 格式化后的时间字符串
+ * 例如：
+ * 1:02:03:04:05
+ * 02:03:04:05
+ * 03:04:05
  */
 export const formatTime = (seconds: number): string => {
+  const YEAR = 365 * 86400
+  const years = Math.floor(seconds / YEAR)
+  seconds %= YEAR
   const days = Math.floor(seconds / 86400)
-  const hours = Math.floor((seconds % 86400) / 3600)
-  const minutes = Math.floor((seconds % 3600) / 60)
+  seconds %= 86400
+  const hours = Math.floor(seconds / 3600)
+  seconds %= 3600
+  const minutes = Math.floor(seconds / 60)
   const secs = Math.floor(seconds % 60)
-
-  if (days > 0) {
-    return `${days}:${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
+  const h = hours.toString().padStart(2, '0')
+  const m = minutes.toString().padStart(2, '0')
+  const s = secs.toString().padStart(2, '0')
+  if (years > 0) {
+    return `${years}:${days}:${h}:${m}:${s}`
   }
-  return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
+  if (days > 0) {
+    return `${days}:${h}:${m}:${s}`
+  }
+  return `${h}:${m}:${s}`
 }
 
 /**

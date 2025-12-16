@@ -13,7 +13,19 @@
     </div>
 
     <!-- 前置条件详情对话框 -->
-    <AlertDialog ref="requirementsDialog" />
+    <AlertDialog :open="requirementsDialogOpen" @update:open="requirementsDialogOpen = $event">
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{{ requirementsDialogTitle }}</AlertDialogTitle>
+          <AlertDialogDescription class="whitespace-pre-line">
+            {{ requirementsDialogMessage }}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogAction>{{ t('common.confirm') }}</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   </div>
 </template>
 
@@ -25,7 +37,15 @@
   import { BuildingType, TechnologyType } from '@/types/game'
   import { Lock } from 'lucide-vue-next'
   import { Button } from '@/components/ui/button'
-  import AlertDialog from '@/components/AlertDialog.vue'
+  import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle
+  } from '@/components/ui/alert-dialog'
   import * as publicLogic from '@/logic/publicLogic'
 
   interface Props {
@@ -37,7 +57,11 @@
   const gameStore = useGameStore()
   const { t } = useI18n()
   const { BUILDINGS, TECHNOLOGIES } = useGameConfig()
-  const requirementsDialog = ref<InstanceType<typeof AlertDialog> | null>(null)
+
+  // AlertDialog 状态
+  const requirementsDialogOpen = ref(false)
+  const requirementsDialogTitle = ref('')
+  const requirementsDialogMessage = ref('')
 
   const isUnlocked = computed(() => {
     // 如果已经建造过（level > 0），则认为已解锁，不显示遮罩
@@ -72,9 +96,8 @@
   }
 
   const showRequirements = () => {
-    requirementsDialog.value?.show({
-      title: t('common.requirementsNotMet'),
-      message: getRequirementsList()
-    })
+    requirementsDialogTitle.value = t('common.requirementsNotMet')
+    requirementsDialogMessage.value = getRequirementsList()
+    requirementsDialogOpen.value = true
   }
 </script>

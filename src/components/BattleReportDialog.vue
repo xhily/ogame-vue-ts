@@ -1,15 +1,18 @@
 <template>
   <Dialog v-model:open="isOpen">
-    <DialogContent class="max-w-4xl max-h-[90vh] overflow-y-auto">
-      <DialogHeader>
-        <DialogTitle class="flex items-center gap-2">
-          <Trophy class="h-5 w-5" />
-          {{ t('messagesView.battleReport') }}
-        </DialogTitle>
-        <DialogDescription v-if="report">
-          {{ formatDate(report.timestamp) }}
-        </DialogDescription>
-      </DialogHeader>
+    <ScrollableDialogContent container-class="sm:max-w-4xl max-h-[90vh]">
+      <template #header>
+        <DialogHeader>
+          <DialogTitle class="flex items-center gap-2">
+            <Trophy class="h-5 w-5" />
+            {{ t('messagesView.battleReport') }}
+          </DialogTitle>
+          <DialogDescription v-if="report">
+            {{ formatDate(report.timestamp) }}
+          </DialogDescription>
+        </DialogHeader>
+      </template>
+
       <div v-if="report" class="space-y-4">
         <!-- 战斗双方信息 -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
@@ -260,7 +263,7 @@
           </div>
         </div>
       </div>
-    </DialogContent>
+    </ScrollableDialogContent>
   </Dialog>
 </template>
 
@@ -270,7 +273,7 @@
   import { useUniverseStore } from '@/stores/universeStore'
   import { useI18n } from '@/composables/useI18n'
   import { useGameConfig } from '@/composables/useGameConfig'
-  import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+  import { Dialog, ScrollableDialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
   import { Button } from '@/components/ui/button'
   import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
   import ResourceIcon from '@/components/ResourceIcon.vue'

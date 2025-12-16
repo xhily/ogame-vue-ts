@@ -304,6 +304,7 @@ const simulateBattle = (attacker: BattleSideData, defender: BattleSideData, maxR
   } else if (defenderUnits.length === 0) {
     winner = 'attacker'
   } else {
+    // OGame原版规则：6回合后双方都有剩余单位时判定为平局
     winner = 'draw'
   }
 

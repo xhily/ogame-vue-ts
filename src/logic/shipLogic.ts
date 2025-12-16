@@ -2,6 +2,9 @@ import type { Resources, BuildQueueItem, Fleet } from '@/types/game'
 import { ShipType, DefenseType, BuildingType, TechnologyType } from '@/types/game'
 import { SHIPS, DEFENSES } from '@/config/gameConfig'
 
+// 用于生成唯一ID的计数器
+let shipQueueIdCounter = 0
+
 /**
  * 计算舰船建造成本
  */
@@ -32,22 +35,56 @@ export const calculateDefenseCost = (defenseType: DefenseType, quantity: number)
 
 /**
  * 计算舰船建造时间
+ * @param shipType 舰船类型
+ * @param quantity 数量
+ * @param buildingSpeedBonus 指挥官等提供的速度加成百分比
+ * @param roboticsFactoryLevel 机器人工厂等级
+ * @param naniteFactoryLevel 纳米工厂等级
  */
-export const calculateShipBuildTime = (shipType: ShipType, quantity: number, buildingSpeedBonus: number = 0): number => {
+export const calculateShipBuildTime = (
+  shipType: ShipType,
+  quantity: number,
+  buildingSpeedBonus: number = 0,
+  roboticsFactoryLevel: number = 0,
+  naniteFactoryLevel: number = 0
+): number => {
   const config = SHIPS[shipType]
   const baseTime = config.buildTime * quantity
+
+  // 机器人工厂和纳米工厂的加速：建造时间 / (1 + 机器人工厂等级 + 纳米工厂等级 × 2)
+  const factorySpeedDivisor = 1 + roboticsFactoryLevel + naniteFactoryLevel * 2
+
+  // 指挥官等的百分比加成
   const speedMultiplier = 1 - buildingSpeedBonus / 100
-  return Math.floor(baseTime * speedMultiplier)
+
+  return Math.floor((baseTime / factorySpeedDivisor) * speedMultiplier)
 }
 
 /**
  * 计算防御设施建造时间
+ * @param defenseType 防御类型
+ * @param quantity 数量
+ * @param buildingSpeedBonus 指挥官等提供的速度加成百分比
+ * @param roboticsFactoryLevel 机器人工厂等级
+ * @param naniteFactoryLevel 纳米工厂等级
  */
-export const calculateDefenseBuildTime = (defenseType: DefenseType, quantity: number, buildingSpeedBonus: number = 0): number => {
+export const calculateDefenseBuildTime = (
+  defenseType: DefenseType,
+  quantity: number,
+  buildingSpeedBonus: number = 0,
+  roboticsFactoryLevel: number = 0,
+  naniteFactoryLevel: number = 0
+): number => {
   const config = DEFENSES[defenseType]
   const baseTime = config.buildTime * quantity
+
+  // 机器人工厂和纳米工厂的加速：建造时间 / (1 + 机器人工厂等级 + 纳米工厂等级 × 2)
+  const factorySpeedDivisor = 1 + roboticsFactoryLevel + naniteFactoryLevel * 2
+
+  // 指挥官等的百分比加成
   const speedMultiplier = 1 - buildingSpeedBonus / 100
-  return Math.floor(baseTime * speedMultiplier)
+
+  return Math.floor((baseTime / factorySpeedDivisor) * speedMultiplier)
 }
 
 /**
@@ -120,12 +157,51 @@ export const checkShieldDomeLimit = (
 }
 
 /**
+ * 计算导弹发射井容量
+ */
+export const calculateMissileSiloCapacity = (buildings: Partial<Record<BuildingType, number>>): number => {
+  const siloLevel = buildings[BuildingType.MissileSilo] || 0
+  return siloLevel * 10 // 每级存储10枚导弹
+}
+
+/**
+ * 计算当前导弹总数
+ */
+export const calculateCurrentMissileCount = (defense: Partial<Record<DefenseType, number>>): number => {
+  const interplanetaryMissiles = defense[DefenseType.InterplanetaryMissile] || 0
+  const antiBallisticMissiles = defense[DefenseType.AntiBallisticMissile] || 0
+  return interplanetaryMissiles + antiBallisticMissiles
+}
+
+/**
+ * 检查导弹容量限制
+ */
+export const checkMissileSiloLimit = (
+  defenseType: DefenseType,
+  currentDefense: Partial<Record<DefenseType, number>>,
+  buildings: Partial<Record<BuildingType, number>>,
+  quantity: number
+): boolean => {
+  // 只对导弹类型进行检查
+  if (defenseType !== DefenseType.InterplanetaryMissile && defenseType !== DefenseType.AntiBallisticMissile) {
+    return true
+  }
+
+  const maxCapacity = calculateMissileSiloCapacity(buildings)
+  const currentCount = calculateCurrentMissileCount(currentDefense)
+  const newCount = currentCount + quantity
+
+  return newCount <= maxCapacity
+}
+
+/**
  * 创建舰船建造队列项
  */
 export const createShipQueueItem = (shipType: ShipType, quantity: number, buildTime: number): BuildQueueItem => {
   const now = Date.now()
+  shipQueueIdCounter++
   return {
-    id: `ship_${now}`,
+    id: `ship_${now}_${shipQueueIdCounter}`,
     type: 'ship',
     itemType: shipType,
     quantity,
@@ -139,8 +215,9 @@ export const createShipQueueItem = (shipType: ShipType, quantity: number, buildT
  */
 export const createDefenseQueueItem = (defenseType: DefenseType, quantity: number, buildTime: number): BuildQueueItem => {
   const now = Date.now()
+  shipQueueIdCounter++
   return {
-    id: `defense_${now}`,
+    id: `defense_${now}_${shipQueueIdCounter}`,
     type: 'defense',
     itemType: defenseType,
     quantity,
@@ -168,11 +245,7 @@ export const checkFleetAvailable = (currentFleet: Partial<Fleet>, requiredFleet:
  * @param cargo 携带的货物（可选）
  * @returns 总燃料消耗（重氢）
  */
-export const calculateFleetFuelConsumption = (
-  fleet: Partial<Fleet>,
-  fuelConsumptionReduction: number = 0,
-  cargo?: Resources
-): number => {
+export const calculateFleetFuelConsumption = (fleet: Partial<Fleet>, fuelConsumptionReduction: number = 0, cargo?: Resources): number => {
   // 计算舰船基础燃料消耗
   let baseFuelNeeded = 0
   for (const [shipType, count] of Object.entries(fleet)) {

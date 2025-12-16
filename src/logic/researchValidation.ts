@@ -1,5 +1,5 @@
 import type { Planet, Resources, BuildQueueItem, Officer } from '@/types/game'
-import { TechnologyType, OfficerType } from '@/types/game'
+import { TechnologyType, OfficerType, BuildingType } from '@/types/game'
 import * as researchLogic from './researchLogic'
 import * as resourceLogic from './resourceLogic'
 import * as publicLogic from './publicLogic'
@@ -20,6 +20,14 @@ export const validateTechnologyResearch = (
   const currentLevel = technologies[techType] || 0
   const targetLevel = currentLevel + 1
   const cost = researchLogic.calculateTechnologyCost(techType, targetLevel)
+
+  // 检查队列中是否已存在该科技的研究任务
+  const existingQueueItem = researchQueue.find(
+    item => item.type === 'technology' && item.itemType === techType
+  )
+  if (existingQueueItem) {
+    return { valid: false, reason: 'errors.technologyAlreadyInQueue' }
+  }
 
   // 检查研究队列是否已满
   const maxQueue = publicLogic.getMaxResearchQueue(technologies)
@@ -47,14 +55,20 @@ export const executeTechnologyResearch = (
   planet: Planet,
   techType: TechnologyType,
   currentLevel: number,
-  officers: Record<OfficerType, Officer>
+  officers: Record<OfficerType, Officer>,
+  technologies: Partial<Record<TechnologyType, number>>
 ): { queueItem: BuildQueueItem } => {
   const targetLevel = currentLevel + 1
   const cost = researchLogic.calculateTechnologyCost(techType, targetLevel)
 
   // 计算军官加成
   const bonuses = officerLogic.calculateActiveBonuses(officers, Date.now())
-  const time = researchLogic.calculateTechnologyTime(techType, currentLevel, bonuses.researchSpeedBonus)
+
+  // 获取研究实验室等级和能源技术等级
+  const researchLabLevel = planet.buildings[BuildingType.ResearchLab] || 1
+  const energyTechLevel = technologies[TechnologyType.EnergyTechnology] || 0
+
+  const time = researchLogic.calculateTechnologyTime(techType, currentLevel, bonuses.researchSpeedBonus, researchLabLevel, energyTechLevel)
 
   // 扣除资源
   resourceLogic.deductResources(planet.resources, cost)

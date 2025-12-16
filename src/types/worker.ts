@@ -120,7 +120,4 @@ export interface CalculateDebrisRequest extends WorkerRequestMessage {
 /**
  * 所有 Worker 请求类型
  */
-export type WorkerRequest =
-  | SimulateBattleRequest
-  | CalculatePlunderRequest
-  | CalculateDebrisRequest
+export type WorkerRequest = SimulateBattleRequest | CalculatePlunderRequest | CalculateDebrisRequest

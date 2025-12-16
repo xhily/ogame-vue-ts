@@ -77,7 +77,6 @@ jobs:
       - name: Build Electron
         run: |
           pnpm install
-          pnpm run build
           pnpm run build:electron --${{ matrix.platform }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -65,6 +65,23 @@ export const BUILDINGS: Record<BuildingType, BuildingConfig> = {
       35: { [BuildingType.NaniteFactory]: 1, [BuildingType.ResearchLab]: 10 }
     }
   },
+  [BuildingType.FusionReactor]: {
+    id: BuildingType.FusionReactor,
+    name: '核聚变反应堆',
+    description: '使用重氢产生大量能源',
+    baseCost: { metal: 900, crystal: 360, deuterium: 180, darkMatter: 0, energy: 0 },
+    baseTime: 30,
+    costMultiplier: 1.8,
+    spaceUsage: 4,
+    requirements: {
+      [TechnologyType.EnergyTechnology]: 3,
+      [BuildingType.DeuteriumSynthesizer]: 5
+    },
+    levelRequirements: {
+      10: { [BuildingType.RoboticsFactory]: 5, [TechnologyType.EnergyTechnology]: 6 },
+      20: { [BuildingType.RoboticsFactory]: 8, [TechnologyType.EnergyTechnology]: 10, [BuildingType.NaniteFactory]: 2 }
+    }
+  },
   [BuildingType.RoboticsFactory]: {
     id: BuildingType.RoboticsFactory,
     name: '机器人工厂',
@@ -80,8 +97,7 @@ export const BUILDINGS: Record<BuildingType, BuildingConfig> = {
     },
     levelRequirements: {
       5: { [BuildingType.ResearchLab]: 3, [BuildingType.SolarPlant]: 8 },
-      8: { [BuildingType.ResearchLab]: 6, [BuildingType.SolarPlant]: 12, [BuildingType.MetalMine]: 12, [BuildingType.CrystalMine]: 12 },
-      10: { [BuildingType.ResearchLab]: 8, [BuildingType.NaniteFactory]: 1 }
+      8: { [BuildingType.ResearchLab]: 6, [BuildingType.SolarPlant]: 12, [BuildingType.MetalMine]: 12, [BuildingType.CrystalMine]: 12 }
     }
   },
   [BuildingType.NaniteFactory]: {
@@ -107,7 +123,7 @@ export const BUILDINGS: Record<BuildingType, BuildingConfig> = {
     baseTime: 30, // 减少建造时间：60→30秒
     costMultiplier: 2,
     spaceUsage: 5,
-    fleetStorageBonus: 1000, // 每级增加100舰队仓储
+    fleetStorageBonus: 1000, // 每级增加1000舰队仓储
     requirements: { [BuildingType.RoboticsFactory]: 2 },
     levelRequirements: {
       8: { [BuildingType.RoboticsFactory]: 5, [BuildingType.ResearchLab]: 5 },
@@ -197,10 +213,45 @@ export const BUILDINGS: Record<BuildingType, BuildingConfig> = {
       8: { [BuildingType.ResearchLab]: 10, [TechnologyType.DarkMatterTechnology]: 5, [BuildingType.NaniteFactory]: 2 }
     }
   },
+  [BuildingType.DarkMatterTank]: {
+    id: BuildingType.DarkMatterTank,
+    name: '暗物质储罐',
+    description: '增加暗物质存储上限',
+    baseCost: { metal: 10000, crystal: 10000, deuterium: 5000, darkMatter: 0, energy: 0 },
+    baseTime: 20,
+    costMultiplier: 2,
+    spaceUsage: 2,
+    planetOnly: true,
+    requirements: {
+      [BuildingType.DarkMatterCollector]: 2,
+      [TechnologyType.DarkMatterTechnology]: 1
+    },
+    levelRequirements: {
+      8: { [BuildingType.DarkMatterCollector]: 8, [BuildingType.RoboticsFactory]: 3 },
+      12: { [BuildingType.DarkMatterCollector]: 15, [BuildingType.RoboticsFactory]: 6, [TechnologyType.DarkMatterTechnology]: 3 }
+    }
+  },
+  [BuildingType.MissileSilo]: {
+    id: BuildingType.MissileSilo,
+    name: '导弹发射井',
+    description: '存储和发射导弹，每级可存储10枚导弹',
+    baseCost: { metal: 20000, crystal: 20000, deuterium: 1000, darkMatter: 0, energy: 0 },
+    baseTime: 45,
+    costMultiplier: 2,
+    spaceUsage: 5,
+    maxLevel: 10,
+    requirements: {
+      [BuildingType.Shipyard]: 1
+    },
+    levelRequirements: {
+      5: { [BuildingType.Shipyard]: 5, [TechnologyType.ComputerTechnology]: 3 },
+      8: { [BuildingType.Shipyard]: 8, [TechnologyType.ComputerTechnology]: 6, [BuildingType.NaniteFactory]: 2 }
+    }
+  },
   [BuildingType.Terraformer]: {
     id: BuildingType.Terraformer,
     name: '地形改造器',
-    description: '改造行星地形，每级增加5个可用空间',
+    description: '改造行星地形，每级增加30个可用空间',
     baseCost: { metal: 0, crystal: 50000, deuterium: 100000, darkMatter: 0, energy: 0 },
     baseTime: 60,
     costMultiplier: 2,
@@ -250,7 +301,7 @@ export const BUILDINGS: Record<BuildingType, BuildingConfig> = {
     id: BuildingType.JumpGate,
     name: '跳跃门',
     description: '瞬间传送舰队到其他月球',
-    baseCost: { metal: 2000000, crystal: 4000000, deuterium: 2000000, darkMatter: 0, energy: 0 },
+    baseCost: { metal: 2000000, crystal: 4000000, deuterium: 2000000, darkMatter: 50000, energy: 0 },
     baseTime: 240, // 减少建造时间：300→240秒
     costMultiplier: 2,
     spaceUsage: 10,
@@ -269,7 +320,7 @@ export const BUILDINGS: Record<BuildingType, BuildingConfig> = {
     id: BuildingType.PlanetDestroyerFactory,
     name: '行星毁灭者工厂',
     description: '建造能够摧毁行星的终极武器',
-    baseCost: { metal: 5000000, crystal: 4000000, deuterium: 1000000, darkMatter: 0, energy: 0 },
+    baseCost: { metal: 5000000, crystal: 4000000, deuterium: 1000000, darkMatter: 100000, energy: 0 },
     baseTime: 300,
     costMultiplier: 2,
     spaceUsage: 15,
@@ -297,7 +348,7 @@ export const TECHNOLOGIES: Record<TechnologyType, TechnologyConfig> = {
   [TechnologyType.EnergyTechnology]: {
     id: TechnologyType.EnergyTechnology,
     name: '能源技术',
-    description: '提高能源利用效率',
+    description: '加快研究速度',
     baseCost: { metal: 0, crystal: 800, deuterium: 400, darkMatter: 0, energy: 0 },
     baseTime: 30, // 减少研究时间：60→30秒
     costMultiplier: 2,
@@ -382,13 +433,94 @@ export const TECHNOLOGIES: Record<TechnologyType, TechnologyConfig> = {
     baseCost: { metal: 0, crystal: 400, deuterium: 600, darkMatter: 0, energy: 0 },
     baseTime: 60,
     costMultiplier: 2,
-    fleetStorageBonus: 500, // 每级全局增加50舰队仓储
+    fleetStorageBonus: 500, // 每级全局增加500舰队仓储
     maxLevel: 10, // 最多10级（最多11个研究队列）
     requirements: { [BuildingType.ResearchLab]: 1 },
     levelRequirements: {
       3: { [BuildingType.ResearchLab]: 5 },
       5: { [BuildingType.ResearchLab]: 8, [BuildingType.RoboticsFactory]: 5 },
       8: { [BuildingType.ResearchLab]: 10, [BuildingType.NaniteFactory]: 2 }
+    }
+  },
+  [TechnologyType.EspionageTechnology]: {
+    id: TechnologyType.EspionageTechnology,
+    name: '间谍技术',
+    description: '提高间谍探测效果，每级提高1级侦查深度',
+    baseCost: { metal: 200, crystal: 1000, deuterium: 200, darkMatter: 0, energy: 0 },
+    baseTime: 60,
+    costMultiplier: 2,
+    requirements: { [BuildingType.ResearchLab]: 3 },
+    levelRequirements: {
+      5: { [BuildingType.ResearchLab]: 6, [TechnologyType.ComputerTechnology]: 3 },
+      8: { [BuildingType.ResearchLab]: 8, [TechnologyType.ComputerTechnology]: 5 }
+    }
+  },
+  [TechnologyType.WeaponsTechnology]: {
+    id: TechnologyType.WeaponsTechnology,
+    name: '武器技术',
+    description: '提高舰船和防御的攻击力，每级+10%',
+    baseCost: { metal: 800, crystal: 200, deuterium: 0, darkMatter: 0, energy: 0 },
+    baseTime: 60,
+    costMultiplier: 2,
+    requirements: { [BuildingType.ResearchLab]: 4 },
+    levelRequirements: {
+      5: { [BuildingType.ResearchLab]: 7, [BuildingType.Shipyard]: 4 },
+      10: { [BuildingType.ResearchLab]: 10, [BuildingType.Shipyard]: 8, [BuildingType.NaniteFactory]: 2 }
+    }
+  },
+  [TechnologyType.ShieldingTechnology]: {
+    id: TechnologyType.ShieldingTechnology,
+    name: '护盾技术',
+    description: '提高舰船和防御的护盾值，每级+10%',
+    baseCost: { metal: 200, crystal: 600, deuterium: 0, darkMatter: 0, energy: 0 },
+    baseTime: 60,
+    costMultiplier: 2,
+    requirements: { [BuildingType.ResearchLab]: 6, [TechnologyType.EnergyTechnology]: 3 },
+    levelRequirements: {
+      5: { [BuildingType.ResearchLab]: 8, [TechnologyType.EnergyTechnology]: 6 },
+      10: { [BuildingType.ResearchLab]: 10, [TechnologyType.EnergyTechnology]: 10, [BuildingType.NaniteFactory]: 2 }
+    }
+  },
+  [TechnologyType.ArmourTechnology]: {
+    id: TechnologyType.ArmourTechnology,
+    name: '装甲技术',
+    description: '提高舰船和防御的装甲值，每级+10%',
+    baseCost: { metal: 1000, crystal: 0, deuterium: 0, darkMatter: 0, energy: 0 },
+    baseTime: 60,
+    costMultiplier: 2,
+    requirements: { [BuildingType.ResearchLab]: 2 },
+    levelRequirements: {
+      5: { [BuildingType.ResearchLab]: 6, [BuildingType.Shipyard]: 3 },
+      10: { [BuildingType.ResearchLab]: 10, [BuildingType.Shipyard]: 7, [BuildingType.NaniteFactory]: 1 }
+    }
+  },
+  [TechnologyType.Astrophysics]: {
+    id: TechnologyType.Astrophysics,
+    name: '天体物理学',
+    description: '每级增加1个殖民地槽位，增加探险成功率',
+    baseCost: { metal: 4000, crystal: 8000, deuterium: 4000, darkMatter: 0, energy: 0 },
+    baseTime: 60,
+    costMultiplier: 1.75,
+    requirements: {
+      [BuildingType.ResearchLab]: 3,
+      [TechnologyType.EspionageTechnology]: 4,
+      [TechnologyType.ImpulseDrive]: 3
+    },
+    levelRequirements: {
+      5: { [BuildingType.ResearchLab]: 8, [TechnologyType.EspionageTechnology]: 8 },
+      10: { [BuildingType.ResearchLab]: 12, [TechnologyType.HyperspaceTechnology]: 5, [BuildingType.NaniteFactory]: 3 }
+    }
+  },
+  [TechnologyType.GravitonTechnology]: {
+    id: TechnologyType.GravitonTechnology,
+    name: '引力技术',
+    description: '研究引力操纵，死星的必要技术',
+    baseCost: { metal: 0, crystal: 0, deuterium: 0, darkMatter: 300000, energy: 0 },
+    baseTime: 0,
+    costMultiplier: 3,
+    maxLevel: 1, // 只有1级
+    requirements: {
+      [BuildingType.ResearchLab]: 12
     }
   },
   [TechnologyType.CombustionDrive]: {
@@ -456,7 +588,7 @@ export const TECHNOLOGIES: Record<TechnologyType, TechnologyConfig> = {
   [TechnologyType.TerraformingTechnology]: {
     id: TechnologyType.TerraformingTechnology,
     name: '地形改造技术',
-    description: '研究行星地形改造技术，每级为所有行星增加5个可用空间',
+    description: '研究行星地形改造技术，每级为所有行星增加30个可用空间',
     baseCost: { metal: 0, crystal: 20000, deuterium: 40000, darkMatter: 0, energy: 0 },
     baseTime: 90,
     costMultiplier: 2,
@@ -470,7 +602,7 @@ export const TECHNOLOGIES: Record<TechnologyType, TechnologyConfig> = {
     id: TechnologyType.PlanetDestructionTech,
     name: '行星毁灭技术',
     description: '研究如何摧毁整个行星的恐怖技术',
-    baseCost: { metal: 4000000, crystal: 8000000, deuterium: 4000000, darkMatter: 0, energy: 0 },
+    baseCost: { metal: 4000000, crystal: 8000000, deuterium: 4000000, darkMatter: 200000, energy: 0 },
     baseTime: 300,
     costMultiplier: 2,
     maxLevel: 5, // 最多5级
@@ -554,6 +686,64 @@ export const SHIPS: Record<ShipType, ShipConfig> = {
     storageUsage: 25,
     requirements: { [BuildingType.Shipyard]: 7, [TechnologyType.HyperspaceDrive]: 4 }
   },
+  [ShipType.Battlecruiser]: {
+    id: ShipType.Battlecruiser,
+    name: '战列巡洋舰',
+    description: '快速强大的战斗舰船，擅长攻击战列舰',
+    cost: { metal: 30000, crystal: 40000, deuterium: 15000, darkMatter: 0, energy: 0 },
+    buildTime: 70,
+    cargoCapacity: 750,
+    attack: 700,
+    shield: 400,
+    armor: 7000,
+    speed: 10000,
+    fuelConsumption: 250,
+    storageUsage: 20,
+    requirements: {
+      [BuildingType.Shipyard]: 8,
+      [TechnologyType.HyperspaceDrive]: 5,
+      [TechnologyType.HyperspaceTechnology]: 5,
+      [TechnologyType.LaserTechnology]: 12
+    }
+  },
+  [ShipType.Bomber]: {
+    id: ShipType.Bomber,
+    name: '轰炸机',
+    description: '专门对付防御设施的轰炸舰',
+    cost: { metal: 50000, crystal: 25000, deuterium: 15000, darkMatter: 0, energy: 0 },
+    buildTime: 100,
+    cargoCapacity: 500,
+    attack: 1000,
+    shield: 500,
+    armor: 7500,
+    speed: 4000,
+    fuelConsumption: 700,
+    storageUsage: 35,
+    requirements: {
+      [BuildingType.Shipyard]: 8,
+      [TechnologyType.ImpulseDrive]: 6,
+      [TechnologyType.PlasmaTechnology]: 5
+    }
+  },
+  [ShipType.Destroyer]: {
+    id: ShipType.Destroyer,
+    name: '驱逐舰',
+    description: '擅长摧毁大型舰船的猎杀者',
+    cost: { metal: 60000, crystal: 50000, deuterium: 15000, darkMatter: 0, energy: 0 },
+    buildTime: 120,
+    cargoCapacity: 2000,
+    attack: 2000,
+    shield: 500,
+    armor: 11000,
+    speed: 5000,
+    fuelConsumption: 1000,
+    storageUsage: 40,
+    requirements: {
+      [BuildingType.Shipyard]: 9,
+      [TechnologyType.HyperspaceDrive]: 6,
+      [TechnologyType.HyperspaceTechnology]: 5
+    }
+  },
   [ShipType.SmallCargo]: {
     id: ShipType.SmallCargo,
     name: '小型运输船',
@@ -629,6 +819,21 @@ export const SHIPS: Record<ShipType, ShipConfig> = {
     storageUsage: 2,
     requirements: { [BuildingType.Shipyard]: 3, [TechnologyType.CombustionDrive]: 3 }
   },
+  [ShipType.SolarSatellite]: {
+    id: ShipType.SolarSatellite,
+    name: '太阳能卫星',
+    description: '提供额外能源，每个产生50点能量',
+    cost: { metal: 0, crystal: 2000, deuterium: 500, darkMatter: 0, energy: 0 },
+    buildTime: 10,
+    cargoCapacity: 0,
+    attack: 1,
+    shield: 1,
+    armor: 200,
+    speed: 0,
+    fuelConsumption: 0,
+    storageUsage: 1,
+    requirements: { [BuildingType.Shipyard]: 1 }
+  },
   [ShipType.DarkMatterHarvester]: {
     id: ShipType.DarkMatterHarvester,
     name: '暗物质采集船',
@@ -652,7 +857,7 @@ export const SHIPS: Record<ShipType, ShipConfig> = {
     id: ShipType.Deathstar,
     name: '死星',
     description: '终极武器，能够摧毁整个行星',
-    cost: { metal: 5000000, crystal: 4000000, deuterium: 1000000, darkMatter: 0, energy: 0 },
+    cost: { metal: 5000000, crystal: 4000000, deuterium: 1000000, darkMatter: 50000, energy: 0 },
     buildTime: 600,
     cargoCapacity: 1000000,
     attack: 200000,
@@ -662,7 +867,7 @@ export const SHIPS: Record<ShipType, ShipConfig> = {
     fuelConsumption: 1,
     storageUsage: 100,
     requirements: {
-      [BuildingType.PlanetDestroyerFactory]: 10,
+      [BuildingType.PlanetDestroyerFactory]: 3,
       [TechnologyType.PlanetDestructionTech]: 7,
       [TechnologyType.HyperspaceDrive]: 7
     }
@@ -763,7 +968,7 @@ export const DEFENSES: Record<DefenseType, DefenseConfig> = {
     id: DefenseType.PlanetaryShield,
     name: '行星护盾',
     description: '保护行星免受毁灭攻击的超级护盾',
-    cost: { metal: 2000000, crystal: 2000000, deuterium: 1000000, darkMatter: 0, energy: 0 },
+    cost: { metal: 2000000, crystal: 2000000, deuterium: 1000000, darkMatter: 50000, energy: 0 },
     buildTime: 180,
     attack: 1,
     shield: 100000,
@@ -772,6 +977,33 @@ export const DEFENSES: Record<DefenseType, DefenseConfig> = {
       [BuildingType.Shipyard]: 10,
       [TechnologyType.EnergyTechnology]: 10,
       [TechnologyType.HyperspaceTechnology]: 8
+    }
+  },
+  [DefenseType.AntiBallisticMissile]: {
+    id: DefenseType.AntiBallisticMissile,
+    name: '反弹道导弹',
+    description: '拦截敌方导弹，每个可拦截1枚星际导弹',
+    cost: { metal: 8000, crystal: 0, deuterium: 2000, darkMatter: 0, energy: 0 },
+    buildTime: 20,
+    attack: 1,
+    shield: 1,
+    armor: 800,
+    requirements: {
+      [BuildingType.MissileSilo]: 2
+    }
+  },
+  [DefenseType.InterplanetaryMissile]: {
+    id: DefenseType.InterplanetaryMissile,
+    name: '星际导弹',
+    description: '可以攻击其他星球的防御设施，射程取决于脉冲引擎等级',
+    cost: { metal: 12500, crystal: 2500, deuterium: 10000, darkMatter: 0, energy: 0 },
+    buildTime: 30,
+    attack: 12000,
+    shield: 1,
+    armor: 1500,
+    requirements: {
+      [BuildingType.MissileSilo]: 4,
+      [TechnologyType.ImpulseDrive]: 1
     }
   }
 }
@@ -782,8 +1014,8 @@ export const OFFICERS: Record<OfficerType, OfficerConfig> = {
     id: OfficerType.Commander,
     name: '指挥官',
     description: '提升建筑速度和管理能力',
-    cost: { metal: 0, crystal: 50000, deuterium: 25000, darkMatter: 0, energy: 0 },
-    weeklyMaintenance: { metal: 0, crystal: 5000, deuterium: 2500, darkMatter: 0, energy: 0 },
+    cost: { metal: 0, crystal: 50000, deuterium: 25000, darkMatter: 7000, energy: 0 },
+    weeklyMaintenance: { metal: 0, crystal: 5000, deuterium: 2500, darkMatter: 900, energy: 0 },
     benefits: {
       buildingSpeedBonus: 10, // 建筑速度 +10%
       additionalBuildQueue: 1, // 额外1个建筑队列
@@ -794,8 +1026,8 @@ export const OFFICERS: Record<OfficerType, OfficerConfig> = {
     id: OfficerType.Admiral,
     name: '上将',
     description: '提升舰队作战能力',
-    cost: { metal: 50000, crystal: 25000, deuterium: 0, darkMatter: 0, energy: 0 },
-    weeklyMaintenance: { metal: 5000, crystal: 2500, deuterium: 0, darkMatter: 0, energy: 0 },
+    cost: { metal: 50000, crystal: 25000, deuterium: 0, darkMatter: 7000, energy: 0 },
+    weeklyMaintenance: { metal: 5000, crystal: 2500, deuterium: 0, darkMatter: 900, energy: 0 },
     benefits: {
       additionalFleetSlots: 2, // 额外2个舰队槽位
       fleetSpeedBonus: 10, // 舰队速度 +10%
@@ -806,8 +1038,8 @@ export const OFFICERS: Record<OfficerType, OfficerConfig> = {
     id: OfficerType.Engineer,
     name: '工程师',
     description: '增强防御和能量系统',
-    cost: { metal: 40000, crystal: 20000, deuterium: 10000, darkMatter: 0, energy: 0 },
-    weeklyMaintenance: { metal: 4000, crystal: 2000, deuterium: 1000, darkMatter: 0, energy: 0 },
+    cost: { metal: 40000, crystal: 20000, deuterium: 10000, darkMatter: 7000, energy: 0 },
+    weeklyMaintenance: { metal: 4000, crystal: 2000, deuterium: 1000, darkMatter: 900, energy: 0 },
     benefits: {
       defenseBonus: 15, // 防御力 +15%
       energyProductionBonus: 10, // 电量产出 +10%
@@ -818,8 +1050,8 @@ export const OFFICERS: Record<OfficerType, OfficerConfig> = {
     id: OfficerType.Geologist,
     name: '地质学家',
     description: '提高资源开采效率',
-    cost: { metal: 30000, crystal: 30000, deuterium: 20000, darkMatter: 0, energy: 0 },
-    weeklyMaintenance: { metal: 3000, crystal: 3000, deuterium: 2000, darkMatter: 0, energy: 0 },
+    cost: { metal: 30000, crystal: 30000, deuterium: 20000, darkMatter: 7000, energy: 0 },
+    weeklyMaintenance: { metal: 3000, crystal: 3000, deuterium: 2000, darkMatter: 900, energy: 0 },
     benefits: {
       resourceProductionBonus: 15, // 资源产量 +15%
       storageCapacityBonus: 10 // 仓储容量 +10%
@@ -829,8 +1061,8 @@ export const OFFICERS: Record<OfficerType, OfficerConfig> = {
     id: OfficerType.Technocrat,
     name: '技术专家',
     description: '加快科技研究速度',
-    cost: { metal: 20000, crystal: 40000, deuterium: 20000, darkMatter: 0, energy: 0 },
-    weeklyMaintenance: { metal: 2000, crystal: 4000, deuterium: 2000, darkMatter: 0, energy: 0 },
+    cost: { metal: 20000, crystal: 40000, deuterium: 20000, darkMatter: 7000, energy: 0 },
+    weeklyMaintenance: { metal: 2000, crystal: 4000, deuterium: 2000, darkMatter: 900, energy: 0 },
     benefits: {
       researchSpeedBonus: 15 // 研究速度 +15%
     }
@@ -853,15 +1085,15 @@ export const MOON_CONFIG = {
   baseChance: 1, // 基础1%概率
   maxChance: 20, // 最大20%概率
   chancePerDebris: 100000, // 每10万资源增加1%概率
-  baseSize: 60, // 月球基础空间
-  lunarBaseSpaceBonus: 5 // 每级月球基地增加的空间
+  baseSize: 100, // 月球基础空间
+  lunarBaseSpaceBonus: 30 // 每级月球基地增加的空间
 }
 
 // 行星配置
 export const PLANET_CONFIG = {
-  baseSize: 200, // 行星基础空间
-  terraformerSpaceBonus: 5, // 每级地形改造器增加的空间
-  terraformingTechSpaceBonus: 3 // 每级地形改造技术增加的空间
+  baseSize: 300, // 行星基础空间
+  terraformerSpaceBonus: 30, // 每级地形改造器增加的空间
+  terraformingTechSpaceBonus: 30 // 每级地形改造技术增加的空间
 }
 
 // 舰队仓储配置
@@ -869,4 +1101,82 @@ export const FLEET_STORAGE_CONFIG = {
   baseStorage: 1000, // 基础舰队仓储
   shipyardBonus: 1000, // 每级造船厂增加的仓储
   computerTechBonus: 500 // 每级计算机技术全局增加的仓储
+}
+
+// 外交系统配置
+export const DIPLOMATIC_CONFIG = {
+  // 好感度范围
+  MIN_REPUTATION: -100,
+  MAX_REPUTATION: 100,
+
+  // 关系状态阈值
+  HOSTILE_THRESHOLD: -20, // 低于此值为敌对
+  FRIENDLY_THRESHOLD: 20, // 高于此值为友好
+
+  // 各种行为的好感度变化值
+  REPUTATION_CHANGES: {
+    // 赠送资源（基于资源价值计算）
+    GIFT_BASE: 0, // 基础好感度（移除固定奖励，完全基于资源量）
+    GIFT_PER_1K_RESOURCES: 2, // 每1000资源价值增加2点（提高权重）
+    GIFT_MIN_VALUE: 500, // 最小资源价值门槛（低于此值不增加好感度）
+    GIFT_MAX_SINGLE: 20, // 单次赠送最大好感度增加
+
+    // 负面行为
+    ATTACK: -15, // 攻击一次
+    ATTACK_WIN: -25, // 攻击并获胜
+    ATTACK_DESTROY_PLANET: -50, // 摧毁星球
+    SPY_DETECTED: -5, // 侦查被发现
+    SPY_UNDETECTED: -2, // 侦查未被发现
+    STEAL_DEBRIS: -10, // 抢夺残骸（在NPC星球位置）
+    DESTROY_FLEET: -3, // 每摧毁1单位战力扣除好感度
+
+    // 正面行为
+    HELP_ATTACK_ENEMY: 15, // 帮助攻击NPC的敌人
+    LONG_PEACE_DECAY: 1, // 长期不攻击的友好衰减（每周+1）
+    TRADE: 5, // 贸易（未来功能预留）
+
+    // 关系网络影响
+    ALLY_ATTACKED: -10, // 攻击盟友导致的好感度降低
+    ALLY_HELPED: 5 // 帮助盟友导致的好感度增加
+  },
+
+  // 好感度自然变化
+  NATURAL_DECAY: {
+    ENABLED: true,
+    INTERVAL: 7 * 24 * 3600, // 7天（秒）
+    TOWARDS_NEUTRAL_RATE: 2 // 每周向中立值回归2点
+  },
+
+  // 基于关系的行为调整
+  BEHAVIOR_MODIFIERS: {
+    HOSTILE_ATTACK_MULTIPLIER: 2.0, // 敌对状态攻击频率翻倍
+    HOSTILE_SPY_MULTIPLIER: 1.5, // 敌对状态侦查频率提高50%
+    FRIENDLY_ATTACK_PROBABILITY: 0, // 友好状态不攻击
+    FRIENDLY_SPY_PROBABILITY: 0.5, // 友好状态侦查概率降低到50%
+    NEUTRAL_ATTACK_PROBABILITY: 1.0, // 中立状态正常攻击概率
+    NEUTRAL_SPY_PROBABILITY: 1.0 // 中立状态正常侦查概率
+  },
+
+  // NPC主动赠送资源配置
+  NPC_GIFT_CONFIG: {
+    ENABLED: true,
+    MIN_REPUTATION: 60, // NPC对玩家好感度≥60才会赠送
+    CHECK_INTERVAL: 24 * 3600, // 每天检查一次（秒）
+    GIFT_PROBABILITY: 0.05, // 5%概率赠送
+    GIFT_AMOUNT: {
+      METAL: { min: 1000, max: 5000 },
+      CRYSTAL: { min: 500, max: 2500 },
+      DEUTERIUM: { min: 200, max: 1000 }
+    }
+  },
+
+  // 礼物接受/拒绝配置
+  GIFT_ACCEPTANCE_CONFIG: {
+    NPC_REJECTION_BASE_PROBABILITY: 0.3, // NPC拒绝礼物的基础概率（30%）
+    NPC_REJECTION_REPUTATION_MODIFIER: 0.01, // 好感度每降低1点，拒绝概率增加1%
+    MIN_REJECTION_PROBABILITY: 0.05, // 最小拒绝概率（5%，即使关系很好）
+    MAX_REJECTION_PROBABILITY: 0.8, // 最大拒绝概率（80%，即使关系很差）
+    GIFT_EXPIRATION_DAYS: 7, // 礼物通知过期天数
+    REJECTION_REPUTATION_PENALTY: -5 // 拒绝礼物导致的好感度降低
+  }
 }

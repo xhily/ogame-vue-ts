@@ -10,7 +10,7 @@ export const useI18n = () => {
   const messages = computed(() => locales[currentLocale.value])
 
   // 获取翻译文本的辅助函数
-  const t = (key: string): string => {
+  const t = (key: string, params?: Record<string, string | number>): string => {
     const keys = key.split('.')
     let value: any = messages.value
 
@@ -22,7 +22,16 @@ export const useI18n = () => {
       }
     }
 
-    return typeof value === 'string' ? value : key
+    let result = typeof value === 'string' ? value : key
+
+    // 替换参数占位符
+    if (params) {
+      Object.entries(params).forEach(([paramKey, paramValue]) => {
+        result = result.replace(new RegExp(`\\{${paramKey}\\}`, 'g'), String(paramValue))
+      })
+    }
+
+    return result
   }
 
   const setLocale = (locale: Locale) => {

@@ -13,20 +13,10 @@ const router = createRouter({
     { path: '/battle-simulator', name: 'battle-simulator', component: () => import('@/views/BattleSimulatorView.vue') },
     { path: '/messages', name: 'messages', component: () => import('@/views/MessagesView.vue') },
     { path: '/galaxy', name: 'galaxy', component: () => import('@/views/GalaxyView.vue') },
+    { path: '/diplomacy', name: 'diplomacy', component: () => import('@/views/DiplomacyView.vue') },
     { path: '/settings', name: 'settings', component: () => import('@/views/SettingsView.vue') },
-    {
-      path: '/gm',
-      name: 'gm',
-      component: () => import('@/views/GMView.vue'),
-      beforeEnter: (_to, _from, next) => {
-        // GM页面仅在开发模式下可访问
-        if (import.meta.env.DEV) {
-          next()
-        } else {
-          next('/')
-        }
-      }
-    }
+    { path: '/gm', name: 'gm', component: () => import('@/views/GMView.vue') },
+    { path: '/:pathMatch(.*)*', name: 'not-found', component: () => import('@/views/NotFoundView.vue') }
   ]
 })
 

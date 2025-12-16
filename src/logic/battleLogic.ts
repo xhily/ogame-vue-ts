@@ -1,7 +1,7 @@
-import type { Fleet, Resources, BattleResult, Officer } from '@/types/game'
+import type { Fleet, Resources, BattleResult, Officer, TechnologyType } from '@/types/game'
 import { DefenseType, OfficerType } from '@/types/game'
-import * as officerLogic from './officerLogic'
 import { workerManager } from '@/workers/workerManager'
+import { MOON_CONFIG } from '@/config/gameConfig'
 
 /**
  * 执行战斗模拟
@@ -12,31 +12,34 @@ export const simulateBattle = async (
   defenderFleet: Partial<Fleet>,
   defenderDefense: Partial<Record<DefenseType, number>>,
   defenderResources: Resources,
-  attackerOfficers: Record<OfficerType, Officer>,
-  defenderOfficers: Record<OfficerType, Officer>
+  _attackerOfficers: Record<OfficerType, Officer>,
+  _defenderOfficers: Record<OfficerType, Officer>,
+  attackerTechnologies: Record<TechnologyType, number>,
+  defenderTechnologies: Record<TechnologyType, number>
 ): Promise<BattleResult> => {
-  // 计算军官加成
-  const attackerBonuses = officerLogic.calculateActiveBonuses(attackerOfficers, Date.now())
-  const defenderBonuses = officerLogic.calculateActiveBonuses(defenderOfficers, Date.now())
+  // 从科技系统读取实际科技等级
+  const attackerWeaponTech = attackerTechnologies['weaponsTechnology'] || 0
+  const attackerShieldTech = attackerTechnologies['shieldingTechnology'] || 0
+  const attackerArmorTech = attackerTechnologies['armourTechnology'] || 0
 
-  // 将防御加成转换为科技等级（简化：10%加成 = 1级科技）
-  const attackerTechLevel = Math.floor(attackerBonuses.defenseBonus / 10)
-  const defenderTechLevel = Math.floor(defenderBonuses.defenseBonus / 10)
+  const defenderWeaponTech = defenderTechnologies['weaponsTechnology'] || 0
+  const defenderShieldTech = defenderTechnologies['shieldingTechnology'] || 0
+  const defenderArmorTech = defenderTechnologies['armourTechnology'] || 0
 
   // 使用 Worker 执行战斗模拟
   const simulationResult = await workerManager.simulateBattle({
     attacker: {
       ships: attackerFleet,
-      weaponTech: 0, // 暂时不考虑武器科技
-      shieldTech: attackerTechLevel,
-      armorTech: attackerTechLevel
+      weaponTech: attackerWeaponTech,
+      shieldTech: attackerShieldTech,
+      armorTech: attackerArmorTech
     },
     defender: {
       ships: defenderFleet,
       defense: defenderDefense,
-      weaponTech: 0,
-      shieldTech: defenderTechLevel,
-      armorTech: defenderTechLevel
+      weaponTech: defenderWeaponTech,
+      shieldTech: defenderShieldTech,
+      armorTech: defenderArmorTech
     },
     maxRounds: 6 // 最多6回合
   })
@@ -58,7 +61,10 @@ export const simulateBattle = async (
 
   // 计算月球生成概率（根据残骸场总量）
   const totalDebris = debrisField.metal + debrisField.crystal
-  const moonChance = Math.min(totalDebris / 100000, 0.2) // 最高20%概率
+  const moonChance = Math.min(
+    (MOON_CONFIG.baseChance + Math.floor(totalDebris / MOON_CONFIG.chancePerDebris)),
+    MOON_CONFIG.maxChance
+  ) / 100 // 转换为0-1的概率
 
   // 生成战斗报告
   const battleResult: BattleResult = {

@@ -30,10 +30,7 @@ export const calculateFleetStorageUsage = (fleet: Fleet): number => {
  * @param technologies 玩家的科技等级
  * @returns 最大舰队仓储容量
  */
-export const calculateMaxFleetStorage = (
-  planet: Planet,
-  technologies: Record<TechnologyType, number>
-): number => {
+export const calculateMaxFleetStorage = (planet: Planet, technologies: Record<TechnologyType, number>): number => {
   // 1. 基础仓储
   let maxStorage = FLEET_STORAGE_CONFIG.baseStorage
 
@@ -78,11 +75,7 @@ export const hasEnoughFleetStorage = (
  * @param technologies 玩家的科技等级
  * @returns 最大可建造数量
  */
-export const getMaxBuildableShips = (
-  planet: Planet,
-  shipType: ShipType,
-  technologies: Record<TechnologyType, number>
-): number => {
+export const getMaxBuildableShips = (planet: Planet, shipType: ShipType, technologies: Record<TechnologyType, number>): number => {
   const currentUsage = calculateFleetStorageUsage(planet.fleet)
   const maxStorage = calculateMaxFleetStorage(planet, technologies)
   const availableStorage = maxStorage - currentUsage

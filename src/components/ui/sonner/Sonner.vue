@@ -37,6 +37,7 @@
   import { CircleCheckIcon, InfoIcon, Loader2Icon, OctagonXIcon, TriangleAlertIcon, XIcon } from 'lucide-vue-next'
   import { Toaster as Sonner } from 'vue-sonner'
   import { cn } from '@/lib/utils'
+  import 'vue-sonner/style.css'
 
   const props = defineProps<ToasterProps>()
 </script>

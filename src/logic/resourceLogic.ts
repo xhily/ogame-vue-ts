@@ -1,5 +1,7 @@
-import type { Planet, Resources } from '@/types/game'
-import { BuildingType } from '@/types/game'
+import type { Planet, Resources, Officer } from '@/types/game'
+import { BuildingType, OfficerType } from '@/types/game'
+import * as officerLogic from './officerLogic'
+import { OFFICERS } from '@/config/gameConfig'
 
 /**
  * 计算电量产出
@@ -11,10 +13,20 @@ export const calculateEnergyProduction = (
   }
 ): number => {
   const solarPlantLevel = planet.buildings[BuildingType.SolarPlant] || 0
+  const fusionReactorLevel = planet.buildings[BuildingType.FusionReactor] || 0
+  const solarSatelliteCount = planet.fleet.solarSatellite || 0
   const energyBonus = 1 + (bonuses.energyProductionBonus || 0) / 100
 
   // 太阳能电站每级产出：50 * 1.1^等级
-  return solarPlantLevel * 50 * Math.pow(1.1, solarPlantLevel) * energyBonus
+  const solarPlantProduction = solarPlantLevel * 50 * Math.pow(1.1, solarPlantLevel)
+
+  // 核聚变反应堆每级产出：150 * 1.15^等级（消耗重氢）
+  const fusionReactorProduction = fusionReactorLevel * 150 * Math.pow(1.15, fusionReactorLevel)
+
+  // 太阳能卫星每个产出：50点能量
+  const solarSatelliteProduction = solarSatelliteCount * 50
+
+  return (solarPlantProduction + fusionReactorProduction + solarSatelliteProduction) * energyBonus
 }
 
 /**
@@ -76,17 +88,18 @@ export const calculateResourceCapacity = (planet: Planet, storageCapacityBonus: 
   const metalStorageLevel = planet.buildings[BuildingType.MetalStorage] || 0
   const crystalStorageLevel = planet.buildings[BuildingType.CrystalStorage] || 0
   const deuteriumTankLevel = planet.buildings[BuildingType.DeuteriumTank] || 0
-  const darkMatterCollectorLevel = planet.buildings[BuildingType.DarkMatterCollector] || 0
+  const darkMatterTankLevel = planet.buildings[BuildingType.DarkMatterTank] || 0
   const solarPlantLevel = planet.buildings[BuildingType.SolarPlant] || 0
 
   const bonus = 1 + (storageCapacityBonus || 0) / 100
 
   const baseCapacity = 10000
+  const darkMatterBaseCapacity = 1000 // 暗物质基础容量较小
   return {
     metal: baseCapacity * Math.pow(2, metalStorageLevel) * bonus,
     crystal: baseCapacity * Math.pow(2, crystalStorageLevel) * bonus,
     deuterium: baseCapacity * Math.pow(2, deuteriumTankLevel) * bonus,
-    darkMatter: 1000 + darkMatterCollectorLevel * 100, // 暗物质容量较小
+    darkMatter: darkMatterBaseCapacity * Math.pow(2, darkMatterTankLevel) * bonus,
     energy: 1000 + solarPlantLevel * 500 // 能量容量基于太阳能电站等级
   }
 }
@@ -194,12 +207,20 @@ export interface ProductionDetail {
   buildingName: string // 建筑名称（用于显示）
   bonuses: ProductionBonus[] // 加成列表
   finalProduction: number // 最终产量
+  sources?: ProductionSource[] // 多个产量来源（用于能量）
+}
+
+export interface ProductionSource {
+  name: string // 来源名称
+  level: number // 等级或数量
+  production: number // 产量
 }
 
 export interface ProductionBonus {
   name: string // 加成名称
-  value: number // 加成百分比或固定值
-  type: 'percentage' | 'multiplier' // 百分比加成或倍率
+  percentage: number // 加成百分比
+  value: number // 实际增加的产量
+  source: 'technology' | 'officer' | 'other' // 加成来源类型
 }
 
 /**
@@ -223,11 +244,8 @@ export interface ConsumptionDetail {
  */
 export const calculateProductionBreakdown = (
   planet: Planet,
-  bonuses: {
-    resourceProductionBonus: number
-    darkMatterProductionBonus: number
-    energyProductionBonus: number
-  }
+  officers: Record<OfficerType, Officer>,
+  currentTime: number
 ): ProductionBreakdown => {
   const metalMineLevel = planet.buildings[BuildingType.MetalMine] || 0
   const crystalMineLevel = planet.buildings[BuildingType.CrystalMine] || 0
@@ -238,86 +256,180 @@ export const calculateProductionBreakdown = (
   const hasEnergy = planet.resources.energy > 0
   const productionEfficiency = hasEnergy ? 1 : 0
 
+  // 收集每个军官的加成信息
+  const activeOfficerBonuses: Array<{
+    type: OfficerType
+    name: string
+    resourceBonus: number
+    darkMatterBonus: number
+    energyBonus: number
+  }> = []
+
+  Object.values(officers).forEach(officer => {
+    if (officerLogic.isOfficerActive(officer, currentTime)) {
+      const config = OFFICERS[officer.type]
+      activeOfficerBonuses.push({
+        type: officer.type,
+        name: config.name,
+        resourceBonus: config.benefits.resourceProductionBonus || 0,
+        darkMatterBonus: config.benefits.darkMatterProductionBonus || 0,
+        energyBonus: config.benefits.energyProductionBonus || 0
+      })
+    }
+  })
+
+  // 计算总加成
+  const totalResourceBonus = activeOfficerBonuses.reduce((sum, officer) => sum + officer.resourceBonus, 0)
+  const totalDarkMatterBonus = activeOfficerBonuses.reduce((sum, officer) => sum + officer.darkMatterBonus, 0)
+  const totalEnergyBonus = activeOfficerBonuses.reduce((sum, officer) => sum + officer.energyBonus, 0)
+
   // 金属矿产量
   const metalBase = metalMineLevel * 1500 * Math.pow(1.5, metalMineLevel)
   const metalBonuses: ProductionBonus[] = []
-  if (bonuses.resourceProductionBonus > 0) {
-    metalBonuses.push({
-      name: 'officers.resourceBonus',
-      value: bonuses.resourceProductionBonus,
-      type: 'percentage'
-    })
-  }
+
+  // 为每个激活的军官添加加成项
+  activeOfficerBonuses.forEach(officer => {
+    if (officer.resourceBonus > 0) {
+      const bonusValue = metalBase * (officer.resourceBonus / 100)
+      metalBonuses.push({
+        name: `officers.${officer.type}`,
+        percentage: officer.resourceBonus,
+        value: bonusValue,
+        source: 'officer'
+      })
+    }
+  })
+
   if (!hasEnergy) {
     metalBonuses.push({
       name: 'resources.noEnergy',
-      value: -100,
-      type: 'percentage'
+      percentage: -100,
+      value: -metalBase * (1 + totalResourceBonus / 100),
+      source: 'other'
     })
   }
-  const metalFinal = metalBase * (1 + bonuses.resourceProductionBonus / 100) * productionEfficiency
+
+  const metalFinal = metalBase * (1 + totalResourceBonus / 100) * productionEfficiency
 
   // 晶体矿产量
   const crystalBase = crystalMineLevel * 1000 * Math.pow(1.5, crystalMineLevel)
   const crystalBonuses: ProductionBonus[] = []
-  if (bonuses.resourceProductionBonus > 0) {
-    crystalBonuses.push({
-      name: 'officers.resourceBonus',
-      value: bonuses.resourceProductionBonus,
-      type: 'percentage'
-    })
-  }
+
+  activeOfficerBonuses.forEach(officer => {
+    if (officer.resourceBonus > 0) {
+      const bonusValue = crystalBase * (officer.resourceBonus / 100)
+      crystalBonuses.push({
+        name: `officers.${officer.type}`,
+        percentage: officer.resourceBonus,
+        value: bonusValue,
+        source: 'officer'
+      })
+    }
+  })
+
   if (!hasEnergy) {
     crystalBonuses.push({
       name: 'resources.noEnergy',
-      value: -100,
-      type: 'percentage'
+      percentage: -100,
+      value: -crystalBase * (1 + totalResourceBonus / 100),
+      source: 'other'
     })
   }
-  const crystalFinal = crystalBase * (1 + bonuses.resourceProductionBonus / 100) * productionEfficiency
+
+  const crystalFinal = crystalBase * (1 + totalResourceBonus / 100) * productionEfficiency
 
   // 重氢合成器产量
   const deuteriumBase = deuteriumSynthesizerLevel * 500 * Math.pow(1.5, deuteriumSynthesizerLevel)
   const deuteriumBonuses: ProductionBonus[] = []
-  if (bonuses.resourceProductionBonus > 0) {
-    deuteriumBonuses.push({
-      name: 'officers.resourceBonus',
-      value: bonuses.resourceProductionBonus,
-      type: 'percentage'
-    })
-  }
+
+  activeOfficerBonuses.forEach(officer => {
+    if (officer.resourceBonus > 0) {
+      const bonusValue = deuteriumBase * (officer.resourceBonus / 100)
+      deuteriumBonuses.push({
+        name: `officers.${officer.type}`,
+        percentage: officer.resourceBonus,
+        value: bonusValue,
+        source: 'officer'
+      })
+    }
+  })
+
   if (!hasEnergy) {
     deuteriumBonuses.push({
       name: 'resources.noEnergy',
-      value: -100,
-      type: 'percentage'
+      percentage: -100,
+      value: -deuteriumBase * (1 + totalResourceBonus / 100),
+      source: 'other'
     })
   }
-  const deuteriumFinal = deuteriumBase * (1 + bonuses.resourceProductionBonus / 100) * productionEfficiency
+
+  const deuteriumFinal = deuteriumBase * (1 + totalResourceBonus / 100) * productionEfficiency
 
   // 暗物质收集器产量
   const darkMatterBase = darkMatterCollectorLevel * 25 * Math.pow(1.5, darkMatterCollectorLevel)
   const darkMatterBonuses: ProductionBonus[] = []
-  if (bonuses.darkMatterProductionBonus > 0) {
-    darkMatterBonuses.push({
-      name: 'officers.darkMatterBonus',
-      value: bonuses.darkMatterProductionBonus,
-      type: 'percentage'
-    })
-  }
-  const darkMatterFinal = darkMatterBase * (1 + bonuses.darkMatterProductionBonus / 100)
 
-  // 太阳能电站产量
-  const energyBase = solarPlantLevel * 50 * Math.pow(1.1, solarPlantLevel)
-  const energyBonuses: ProductionBonus[] = []
-  if (bonuses.energyProductionBonus > 0) {
-    energyBonuses.push({
-      name: 'officers.energyBonus',
-      value: bonuses.energyProductionBonus,
-      type: 'percentage'
+  activeOfficerBonuses.forEach(officer => {
+    if (officer.darkMatterBonus > 0) {
+      const bonusValue = darkMatterBase * (officer.darkMatterBonus / 100)
+      darkMatterBonuses.push({
+        name: `officers.${officer.type}`,
+        percentage: officer.darkMatterBonus,
+        value: bonusValue,
+        source: 'officer'
+      })
+    }
+  })
+
+  const darkMatterFinal = darkMatterBase * (1 + totalDarkMatterBonus / 100)
+
+  // 能量产量（包含多个来源）
+  const fusionReactorLevel = planet.buildings[BuildingType.FusionReactor] || 0
+  const solarSatelliteCount = planet.fleet.solarSatellite || 0
+
+  const solarPlantProduction = solarPlantLevel * 50 * Math.pow(1.1, solarPlantLevel)
+  const fusionReactorProduction = fusionReactorLevel * 150 * Math.pow(1.15, fusionReactorLevel)
+  const solarSatelliteProduction = solarSatelliteCount * 50
+
+  const energyBase = solarPlantProduction + fusionReactorProduction + solarSatelliteProduction
+
+  const energySources: ProductionSource[] = []
+  if (solarPlantLevel > 0) {
+    energySources.push({
+      name: 'buildings.solarPlant',
+      level: solarPlantLevel,
+      production: solarPlantProduction
     })
   }
-  const energyFinal = energyBase * (1 + bonuses.energyProductionBonus / 100)
+  if (fusionReactorLevel > 0) {
+    energySources.push({
+      name: 'buildings.fusionReactor',
+      level: fusionReactorLevel,
+      production: fusionReactorProduction
+    })
+  }
+  if (solarSatelliteCount > 0) {
+    energySources.push({
+      name: 'ships.solarSatellite',
+      level: solarSatelliteCount,
+      production: solarSatelliteProduction
+    })
+  }
+
+  const energyBonuses: ProductionBonus[] = []
+  activeOfficerBonuses.forEach(officer => {
+    if (officer.energyBonus > 0) {
+      const bonusValue = energyBase * (officer.energyBonus / 100)
+      energyBonuses.push({
+        name: `officers.${officer.type}`,
+        percentage: officer.energyBonus,
+        value: bonusValue,
+        source: 'officer'
+      })
+    }
+  })
+
+  const energyFinal = energyBase * (1 + totalEnergyBonus / 100)
 
   return {
     metal: {
@@ -353,7 +465,8 @@ export const calculateProductionBreakdown = (
       buildingLevel: solarPlantLevel,
       buildingName: 'buildings.solarPlant',
       bonuses: energyBonuses,
-      finalProduction: energyFinal
+      finalProduction: energyFinal,
+      sources: energySources
     }
   }
 }

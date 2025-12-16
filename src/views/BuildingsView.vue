@@ -1,12 +1,30 @@
 <template>
   <div v-if="planet" class="container mx-auto p-4 sm:p-6">
-    <div class="flex justify-between items-center mb-4 sm:mb-6 gap-2">
-      <h1 class="text-2xl sm:text-3xl font-bold">{{ t('buildingsView.title') }}</h1>
-      <div class="text-xs sm:text-sm">
-        <span class="flex items-center gap-1.5 text-muted-foreground">
-          <Grid3x3 :size="14" />
-          {{ getUsedSpace(planet) }} / {{ planet.maxSpace }}
-        </span>
+    <h1 class="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6">{{ t('buildingsView.title') }}</h1>
+
+    <!-- 占地显示 -->
+    <div class="mb-4 sm:mb-6 p-3 sm:p-4 bg-muted/50 rounded-lg border">
+      <div class="flex items-center justify-between">
+        <div class="text-sm sm:text-base font-medium flex items-center gap-2">
+          <Grid3x3 :size="16" />
+          {{ t('buildingsView.spaceUsage') }}:
+        </div>
+        <div class="text-sm sm:text-base font-bold">
+          <span :class="getUsedSpace(planet) > planet.maxSpace ? 'text-destructive' : 'text-primary'">
+            {{ formatNumber(getUsedSpace(planet)) }}
+          </span>
+          <span class="text-muted-foreground mx-1">/</span>
+          <span>{{ formatNumber(planet.maxSpace) }}</span>
+        </div>
+      </div>
+      <div class="mt-2">
+        <div class="w-full bg-background rounded-full h-2.5 sm:h-3 overflow-hidden">
+          <div
+            class="h-full transition-all duration-300"
+            :class="getUsedSpace(planet) > planet.maxSpace ? 'bg-destructive' : 'bg-primary'"
+            :style="{ width: `${Math.min((getUsedSpace(planet) / planet.maxSpace) * 100, 100)}%` }"
+          />
+        </div>
       </div>
     </div>
 
@@ -16,64 +34,46 @@
         <CardUnlockOverlay :requirements="BUILDINGS[buildingType].requirements" :currentLevel="getBuildingLevel(buildingType)" />
 
         <CardHeader>
-          <div class="flex justify-between items-start gap-2">
-            <div class="min-w-0 flex-1">
+          <div class="mb-2">
+            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2">
               <CardTitle
-                class="text-base sm:text-lg cursor-pointer hover:text-primary transition-colors"
+                class="text-sm sm:text-base lg:text-lg cursor-pointer hover:text-primary transition-colors underline decoration-dotted underline-offset-4 order-2 sm:order-1"
                 @click="detailDialog.openBuilding(buildingType, getBuildingLevel(buildingType))"
               >
                 {{ BUILDINGS[buildingType].name }}
               </CardTitle>
-              <CardDescription class="text-xs sm:text-sm">{{ BUILDINGS[buildingType].description }}</CardDescription>
+              <Badge variant="secondary" class="text-xs whitespace-nowrap self-start order-1 sm:order-2">
+                Lv {{ getBuildingLevel(buildingType) }}
+              </Badge>
             </div>
-            <Badge variant="secondary" class="text-xs whitespace-nowrap flex-shrink-0">Lv {{ getBuildingLevel(buildingType) }}</Badge>
           </div>
+          <CardDescription class="text-xs sm:text-sm">{{ BUILDINGS[buildingType].description }}</CardDescription>
         </CardHeader>
         <CardContent>
           <div class="space-y-3">
             <div class="text-xs sm:text-sm space-y-1.5 sm:space-y-2">
               <p class="text-muted-foreground mb-1 sm:mb-2">{{ t('buildingsView.upgradeCost') }}:</p>
               <div class="space-y-1 sm:space-y-1.5">
-                <div class="flex items-center gap-1.5 sm:gap-2">
-                  <ResourceIcon type="metal" size="sm" />
-                  <span class="text-xs">{{ t('resources.metal') }}:</span>
-                  <span
-                    class="font-medium text-xs sm:text-sm"
-                    :class="
-                      getResourceCostColor(planet.resources.metal, getBuildingCost(buildingType, getBuildingLevel(buildingType) + 1).metal)
-                    "
-                  >
-                    {{ formatNumber(getBuildingCost(buildingType, getBuildingLevel(buildingType) + 1).metal) }}
-                  </span>
-                </div>
-                <div class="flex items-center gap-1.5 sm:gap-2">
-                  <ResourceIcon type="crystal" size="sm" />
-                  <span class="text-xs">{{ t('resources.crystal') }}:</span>
+                <div
+                  v-for="resourceType in costResourceTypes"
+                  :key="resourceType.key"
+                  v-show="
+                    resourceType.key !== 'darkMatter' || getBuildingCost(buildingType, getBuildingLevel(buildingType) + 1).darkMatter > 0
+                  "
+                  class="flex items-center gap-1.5 sm:gap-2"
+                >
+                  <ResourceIcon :type="resourceType.key" size="sm" />
+                  <span class="text-xs">{{ t(`resources.${resourceType.key}`) }}:</span>
                   <span
                     class="font-medium text-xs sm:text-sm"
                     :class="
                       getResourceCostColor(
-                        planet.resources.crystal,
-                        getBuildingCost(buildingType, getBuildingLevel(buildingType) + 1).crystal
+                        planet.resources[resourceType.key],
+                        getBuildingCost(buildingType, getBuildingLevel(buildingType) + 1)[resourceType.key]
                       )
                     "
                   >
-                    {{ formatNumber(getBuildingCost(buildingType, getBuildingLevel(buildingType) + 1).crystal) }}
-                  </span>
-                </div>
-                <div class="flex items-center gap-1.5 sm:gap-2">
-                  <ResourceIcon type="deuterium" size="sm" />
-                  <span class="text-xs">{{ t('resources.deuterium') }}:</span>
-                  <span
-                    class="font-medium text-xs sm:text-sm"
-                    :class="
-                      getResourceCostColor(
-                        planet.resources.deuterium,
-                        getBuildingCost(buildingType, getBuildingLevel(buildingType) + 1).deuterium
-                      )
-                    "
-                  >
-                    {{ formatNumber(getBuildingCost(buildingType, getBuildingLevel(buildingType) + 1).deuterium) }}
+                    {{ formatNumber(getBuildingCost(buildingType, getBuildingLevel(buildingType) + 1)[resourceType.key]) }}
                   </span>
                 </div>
               </div>
@@ -113,6 +113,9 @@
                 <span>{{ formatNumber(getDemolishRefund(buildingType).metal) }} {{ t('resources.metal') }}</span>
                 <span>{{ formatNumber(getDemolishRefund(buildingType).crystal) }} {{ t('resources.crystal') }}</span>
                 <span>{{ formatNumber(getDemolishRefund(buildingType).deuterium) }} {{ t('resources.deuterium') }}</span>
+                <span v-if="getDemolishRefund(buildingType).darkMatter > 0">
+                  {{ formatNumber(getDemolishRefund(buildingType).darkMatter) }} {{ t('resources.darkMatter') }}
+                </span>
               </div>
             </div>
           </div>
@@ -121,7 +124,35 @@
     </div>
 
     <!-- 提示对话框 -->
-    <AlertDialog ref="alertDialog" />
+    <AlertDialog :open="alertDialogOpen" @update:open="alertDialogOpen = $event">
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{{ alertDialogTitle }}</AlertDialogTitle>
+          <AlertDialogDescription class="whitespace-pre-line">
+            {{ alertDialogMessage }}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogAction>{{ t('common.confirm') }}</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+
+    <!-- 拆除确认对话框 -->
+    <AlertDialog :open="demolishConfirmOpen" @update:open="demolishConfirmOpen = $event">
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{{ t('buildingsView.confirmDemolish') }}</AlertDialogTitle>
+          <AlertDialogDescription class="whitespace-pre-line">
+            {{ demolishConfirmMessage }}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>{{ t('common.cancel') }}</AlertDialogCancel>
+          <AlertDialogAction @click="confirmDemolish">{{ t('common.confirm') }}</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   </div>
 </template>
 
@@ -138,24 +169,51 @@
   import { Badge } from '@/components/ui/badge'
   import ResourceIcon from '@/components/ResourceIcon.vue'
   import CardUnlockOverlay from '@/components/CardUnlockOverlay.vue'
-  import AlertDialog from '@/components/AlertDialog.vue'
+  import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle
+  } from '@/components/ui/alert-dialog'
   import { Clock, Grid3x3 } from 'lucide-vue-next'
   import { formatNumber, formatTime, getResourceCostColor } from '@/utils/format'
   import * as buildingLogic from '@/logic/buildingLogic'
   import * as buildingValidation from '@/logic/buildingValidation'
   import * as publicLogic from '@/logic/publicLogic'
+  import * as officerLogic from '@/logic/officerLogic'
 
   const gameStore = useGameStore()
   const detailDialog = useDetailDialogStore()
   const { t } = useI18n()
   const { BUILDINGS, TECHNOLOGIES } = useGameConfig()
   const planet = computed(() => gameStore.currentPlanet)
-  const alertDialog = ref<InstanceType<typeof AlertDialog> | null>(null)
+
+  // AlertDialog 状态
+  const alertDialogOpen = ref(false)
+  const alertDialogTitle = ref('')
+  const alertDialogMessage = ref('')
+
+  // 拆除确认对话框状态
+  const demolishConfirmOpen = ref(false)
+  const demolishConfirmMessage = ref('')
+  const pendingDemolishBuilding = ref<BuildingType | null>(null)
+
+  // 资源类型配置（用于成本显示）
+  const costResourceTypes = [
+    { key: 'metal' as const },
+    { key: 'crystal' as const },
+    { key: 'deuterium' as const },
+    { key: 'darkMatter' as const }
+  ]
 
   // 根据星球类型过滤可用建筑
-  const availableBuildings = computed(() => {
+  const availableBuildings = computed<BuildingType[]>(() => {
     if (!planet.value) return []
-    return Object.values(BuildingType).filter(buildingType => {
+    return (Object.values(BuildingType) as BuildingType[]).filter(buildingType => {
       const config = BUILDINGS.value[buildingType]
       if (planet.value!.isMoon) {
         // 月球只能建造月球专属建筑
@@ -189,19 +247,17 @@
   const handleUpgrade = (buildingType: BuildingType) => {
     // 检查前置条件
     if (!checkUpgradeRequirements(buildingType)) {
-      alertDialog.value?.show({
-        title: t('common.requirementsNotMet'),
-        message: getRequirementsList(buildingType)
-      })
+      alertDialogTitle.value = t('common.requirementsNotMet')
+      alertDialogMessage.value = getRequirementsList(buildingType)
+      alertDialogOpen.value = true
       return
     }
 
     const success = upgradeBuilding(buildingType)
     if (!success) {
-      alertDialog.value?.show({
-        title: t('buildingsView.upgradeFailed'),
-        message: t('buildingsView.upgradeFailedMessage')
-      })
+      alertDialogTitle.value = t('buildingsView.upgradeFailed')
+      alertDialogMessage.value = t('buildingsView.upgradeFailedMessage')
+      alertDialogOpen.value = true
     }
   }
 
@@ -291,7 +347,13 @@
       return false
     }
 
-    if (planet.value.buildQueue.length > 0) return false
+    // 检查建造队列是否已满（只计算建筑类型的队列项）
+    const bonuses = officerLogic.calculateActiveBonuses(gameStore.player.officers, Date.now())
+    const maxQueue = publicLogic.getMaxBuildQueue(planet.value, bonuses.additionalBuildQueue)
+    const buildingQueueCount = planet.value.buildQueue.filter(item => item.type === 'building' || item.type === 'demolish').length
+    if (buildingQueueCount >= maxQueue) {
+      return false
+    }
 
     // 检查前置条件
     const validation = buildingValidation.validateBuildingUpgrade(
@@ -307,7 +369,8 @@
     return (
       planet.value.resources.metal >= cost.metal &&
       planet.value.resources.crystal >= cost.crystal &&
-      planet.value.resources.deuterium >= cost.deuterium
+      planet.value.resources.deuterium >= cost.deuterium &&
+      planet.value.resources.darkMatter >= cost.darkMatter
     )
   }
 
@@ -316,7 +379,21 @@
   }
 
   const getBuildingTime = (buildingType: BuildingType, targetLevel: number): number => {
-    return buildingLogic.calculateBuildingTime(buildingType, targetLevel)
+    if (!planet.value) return 0
+
+    const bonuses = officerLogic.calculateActiveBonuses(gameStore.player.officers, Date.now())
+
+    // 获取机器人工厂和纳米工厂等级
+    const roboticsFactoryLevel = planet.value.buildings[BuildingType.RoboticsFactory] || 0
+    const naniteFactoryLevel = planet.value.buildings[BuildingType.NaniteFactory] || 0
+
+    return buildingLogic.calculateBuildingTime(
+      buildingType,
+      targetLevel,
+      bonuses.buildingSpeedBonus,
+      roboticsFactoryLevel,
+      naniteFactoryLevel
+    )
   }
 
   // 拆除建筑
@@ -330,20 +407,49 @@
   }
 
   const handleDemolish = (buildingType: BuildingType) => {
-    const success = demolishBuilding(buildingType)
-    if (!success) {
-      alertDialog.value?.show({
-        title: t('buildingsView.demolishFailed'),
-        message: t('buildingsView.demolishFailedMessage')
-      })
+    const buildingName = BUILDINGS.value[buildingType].name
+    const refund = getDemolishRefund(buildingType)
+
+    demolishConfirmMessage.value = `${t('buildingsView.confirmDemolishMessage')}: ${buildingName}
+
+${t('buildingsView.demolishRefund')}:
+${t('resources.metal')}: ${formatNumber(refund.metal)}
+${t('resources.crystal')}: ${formatNumber(refund.crystal)}
+${t('resources.deuterium')}: ${formatNumber(refund.deuterium)}${
+      refund.darkMatter > 0 ? `\n${t('resources.darkMatter')}: ${formatNumber(refund.darkMatter)}` : ''
+    }`
+
+    pendingDemolishBuilding.value = buildingType
+    demolishConfirmOpen.value = true
+  }
+
+  const confirmDemolish = () => {
+    if (pendingDemolishBuilding.value) {
+      const success = demolishBuilding(pendingDemolishBuilding.value)
+      if (!success) {
+        alertDialogTitle.value = t('buildingsView.demolishFailed')
+        alertDialogMessage.value = t('buildingsView.demolishFailedMessage')
+        alertDialogOpen.value = true
+      }
     }
+    demolishConfirmOpen.value = false
+    pendingDemolishBuilding.value = null
   }
 
   // 检查是否可以拆除
   const canDemolish = (buildingType: BuildingType): boolean => {
     if (!planet.value) return false
-    if (planet.value.buildQueue.length > 0) return false
-    return getBuildingLevel(buildingType) > 0
+    if (getBuildingLevel(buildingType) <= 0) return false
+
+    // 检查建造队列是否已满（只计算建筑类型的队列项）
+    const bonuses = officerLogic.calculateActiveBonuses(gameStore.player.officers, Date.now())
+    const maxQueue = publicLogic.getMaxBuildQueue(planet.value, bonuses.additionalBuildQueue)
+    const buildingQueueCount = planet.value.buildQueue.filter(item => item.type === 'building' || item.type === 'demolish').length
+    if (buildingQueueCount >= maxQueue) {
+      return false
+    }
+
+    return true
   }
 
   // 获取拆除返还资源

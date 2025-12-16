@@ -23,7 +23,7 @@
             class="h-full transition-all duration-300"
             :class="fleetStorageUsage > maxFleetStorage ? 'bg-destructive' : 'bg-primary'"
             :style="{ width: `${Math.min((fleetStorageUsage / maxFleetStorage) * 100, 100)}%` }"
-          ></div>
+          />
         </div>
       </div>
     </div>
@@ -31,9 +31,9 @@
     <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
       <Card v-for="shipType in Object.values(ShipType)" :key="shipType" class="relative">
         <CardUnlockOverlay :requirements="SHIPS[shipType].requirements" />
-        <CardHeader>
+        <CardHeader class="pb-3">
           <CardTitle
-            class="text-base sm:text-lg cursor-pointer hover:text-primary transition-colors"
+            class="text-sm sm:text-base lg:text-lg cursor-pointer hover:text-primary transition-colors underline decoration-dotted underline-offset-4 mb-2"
             @click="detailDialog.openShip(shipType)"
           >
             {{ SHIPS[shipType].name }}
@@ -64,34 +64,19 @@
             <div class="text-xs sm:text-sm space-y-1.5 sm:space-y-2">
               <p class="text-muted-foreground mb-1 sm:mb-2">{{ t('shipyardView.unitCost') }}:</p>
               <div class="space-y-1 sm:space-y-1.5">
-                <div class="flex items-center gap-1.5 sm:gap-2">
-                  <ResourceIcon type="metal" size="sm" />
-                  <span class="text-xs">{{ t('resources.metal') }}:</span>
+                <div
+                  v-for="resourceType in costResourceTypes"
+                  :key="resourceType.key"
+                  v-show="resourceType.key !== 'darkMatter' || SHIPS[shipType].cost.darkMatter > 0"
+                  class="flex items-center gap-1.5 sm:gap-2"
+                >
+                  <ResourceIcon :type="resourceType.key" size="sm" />
+                  <span class="text-xs">{{ t(`resources.${resourceType.key}`) }}:</span>
                   <span
                     class="font-medium text-xs sm:text-sm"
-                    :class="getResourceCostColor(planet.resources.metal, SHIPS[shipType].cost.metal)"
+                    :class="getResourceCostColor(planet.resources[resourceType.key], SHIPS[shipType].cost[resourceType.key])"
                   >
-                    {{ formatNumber(SHIPS[shipType].cost.metal) }}
-                  </span>
-                </div>
-                <div class="flex items-center gap-1.5 sm:gap-2">
-                  <ResourceIcon type="crystal" size="sm" />
-                  <span class="text-xs">{{ t('resources.crystal') }}:</span>
-                  <span
-                    class="font-medium text-xs sm:text-sm"
-                    :class="getResourceCostColor(planet.resources.crystal, SHIPS[shipType].cost.crystal)"
-                  >
-                    {{ formatNumber(SHIPS[shipType].cost.crystal) }}
-                  </span>
-                </div>
-                <div class="flex items-center gap-1.5 sm:gap-2">
-                  <ResourceIcon type="deuterium" size="sm" />
-                  <span class="text-xs">{{ t('resources.deuterium') }}:</span>
-                  <span
-                    class="font-medium text-xs sm:text-sm"
-                    :class="getResourceCostColor(planet.resources.deuterium, SHIPS[shipType].cost.deuterium)"
-                  >
-                    {{ formatNumber(SHIPS[shipType].cost.deuterium) }}
+                    {{ formatNumber(SHIPS[shipType].cost[resourceType.key]) }}
                   </span>
                 </div>
               </div>
@@ -112,34 +97,19 @@
             <div v-if="quantities[shipType] > 0" class="text-xs sm:text-sm space-y-1.5 sm:space-y-2 p-2.5 sm:p-3 bg-muted rounded-lg">
               <p class="font-medium text-muted-foreground">{{ t('shipyardView.totalCost') }}:</p>
               <div class="space-y-1 sm:space-y-1.5">
-                <div class="flex items-center gap-1.5 sm:gap-2">
-                  <ResourceIcon type="metal" size="sm" />
-                  <span class="text-xs">{{ t('resources.metal') }}:</span>
+                <div
+                  v-for="resourceType in costResourceTypes"
+                  :key="resourceType.key"
+                  v-show="resourceType.key !== 'darkMatter' || getTotalCost(shipType).darkMatter > 0"
+                  class="flex items-center gap-1.5 sm:gap-2"
+                >
+                  <ResourceIcon :type="resourceType.key" size="sm" />
+                  <span class="text-xs">{{ t(`resources.${resourceType.key}`) }}:</span>
                   <span
                     class="font-medium text-xs sm:text-sm"
-                    :class="getResourceCostColor(planet.resources.metal, getTotalCost(shipType).metal)"
+                    :class="getResourceCostColor(planet.resources[resourceType.key], getTotalCost(shipType)[resourceType.key])"
                   >
-                    {{ formatNumber(getTotalCost(shipType).metal) }}
-                  </span>
-                </div>
-                <div class="flex items-center gap-1.5 sm:gap-2">
-                  <ResourceIcon type="crystal" size="sm" />
-                  <span class="text-xs">{{ t('resources.crystal') }}:</span>
-                  <span
-                    class="font-medium text-xs sm:text-sm"
-                    :class="getResourceCostColor(planet.resources.crystal, getTotalCost(shipType).crystal)"
-                  >
-                    {{ formatNumber(getTotalCost(shipType).crystal) }}
-                  </span>
-                </div>
-                <div class="flex items-center gap-1.5 sm:gap-2">
-                  <ResourceIcon type="deuterium" size="sm" />
-                  <span class="text-xs">{{ t('resources.deuterium') }}:</span>
-                  <span
-                    class="font-medium text-xs sm:text-sm"
-                    :class="getResourceCostColor(planet.resources.deuterium, getTotalCost(shipType).deuterium)"
-                  >
-                    {{ formatNumber(getTotalCost(shipType).deuterium) }}
+                    {{ formatNumber(getTotalCost(shipType)[resourceType.key]) }}
                   </span>
                 </div>
               </div>
@@ -152,7 +122,19 @@
     </div>
 
     <!-- 提示对话框 -->
-    <AlertDialog ref="alertDialog" />
+    <AlertDialog :open="alertDialogOpen" @update:open="alertDialogOpen = $event">
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{{ alertDialogTitle }}</AlertDialogTitle>
+          <AlertDialogDescription class="whitespace-pre-line">
+            {{ alertDialogMessage }}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogAction>{{ t('common.confirm') }}</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   </div>
 </template>
 
@@ -168,7 +150,15 @@
   import { Input } from '@/components/ui/input'
   import { Label } from '@/components/ui/label'
   import ResourceIcon from '@/components/ResourceIcon.vue'
-  import AlertDialog from '@/components/AlertDialog.vue'
+  import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle
+  } from '@/components/ui/alert-dialog'
   import UnlockRequirement from '@/components/UnlockRequirement.vue'
   import CardUnlockOverlay from '@/components/CardUnlockOverlay.vue'
   import { formatNumber, getResourceCostColor } from '@/utils/format'
@@ -181,7 +171,19 @@
   const { t } = useI18n()
   const { SHIPS } = useGameConfig()
   const planet = computed(() => gameStore.currentPlanet)
-  const alertDialog = ref<InstanceType<typeof AlertDialog> | null>(null)
+
+  // AlertDialog 状态
+  const alertDialogOpen = ref(false)
+  const alertDialogTitle = ref('')
+  const alertDialogMessage = ref('')
+
+  // 资源类型配置（用于成本显示）
+  const costResourceTypes = [
+    { key: 'metal' as const },
+    { key: 'crystal' as const },
+    { key: 'deuterium' as const },
+    { key: 'darkMatter' as const }
+  ]
 
   // 舰队仓储使用量
   const fleetStorageUsage = computed(() => {
@@ -201,11 +203,15 @@
     [ShipType.HeavyFighter]: 0,
     [ShipType.Cruiser]: 0,
     [ShipType.Battleship]: 0,
+    [ShipType.Battlecruiser]: 0,
+    [ShipType.Bomber]: 0,
+    [ShipType.Destroyer]: 0,
     [ShipType.SmallCargo]: 0,
     [ShipType.LargeCargo]: 0,
     [ShipType.ColonyShip]: 0,
     [ShipType.Recycler]: 0,
     [ShipType.EspionageProbe]: 0,
+    [ShipType.SolarSatellite]: 0,
     [ShipType.DarkMatterHarvester]: 0,
     [ShipType.Deathstar]: 0
   })
@@ -223,19 +229,17 @@
   const handleBuild = (shipType: ShipType) => {
     const quantity = quantities.value[shipType]
     if (quantity <= 0) {
-      alertDialog.value?.show({
-        title: t('shipyardView.inputError'),
-        message: t('shipyardView.inputErrorMessage')
-      })
+      alertDialogTitle.value = t('shipyardView.inputError')
+      alertDialogMessage.value = t('shipyardView.inputErrorMessage')
+      alertDialogOpen.value = true
       return
     }
 
     const success = buildShip(shipType, quantity)
     if (!success) {
-      alertDialog.value?.show({
-        title: t('shipyardView.buildFailed'),
-        message: t('shipyardView.buildFailedMessage')
-      })
+      alertDialogTitle.value = t('shipyardView.buildFailed')
+      alertDialogMessage.value = t('shipyardView.buildFailedMessage')
+      alertDialogOpen.value = true
     } else {
       quantities.value[shipType] = 0
     }
@@ -252,14 +256,16 @@
     const totalCost = {
       metal: config.cost.metal * quantity,
       crystal: config.cost.crystal * quantity,
-      deuterium: config.cost.deuterium * quantity
+      deuterium: config.cost.deuterium * quantity,
+      darkMatter: config.cost.darkMatter * quantity
     }
 
     return (
       publicLogic.checkRequirements(planet.value, gameStore.player.technologies, config.requirements) &&
       planet.value.resources.metal >= totalCost.metal &&
       planet.value.resources.crystal >= totalCost.crystal &&
-      planet.value.resources.deuterium >= totalCost.deuterium
+      planet.value.resources.deuterium >= totalCost.deuterium &&
+      planet.value.resources.darkMatter >= totalCost.darkMatter
     )
   }
 
@@ -270,7 +276,8 @@
     return {
       metal: config.cost.metal * quantity,
       crystal: config.cost.crystal * quantity,
-      deuterium: config.cost.deuterium * quantity
+      deuterium: config.cost.deuterium * quantity,
+      darkMatter: config.cost.darkMatter * quantity
     }
   }
 </script>

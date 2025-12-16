@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import type { Planet, Player, BuildQueueItem, FleetMission, BattleResult, SpyReport, Officer } from '@/types/game'
+import type { Planet, Player, BuildQueueItem, FleetMission, BattleResult, SpyReport, Officer, SpiedNotification, NPCActivityNotification, IncomingFleetAlert, MissileAttack } from '@/types/game'
 import { TechnologyType, OfficerType } from '@/types/game'
 import type { Locale } from '@/locales'
 import pkg from '../../package.json'
@@ -9,6 +9,7 @@ export const useGameStore = defineStore('game', {
   state: () => ({
     gameTime: Date.now(),
     isPaused: false,
+    gameSpeed: 1,
     player: {
       id: 'player1',
       name: '',
@@ -17,8 +18,18 @@ export const useGameStore = defineStore('game', {
       officers: {} as Record<OfficerType, Officer>,
       researchQueue: [] as BuildQueueItem[],
       fleetMissions: [] as FleetMission[],
+      missileAttacks: [] as MissileAttack[],
       battleReports: [] as BattleResult[],
-      spyReports: [] as SpyReport[]
+      spyReports: [] as SpyReport[],
+      spiedNotifications: [] as SpiedNotification[],
+      npcActivityNotifications: [] as NPCActivityNotification[],
+      missionReports: [],
+      incomingFleetAlerts: [] as IncomingFleetAlert[],
+      giftNotifications: [],
+      giftRejectedNotifications: [],
+      points: 0,
+      isGMEnabled: false, // 明确设置 GM 模式默认为 false
+      lastVersionCheckTime: 0 // 最后一次检查版本的时间戳，默认为0
     } as Player,
     currentPlanetId: '',
     isDark: '',
