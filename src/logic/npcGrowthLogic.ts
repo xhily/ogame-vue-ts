@@ -23,25 +23,25 @@ export interface NPCGrowthGameState {
 // NPC成长配置（旧版，保留用于兼容）
 export const NPC_GROWTH_CONFIG = {
   easy: {
-    powerRatio: 1.0, // 实力比例(相对玩家) - 提升到1.0,与玩家势均力敌
+    powerRatio: 0.6, // 实力比例(相对玩家)
     checkInterval: 300, // 检查间隔(秒) - 5分钟
-    resourceGrowthRate: 1.3, // 资源增长速率系数 - 大幅提升
-    buildingGrowthSpeed: 1.0, // 建筑升级速度系数
-    techGrowthSpeed: 1.0 // 科技研究速度系数
+    resourceGrowthRate: 0.5, // 资源增长速率系数
+    buildingGrowthSpeed: 0.5, // 建筑升级速度系数
+    techGrowthSpeed: 0.5 // 科技研究速度系数
   },
   medium: {
-    powerRatio: 1.5, // 提升到1.5,超越玩家
+    powerRatio: 0.8,
     checkInterval: 180, // 3分钟
-    resourceGrowthRate: 1.8, // 大幅提升资源增长
-    buildingGrowthSpeed: 1.5,
-    techGrowthSpeed: 1.5
+    resourceGrowthRate: 0.8,
+    buildingGrowthSpeed: 0.8,
+    techGrowthSpeed: 0.8
   },
   hard: {
-    powerRatio: 2.0, // 提升到2.0,远超玩家
+    powerRatio: 1.1,
     checkInterval: 120, // 2分钟
-    resourceGrowthRate: 2.5, // 极高资源增长
-    buildingGrowthSpeed: 2.0,
-    techGrowthSpeed: 2.0
+    resourceGrowthRate: 1.2,
+    buildingGrowthSpeed: 1.0,
+    techGrowthSpeed: 1.0
   }
 } as const
 
@@ -61,58 +61,58 @@ export const calculateDynamicDifficulty = (playerPoints: number): DynamicDifficu
   // 积分区间和对应的难度参数
   if (playerPoints < 1000) {
     // 新手期：0-1,000分
-    // NPC保持50-70%实力，给予发展空间但保持挑战
-    const ratio = 0.5 + (playerPoints / 1000) * 0.2
+    // NPC保持30-50%实力，给予充分发展空间，但资源增长速度加快
+    const ratio = 0.3 + (playerPoints / 1000) * 0.2
     return {
       powerRatio: ratio,
       checkInterval: 300, // 5分钟
-      resourceGrowthRate: 1.2, // 提升资源增长,确保NPC快速发育
-      buildingGrowthSpeed: 0.8,
-      techGrowthSpeed: 0.8
+      resourceGrowthRate: 0.8, // 从0.4提升到0.8，确保NPC有足够资源发育
+      buildingGrowthSpeed: 0.6, // 从0.4提升到0.6
+      techGrowthSpeed: 0.6 // 从0.4提升到0.6
     }
   } else if (playerPoints < 5000) {
     // 初级期：1,000-5,000分
-    // NPC保持70-110%实力，快速追赶玩家
-    const ratio = 0.7 + ((playerPoints - 1000) / 4000) * 0.4
+    // NPC保持50-70%实力，逐渐增加挑战
+    const ratio = 0.5 + ((playerPoints - 1000) / 4000) * 0.2
     return {
       powerRatio: ratio,
       checkInterval: 240, // 4分钟
-      resourceGrowthRate: 1.5, // 大幅提升资源增长速度
-      buildingGrowthSpeed: 1.2,
-      techGrowthSpeed: 1.2
+      resourceGrowthRate: 1.0, // 从0.6提升到1.0，与玩家资源产出相当
+      buildingGrowthSpeed: 0.8, // 从0.6提升到0.8
+      techGrowthSpeed: 0.8 // 从0.6提升到0.8
     }
   } else if (playerPoints < 20000) {
     // 中级期：5,000-20,000分
-    // NPC保持110-150%实力，形成强大威胁
-    const ratio = 1.1 + ((playerPoints - 5000) / 15000) * 0.4
+    // NPC保持70-90%实力，持续挑战
+    const ratio = 0.7 + ((playerPoints - 5000) / 15000) * 0.2
     return {
       powerRatio: ratio,
       checkInterval: 180, // 3分钟
-      resourceGrowthRate: 1.8, // 极大幅提升资源增长
-      buildingGrowthSpeed: 1.5,
-      techGrowthSpeed: 1.5
+      resourceGrowthRate: 0.8,
+      buildingGrowthSpeed: 0.8,
+      techGrowthSpeed: 0.8
     }
   } else if (playerPoints < 50000) {
     // 高级期：20,000-50,000分
-    // NPC保持150-200%实力，远超玩家
-    const ratio = 1.5 + ((playerPoints - 20000) / 30000) * 0.5
+    // NPC保持90-110%实力，与玩家势均力敌
+    const ratio = 0.9 + ((playerPoints - 20000) / 30000) * 0.2
     return {
       powerRatio: ratio,
       checkInterval: 150, // 2.5分钟
-      resourceGrowthRate: 2.2, // 极高资源增长
-      buildingGrowthSpeed: 1.8,
-      techGrowthSpeed: 1.8
+      resourceGrowthRate: 1.0,
+      buildingGrowthSpeed: 1.0,
+      techGrowthSpeed: 1.0
     }
   } else {
     // 专家期：50,000+分
-    // NPC保持200-250%实力，成为超强对手
-    const ratio = Math.min(2.5, 2.0 + ((playerPoints - 50000) / 50000) * 0.5)
+    // NPC保持110-130%实力，超越玩家
+    const ratio = Math.min(1.3, 1.1 + ((playerPoints - 50000) / 50000) * 0.2)
     return {
       powerRatio: ratio,
       checkInterval: 120, // 2分钟
-      resourceGrowthRate: 2.5, // 极高的资源增长速度
-      buildingGrowthSpeed: 2.0,
-      techGrowthSpeed: 2.0
+      resourceGrowthRate: 1.2,
+      buildingGrowthSpeed: 1.2,
+      techGrowthSpeed: 1.2
     }
   }
 }

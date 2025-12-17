@@ -68,13 +68,18 @@ export const migrateGameData = (): void => {
 
     // 修复NPC数据（确保所有必需字段都存在）
     if (oldData.npcs && Array.isArray(oldData.npcs)) {
+      const now = Date.now()
       oldData.npcs.forEach((npc: NPC) => {
-        // 确保NPC有必需的时间字段
-        if (npc.lastSpyTime === undefined) {
-          npc.lastSpyTime = 0
+        // 确保NPC有必需的时间字段，并设置随机冷却避免同时行动
+        if (npc.lastSpyTime === undefined || npc.lastSpyTime === 0) {
+          // 0-4分钟的随机延迟
+          const randomSpyOffset = Math.random() * 240 * 1000
+          npc.lastSpyTime = now - randomSpyOffset
         }
-        if (npc.lastAttackTime === undefined) {
-          npc.lastAttackTime = 0
+        if (npc.lastAttackTime === undefined || npc.lastAttackTime === 0) {
+          // 0-8分钟的随机延迟
+          const randomAttackOffset = Math.random() * 480 * 1000
+          npc.lastAttackTime = now - randomAttackOffset
         }
         // 确保NPC有必需的数组字段
         if (!npc.fleetMissions) {

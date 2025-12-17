@@ -655,7 +655,7 @@ export default {
     spiedNotificationDetails: 'Spied Notification Details',
     spyDetected: 'Spy Detected',
     detectionResult: 'Detection Result',
-    detectionSuccess: 'Your spy probe was detected!',
+    detectionSuccess: 'You detected the enemy spy!',
     spiedNotificationMessage: '{npc} attempted to spy on your planet {planet}',
     spiedNotificationTip: 'Consider increasing your defense or counter-attacking if this NPC is hostile',
     viewInGalaxy: 'View in Galaxy',

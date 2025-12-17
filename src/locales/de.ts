@@ -866,7 +866,7 @@ export default {
     ships: 'Schiffe',
     spiedBy: 'Ausspioniert von',
     attackedBy: 'Angegriffen von',
-    detectionSuccess: 'Spionage entdeckt',
+    detectionSuccess: 'Du hast feindliche Spionage entdeckt!',
     detectionFailed: 'Spionage nicht entdeckt',
     npcSpiedYourPlanet: 'NPC hat deinen Planeten ausspioniert',
     npcAttackedYourPlanet: 'NPC hat deinen Planeten angegriffen'

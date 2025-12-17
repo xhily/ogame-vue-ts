@@ -857,7 +857,7 @@ export default {
     ships: '척',
     spiedBy: '정찰당함',
     attackedBy: '공격당함',
-    detectionSuccess: '정찰 발견됨',
+    detectionSuccess: '적의 정찰을 발견했습니다!',
     detectionFailed: '정찰 미발견',
     npcSpiedYourPlanet: 'NPC가 당신의 행성을 정찰했습니다',
     npcAttackedYourPlanet: 'NPC가 당신의 행성을 공격했습니다'

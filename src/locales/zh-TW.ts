@@ -857,7 +857,7 @@ export default {
     ships: '艘艦船',
     spiedBy: '被偵查',
     attackedBy: '被攻擊',
-    detectionSuccess: '偵查被發現',
+    detectionSuccess: '你發現了敵方偵查！',
     detectionFailed: '偵查未被發現',
     npcSpiedYourPlanet: 'NPC偵查了你的星球',
     npcAttackedYourPlanet: 'NPC攻擊了你的星球'

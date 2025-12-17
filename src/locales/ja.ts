@@ -856,7 +856,7 @@ export default {
     ships: '隻',
     spiedBy: '偵察された',
     attackedBy: '攻撃された',
-    detectionSuccess: '偵察が発見された',
+    detectionSuccess: '敵の偵察を発見した!',
     detectionFailed: '偵察が発見されなかった',
     npcSpiedYourPlanet: 'NPCがあなたの惑星を偵察しました',
     npcAttackedYourPlanet: 'NPCがあなたの惑星を攻撃しました'

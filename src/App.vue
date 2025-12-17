@@ -1136,6 +1136,11 @@
 
         // 这是NPC的星球
         if (!npcMap.has(planet.ownerId)) {
+          // 为每个NPC设置随机的初始冷却时间，避免所有NPC同时行动
+          const now = Date.now()
+          const randomSpyOffset = Math.random() * 240 * 1000 // 0-4分钟的随机延迟
+          const randomAttackOffset = Math.random() * 480 * 1000 // 0-8分钟的随机延迟
+
           npcMap.set(planet.ownerId, {
             id: planet.ownerId,
             name: `NPC-${planet.ownerId.substring(0, 8)}`,
@@ -1145,8 +1150,8 @@
             relations: {}, // 外交关系
             allies: [], // 盟友列表
             enemies: [], // 敌人列表
-            lastSpyTime: 0, // 上次侦查时间
-            lastAttackTime: 0, // 上次攻击时间
+            lastSpyTime: now - randomSpyOffset, // 设置随机的上次侦查时间
+            lastAttackTime: now - randomAttackOffset, // 设置随机的上次攻击时间
             fleetMissions: [], // 舰队任务
             playerSpyReports: {} // 对玩家的侦查报告
           })
@@ -1224,7 +1229,8 @@
     }
 
     const now = Date.now()
-    const allPlanets = Object.values(universeStore.planets)
+    // 合并玩家星球和NPC星球到allPlanets（NPC需要能够侦查和攻击玩家星球）
+    const allPlanets = [...gameStore.player.planets, ...Object.values(universeStore.planets)]
 
     // 更新每个NPC的行为
     npcStore.npcs.forEach(npc => {

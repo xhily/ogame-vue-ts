@@ -650,7 +650,7 @@ export default {
     spiedNotificationDetails: '被侦查通知详情',
     spyDetected: '侦查被发现',
     detectionResult: '检测结果',
-    detectionSuccess: '你的侦查探测被发现了！',
+    detectionSuccess: '你发现了敌方侦查！',
     spiedNotificationMessage: '{npc}试图侦查你的星球{planet}',
     spiedNotificationTip: '考虑增强防御或反击，如果这个NPC对你有敌意',
     viewInGalaxy: '在星系中查看',

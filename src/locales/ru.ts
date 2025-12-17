@@ -864,7 +864,7 @@ export default {
     ships: 'кораблей',
     spiedBy: 'Разведан',
     attackedBy: 'Атакован',
-    detectionSuccess: 'Разведка обнаружена',
+    detectionSuccess: 'Вы обнаружили вражескую разведку!',
     detectionFailed: 'Разведка не обнаружена',
     npcSpiedYourPlanet: 'NPC разведал вашу планету',
     npcAttackedYourPlanet: 'NPC атаковал вашу планету'

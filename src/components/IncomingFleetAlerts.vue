@@ -1,6 +1,6 @@
 <template>
   <div v-if="alerts.length > 0" class="bg-destructive/10 border-b border-destructive/20">
-    <div class="px-4 sm:px-6 py-2 space-y-2">
+    <div class="px-4 sm:px-6 py-2 space-y-2 max-h-[230px] overflow-y-auto">
       <div
         v-for="alert in alerts"
         :key="alert.id"
