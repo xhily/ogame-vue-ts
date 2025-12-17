@@ -331,6 +331,14 @@
                 <RouterView class="h-full" />
               </StarsBackground>
               <div v-else class="h-full">
+                <ParticlesBg
+                    class="absolute inset-0"
+                    :quantity="100"
+                    :ease="100"
+                    :color="isDark ? '#FFF' : '#000'"
+                    :staticity="10"
+                    refresh
+                />
                 <RouterView class="h-full" />
               </div>
             </div>
@@ -458,6 +466,7 @@
   import { migrateGameData } from '@/utils/migration'
   import { checkLatestVersion } from '@/utils/versionCheck'
   import {StarsBackground} from "@/components/ui/bg-stars";
+  import {ParticlesBg} from "@/components/ui/particles-bg";
 
   // 执行数据迁移（在 store 初始化之前）
   migrateGameData()
