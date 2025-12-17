@@ -101,7 +101,7 @@ export const validateDefenseBuild = (
   }
 
   // 导弹发射井容量限制
-  if (!shipLogic.checkMissileSiloLimit(defenseType, planet.defense, planet.buildings, quantity)) {
+  if (!shipLogic.checkMissileSiloLimit(defenseType, planet.defense, planet.buildings, quantity, planet.buildQueue)) {
     return { valid: false, reason: 'errors.missileSiloLimit' }
   }
 

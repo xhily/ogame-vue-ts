@@ -384,15 +384,16 @@ export const autoBuildNPCFleet = (npc: NPC): void => {
 
     if (!canBuild) continue
 
-    // 根据难度和当前资源决定建造数量
-    const maxAffordable = Math.floor(
-      Math.min(
-        planet.resources.metal / shipConfig.cost.metal,
-        planet.resources.crystal / shipConfig.cost.crystal,
-        planet.resources.deuterium / shipConfig.cost.deuterium,
-        shipConfig.cost.darkMatter > 0 ? planet.resources.darkMatter / shipConfig.cost.darkMatter : Infinity
-      )
-    )
+    // 根据难度和当前资源决定建造数量（防止除零）
+    const metalAffordable = shipConfig.cost.metal > 0 ? planet.resources.metal / shipConfig.cost.metal : Infinity
+    const crystalAffordable = shipConfig.cost.crystal > 0 ? planet.resources.crystal / shipConfig.cost.crystal : Infinity
+    const deuteriumAffordable = shipConfig.cost.deuterium > 0 ? planet.resources.deuterium / shipConfig.cost.deuterium : Infinity
+    const darkMatterAffordable = shipConfig.cost.darkMatter > 0 ? planet.resources.darkMatter / shipConfig.cost.darkMatter : Infinity
+
+    const maxAffordable = Math.floor(Math.min(metalAffordable, crystalAffordable, deuteriumAffordable, darkMatterAffordable))
+
+    // 防止NaN或Infinity（如果所有成本都为0的极端情况）
+    if (!Number.isFinite(maxAffordable) || maxAffordable <= 0) continue
 
     // 建造数量：简单1-5艘，中等5-10艘，困难10-20艘
     const buildCount = Math.min(maxAffordable, npc.difficulty === 'easy' ? 5 : npc.difficulty === 'medium' ? 10 : 20)

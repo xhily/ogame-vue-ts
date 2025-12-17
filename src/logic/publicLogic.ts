@@ -8,6 +8,7 @@ import type { Planet, Resources, Officer, BuildingConfig, TechnologyConfig } fro
 import { OfficerType } from '@/types/game'
 import * as officerLogic from '@/logic/officerLogic'
 import * as resourceLogic from '@/logic/resourceLogic'
+import { scaleResources } from '@/utils/speed'
 
 /**
  * 获取特定等级的升级条件
@@ -93,11 +94,12 @@ export const checkRequirements = (
  * @param officers 玩家的军官对象
  * @returns 每小时各类资源的产量
  */
-export const getResourceProduction = (planet: Planet, officers: Record<OfficerType, Officer>): Resources => {
+export const getResourceProduction = (planet: Planet, officers: Record<OfficerType, Officer>, resourceSpeed: number = 1): Resources => {
   // 计算当前激活的军官加成
   const bonuses = officerLogic.calculateActiveBonuses(officers, Date.now())
   // 根据建筑等级和军官加成计算资源产量
-  return resourceLogic.calculateResourceProduction(planet, bonuses)
+  const base = resourceLogic.calculateResourceProduction(planet, bonuses)
+  return scaleResources(base, resourceSpeed)
 }
 
 /**

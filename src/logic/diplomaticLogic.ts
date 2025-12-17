@@ -6,6 +6,8 @@
 
 import { DIPLOMATIC_CONFIG } from '@/config/gameConfig'
 import { locales, type Locale } from '@/locales'
+import * as resourceLogic from './resourceLogic'
+import * as officerLogic from './officerLogic'
 import type {
   DiplomaticRelation,
   RelationStatus,
@@ -783,14 +785,14 @@ export const handleNPCGiftToPlayer = (npc: NPC, player: Player, giftResources: R
  * @param locale 语言代码
  */
 export const acceptNPCGift = (player: Player, npc: NPC, giftNotification: GiftNotification, locale: Locale): void => {
-  // 将资源添加到玩家主星球
+  // 将资源添加到玩家主星球（使用安全添加函数防止溢出）
   if (player.planets && player.planets.length > 0) {
     const mainPlanet = player.planets[0]
     if (mainPlanet) {
-      mainPlanet.resources.metal += giftNotification.resources.metal
-      mainPlanet.resources.crystal += giftNotification.resources.crystal
-      mainPlanet.resources.deuterium += giftNotification.resources.deuterium
-      mainPlanet.resources.darkMatter += giftNotification.resources.darkMatter
+      // 计算军官加成
+      const bonuses = officerLogic.calculateActiveBonuses(player.officers, Date.now())
+      // 使用安全添加函数，超出容量的资源会丢失
+      resourceLogic.addResourcesSafely(mainPlanet, giftNotification.resources, bonuses.storageCapacityBonus)
     }
   }
 

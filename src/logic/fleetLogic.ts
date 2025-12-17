@@ -6,6 +6,9 @@ import * as battleLogic from './battleLogic'
 import * as moonLogic from './moonLogic'
 import * as moonValidation from './moonValidation'
 import * as diplomaticLogic from './diplomaticLogic'
+import * as resourceLogic from './resourceLogic'
+import * as fleetStorageLogic from './fleetStorageLogic'
+import * as officerLogic from './officerLogic'
 
 /**
  * 计算两个星球之间的距离
@@ -78,8 +81,9 @@ export const processTransportArrival = (
   targetPlanet: Planet | undefined,
   player?: Player,
   allNpcs?: NPC[],
-  locale: Locale = 'zh-CN'
-): { success: boolean; reputationGain?: number } => {
+  locale: Locale = 'zh-CN',
+  storageCapacityBonus: number = 0
+): { success: boolean; reputationGain?: number; overflow?: Resources } => {
   // 检查是否是赠送任务
   if (mission.isGift && mission.giftTargetNpcId && player && allNpcs) {
     const targetNpc = allNpcs.find(n => n.id === mission.giftTargetNpcId)
@@ -101,13 +105,15 @@ export const processTransportArrival = (
 
   // 正常运输任务
   if (targetPlanet) {
-    targetPlanet.resources.metal += mission.cargo.metal
-    targetPlanet.resources.crystal += mission.cargo.crystal
-    targetPlanet.resources.deuterium += mission.cargo.deuterium
-    targetPlanet.resources.darkMatter += mission.cargo.darkMatter
+    // 使用安全添加函数，防止资源溢出
+    const result = resourceLogic.addResourcesSafely(targetPlanet, mission.cargo, storageCapacityBonus)
     mission.status = 'returning'
-    mission.cargo = { metal: 0, crystal: 0, deuterium: 0, darkMatter: 0, energy: 0 }
-    return { success: true }
+
+    // 如果有溢出的资源，保留在cargo中返回给发送者
+    if (result.overflow.metal > 0 || result.overflow.crystal > 0 || result.overflow.deuterium > 0 || result.overflow.darkMatter > 0) {
+      mission.cargo = result.overflow
+      return { success: true, overflow: result.overflow }
+    }
   }
   mission.status = 'returning'
   mission.cargo = { metal: 0, crystal: 0, deuterium: 0, darkMatter: 0, energy: 0 }
@@ -178,10 +184,10 @@ export const processAttackArrival = async (
   })
   targetPlanet.defense = battleLogic.repairDefense(defenseBeforeBattle, targetPlanet.defense) as Record<DefenseType, number>
 
-  // 扣除掠夺的资源
-  targetPlanet.resources.metal -= battleResult.plunder.metal
-  targetPlanet.resources.crystal -= battleResult.plunder.crystal
-  targetPlanet.resources.deuterium -= battleResult.plunder.deuterium
+  // 扣除掠夺的资源（防止下溢到负数）
+  targetPlanet.resources.metal = Math.max(0, targetPlanet.resources.metal - battleResult.plunder.metal)
+  targetPlanet.resources.crystal = Math.max(0, targetPlanet.resources.crystal - battleResult.plunder.crystal)
+  targetPlanet.resources.deuterium = Math.max(0, targetPlanet.resources.deuterium - battleResult.plunder.deuterium)
 
   mission.status = 'returning'
 
@@ -519,18 +525,28 @@ export const processSpyArrival = (
 /**
  * 处理部署任务到达
  */
-export const processDeployArrival = (mission: FleetMission, targetPlanet: Planet | undefined, playerId: string): boolean => {
+export const processDeployArrival = (
+  mission: FleetMission,
+  targetPlanet: Planet | undefined,
+  playerId: string,
+  technologies: Record<TechnologyType, number>
+): { success: boolean; overflow?: Partial<Record<ShipType, number>> } => {
   if (!targetPlanet || targetPlanet.ownerId !== playerId) {
     mission.status = 'returning'
-    return false
+    return { success: false }
   }
 
-  for (const [shipType, count] of Object.entries(mission.fleet)) {
-    targetPlanet.fleet[shipType as ShipType] += count
+  // 使用安全添加函数，防止舰队仓储溢出
+  const result = fleetStorageLogic.addFleetSafely(targetPlanet, mission.fleet, technologies)
+  // 如果有溢出的舰船，保留在mission.fleet中返回给发送者
+  const hasOverflow = Object.keys(result.overflow).length > 0
+  if (hasOverflow) {
+    mission.fleet = result.overflow as Fleet
+    mission.status = 'returning'
+    return { success: true, overflow: result.overflow }
   }
-
   // 部署任务直接完成，不返回
-  return true
+  return { success: true }
 }
 
 /**
@@ -693,19 +709,19 @@ export const processDestroyArrival = (
 /**
  * 处理舰队任务返回
  */
-export const processFleetReturn = (mission: FleetMission, originPlanet: Planet): void => {
-  // 舰船返回
-  Object.entries(mission.fleet).forEach(([shipType, count]) => {
-    if (count > 0) {
-      originPlanet.fleet[shipType as ShipType] += count
-    }
-  })
+export const processFleetReturn = (
+  mission: FleetMission,
+  originPlanet: Planet,
+  technologies: Record<TechnologyType, number>,
+  storageCapacityBonus: number
+): void => {
+  // 舰船返回 - 使用安全添加函数
+  fleetStorageLogic.addFleetSafely(originPlanet, mission.fleet, technologies)
+  // 注意：如果舰队仓储溢出，超出部分会丢失（这是合理的惩罚）
 
-  // 资源返回（掠夺物或运输货物）
-  originPlanet.resources.metal += mission.cargo.metal
-  originPlanet.resources.crystal += mission.cargo.crystal
-  originPlanet.resources.deuterium += mission.cargo.deuterium
-  originPlanet.resources.darkMatter += mission.cargo.darkMatter
+  // 资源返回（掠夺物或运输货物）- 使用安全添加函数
+  resourceLogic.addResourcesSafely(originPlanet, mission.cargo, storageCapacityBonus)
+  // 注意：如果资源仓储溢出，超出部分会丢失（这是合理的惩罚）
 }
 
 /**
@@ -743,6 +759,9 @@ export const updateFleetMissions = async (
 
   // 获取所有星球列表（用于月球生成检查）
   const allPlanets = Array.from(planets.values())
+  // 计算军官加成（用于资源容量计算）
+  const bonuses = officerLogic.calculateActiveBonuses(attacker.officers, now)
+  const storageCapacityBonus = bonuses.storageCapacityBonus
 
   // 使用 for...of 以支持 await
   for (const mission of missions) {
@@ -755,7 +774,7 @@ export const updateFleetMissions = async (
 
       switch (mission.missionType) {
         case MissionType.Transport:
-          processTransportArrival(mission, targetPlanet, attacker, allNpcs)
+          processTransportArrival(mission, targetPlanet, attacker, allNpcs, locale, storageCapacityBonus)
           break
 
         case MissionType.Attack: {
@@ -808,8 +827,8 @@ export const updateFleetMissions = async (
           break
 
         case MissionType.Deploy:
-          const deployed = processDeployArrival(mission, targetPlanet, attacker.id)
-          if (deployed) {
+          const deployed = processDeployArrival(mission, targetPlanet, attacker.id, attacker.technologies)
+          if (deployed.success && !deployed.overflow) {
             completedMissions.push(mission.id)
           }
           break
@@ -858,7 +877,7 @@ export const updateFleetMissions = async (
     if (mission.status === 'returning' && mission.returnTime && now >= mission.returnTime) {
       // 舰队返回
       if (originPlanet) {
-        processFleetReturn(mission, originPlanet)
+        processFleetReturn(mission, originPlanet, attacker.technologies, storageCapacityBonus)
       }
       completedMissions.push(mission.id)
     }

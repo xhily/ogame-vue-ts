@@ -200,41 +200,49 @@
                 <SidebarTrigger class="lg:hidden" data-tutorial="mobile-menu" />
               </div>
 
-              <!-- 资源显示 - PC端居中，移动端可折叠 -->
-              <div
-                class="resource-bar flex items-center gap-3 sm:gap-6 justify-center"
-                :class="resourceBarExpanded ? 'hidden' : 'overflow-x-auto'"
-              >
-                <div v-for="resourceType in resourceTypes" :key="resourceType.key" class="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
-                  <ResourceIcon :type="resourceType.key" size="md" />
-                  <div class="min-w-0">
-                    <!-- 电力显示净产量和效率 -->
-                    <template v-if="resourceType.key === 'energy'">
-                      <p
-                        class="text-xs sm:text-sm font-medium truncate"
-                        :class="netEnergy >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'"
-                      >
-                        {{ netEnergy >= 0 ? '+' : '' }}{{ formatNumber(netEnergy) }}
-                      </p>
-                      <p class="text-[10px] sm:text-xs text-muted-foreground truncate">
-                        {{ formatNumber(production?.energy || 0) }} / {{ formatNumber(energyConsumption) }}
-                      </p>
-                    </template>
-                    <!-- 其他资源统一显示：当前值/容量 -->
-                    <template v-else>
-                      <p
-                        class="text-xs sm:text-sm font-medium truncate"
-                        :class="getResourceColor(planet.resources[resourceType.key], capacity?.[resourceType.key] || Infinity)"
-                      >
-                        {{ formatNumber(planet.resources[resourceType.key]) }} / {{ formatNumber(capacity?.[resourceType.key] || 0) }}
-                      </p>
-                      <p class="text-[10px] sm:text-xs text-muted-foreground truncate">
-                        +{{ formatNumber(Math.round((production?.[resourceType.key] || 0) / 60)) }}/{{ t('resources.perMinute') }}
-                      </p>
-                    </template>
-                  </div>
-                </div>
-              </div>
+	              <!-- 资源显示 - PC端居中，移动端可折叠 -->
+	              <!-- 关键：min-w-0 + overflow-hidden，避免横向滚动内容溢出覆盖左侧菜单按钮 -->
+	              <div class="min-w-0 overflow-hidden">
+	                <div
+	                  class="resource-bar flex items-center gap-3 sm:gap-6 justify-start sm:justify-center"
+	                  :class="resourceBarExpanded ? 'hidden' : 'overflow-x-auto'"
+	                >
+	                  <div
+	                    v-for="resourceType in resourceTypes"
+	                    :key="resourceType.key"
+	                    class="flex items-center gap-1.5 sm:gap-2 flex-shrink-0"
+	                  >
+	                    <ResourceIcon :type="resourceType.key" size="md" />
+	                    <div class="min-w-0">
+	                      <!-- 电力显示净产量和效率 -->
+	                      <template v-if="resourceType.key === 'energy'">
+	                        <p
+	                          class="text-xs sm:text-sm font-medium truncate"
+	                          :class="netEnergy >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'"
+	                        >
+	                          {{ netEnergy >= 0 ? '+' : '' }}{{ formatNumber(netEnergy) }}
+	                        </p>
+	                        <p class="text-[10px] sm:text-xs text-muted-foreground truncate">
+	                          {{ formatNumber(production?.energy || 0) }} / {{ formatNumber(energyConsumption) }}
+	                        </p>
+	                      </template>
+	                      <!-- 其他资源统一显示：当前值/容量 -->
+	                      <template v-else>
+	                        <p
+	                          class="text-xs sm:text-sm font-medium truncate"
+	                          :class="getResourceColor(planet.resources[resourceType.key], capacity?.[resourceType.key] || Infinity)"
+	                        >
+	                          {{ formatNumber(planet.resources[resourceType.key]) }} /
+	                          {{ formatNumber(capacity?.[resourceType.key] || 0) }}
+	                        </p>
+	                        <p class="text-[10px] sm:text-xs text-muted-foreground truncate">
+	                          +{{ formatNumber(Math.round((production?.[resourceType.key] || 0) / 60)) }}/{{ t('resources.perMinute') }}
+	                        </p>
+	                      </template>
+	                    </div>
+	                  </div>
+	                </div>
+	              </div>
 
               <!-- 右侧：展开按钮（仅移动端） + 状态 -->
               <div class="flex items-center gap-2 sm:gap-3 flex-shrink-0 justify-end">
@@ -428,6 +436,7 @@
   import { DIPLOMATIC_CONFIG } from '@/config/gameConfig'
   import type { VersionInfo } from '@/utils/versionCheck'
   import { formatNumber, getResourceColor } from '@/utils/format'
+  import { getGameLoopIntervalMs, scaleNumber, scaleResources } from '@/utils/speed'
   import {
     Moon,
     Sun,
@@ -1232,7 +1241,7 @@
       clearInterval(gameLoop)
     }
     // 根据游戏速度计算间隔时间
-    const interval = 1000 / (gameStore.gameSpeed || 1)
+    const interval = getGameLoopIntervalMs(gameStore.gameSpeed)
     // 启动新的游戏循环
     gameLoop = setInterval(() => {
       updateGame()
@@ -1433,11 +1442,12 @@
     if (!planet.value) return null
     const now = Date.now()
     const bonuses = officerLogic.calculateActiveBonuses(gameStore.player.officers, now)
-    return resourceLogic.calculateResourceProduction(planet.value, {
+    const base = resourceLogic.calculateResourceProduction(planet.value, {
       resourceProductionBonus: bonuses.resourceProductionBonus,
       darkMatterProductionBonus: bonuses.darkMatterProductionBonus,
       energyProductionBonus: bonuses.energyProductionBonus
     })
+    return scaleResources(base, gameStore.gameSpeed)
   })
 
   const capacity = computed(() => {
@@ -1450,7 +1460,7 @@
   // 电力消耗
   const energyConsumption = computed(() => {
     if (!planet.value) return 0
-    return resourceLogic.calculateEnergyConsumption(planet.value)
+    return scaleNumber(resourceLogic.calculateEnergyConsumption(planet.value), gameStore.gameSpeed)
   })
 
   // 净电力（产量 - 消耗）

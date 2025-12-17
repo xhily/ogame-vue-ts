@@ -174,13 +174,32 @@ export const calculateCurrentMissileCount = (defense: Partial<Record<DefenseType
 }
 
 /**
+ * 计算建造队列中的导弹总数
+ */
+export const calculateQueueMissileCount = (buildQueue: Array<{ type: string; itemType: string; quantity?: number }>): number => {
+  let queueMissileCount = 0
+
+  for (const item of buildQueue) {
+    if (item.type === 'defense') {
+      const defenseType = item.itemType as DefenseType
+      if (defenseType === DefenseType.InterplanetaryMissile || defenseType === DefenseType.AntiBallisticMissile) {
+        queueMissileCount += item.quantity || 0
+      }
+    }
+  }
+
+  return queueMissileCount
+}
+
+/**
  * 检查导弹容量限制
  */
 export const checkMissileSiloLimit = (
   defenseType: DefenseType,
   currentDefense: Partial<Record<DefenseType, number>>,
   buildings: Partial<Record<BuildingType, number>>,
-  quantity: number
+  quantity: number,
+  buildQueue?: Array<{ type: string; itemType: string; quantity?: number }>
 ): boolean => {
   // 只对导弹类型进行检查
   if (defenseType !== DefenseType.InterplanetaryMissile && defenseType !== DefenseType.AntiBallisticMissile) {
@@ -189,7 +208,8 @@ export const checkMissileSiloLimit = (
 
   const maxCapacity = calculateMissileSiloCapacity(buildings)
   const currentCount = calculateCurrentMissileCount(currentDefense)
-  const newCount = currentCount + quantity
+  const queueCount = buildQueue ? calculateQueueMissileCount(buildQueue) : 0
+  const newCount = currentCount + queueCount + quantity
 
   return newCount <= maxCapacity
 }

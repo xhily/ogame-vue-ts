@@ -195,6 +195,44 @@ export const addResources = (currentResources: Resources, amount: Resources): vo
 }
 
 /**
+ * 安全地添加资源（会检查仓储容量上限）
+ * @param planet 星球对象
+ * @param amount 要添加的资源
+ * @param storageCapacityBonus 仓储容量加成
+ * @returns 实际添加的资源数量和溢出的资源数量
+ */
+export const addResourcesSafely = (
+  planet: Planet,
+  amount: Resources,
+  storageCapacityBonus: number
+): { added: Resources; overflow: Resources } => {
+  const capacity = calculateResourceCapacity(planet, storageCapacityBonus)
+
+  const added: Resources = { metal: 0, crystal: 0, deuterium: 0, darkMatter: 0, energy: 0 }
+  const overflow: Resources = { metal: 0, crystal: 0, deuterium: 0, darkMatter: 0, energy: 0 }
+
+  // 处理每种资源
+  const resources: Array<keyof Resources> = ['metal', 'crystal', 'deuterium', 'darkMatter']
+
+  for (const resourceType of resources) {
+    const currentAmount = planet.resources[resourceType]
+    const amountToAdd = amount[resourceType]
+    const maxCapacity = capacity[resourceType]
+
+    // 计算可以添加的量（不超过容量上限）
+    const spaceAvailable = Math.max(0, maxCapacity - currentAmount)
+    const actuallyAdded = Math.min(amountToAdd, spaceAvailable)
+    const overflowed = amountToAdd - actuallyAdded
+
+    planet.resources[resourceType] += actuallyAdded
+    added[resourceType] = actuallyAdded
+    overflow[resourceType] = overflowed
+  }
+
+  return { added, overflow }
+}
+
+/**
  * 资源产量详细信息（用于UI展示）
  */
 export interface ProductionBreakdown {
@@ -249,7 +287,8 @@ export interface ConsumptionDetail {
 export const calculateProductionBreakdown = (
   planet: Planet,
   officers: Record<OfficerType, Officer>,
-  currentTime: number
+  currentTime: number,
+  resourceSpeed: number = 1
 ): ProductionBreakdown => {
   const metalMineLevel = planet.buildings[BuildingType.MetalMine] || 0
   const crystalMineLevel = planet.buildings[BuildingType.CrystalMine] || 0
@@ -435,42 +474,56 @@ export const calculateProductionBreakdown = (
 
   const energyFinal = energyBase * (1 + totalEnergyBonus / 100)
 
+  const speed = resourceSpeed
+
+  const scaleBonuses = (bonuses: ProductionBonus[]) =>
+    bonuses.map(bonus => ({
+      ...bonus,
+      value: bonus.value * speed
+    }))
+
+  const scaleSources = (sources?: ProductionSource[]) =>
+    sources?.map(source => ({
+      ...source,
+      production: source.production * speed
+    }))
+
   return {
     metal: {
-      baseProduction: metalBase,
+      baseProduction: metalBase * speed,
       buildingLevel: metalMineLevel,
       buildingName: 'buildings.metalMine',
-      bonuses: metalBonuses,
-      finalProduction: metalFinal
+      bonuses: scaleBonuses(metalBonuses),
+      finalProduction: metalFinal * speed
     },
     crystal: {
-      baseProduction: crystalBase,
+      baseProduction: crystalBase * speed,
       buildingLevel: crystalMineLevel,
       buildingName: 'buildings.crystalMine',
-      bonuses: crystalBonuses,
-      finalProduction: crystalFinal
+      bonuses: scaleBonuses(crystalBonuses),
+      finalProduction: crystalFinal * speed
     },
     deuterium: {
-      baseProduction: deuteriumBase,
+      baseProduction: deuteriumBase * speed,
       buildingLevel: deuteriumSynthesizerLevel,
       buildingName: 'buildings.deuteriumSynthesizer',
-      bonuses: deuteriumBonuses,
-      finalProduction: deuteriumFinal
+      bonuses: scaleBonuses(deuteriumBonuses),
+      finalProduction: deuteriumFinal * speed
     },
     darkMatter: {
-      baseProduction: darkMatterBase,
+      baseProduction: darkMatterBase * speed,
       buildingLevel: darkMatterCollectorLevel,
       buildingName: 'buildings.darkMatterCollector',
-      bonuses: darkMatterBonuses,
-      finalProduction: darkMatterFinal
+      bonuses: scaleBonuses(darkMatterBonuses),
+      finalProduction: darkMatterFinal * speed
     },
     energy: {
-      baseProduction: energyBase,
+      baseProduction: energyBase * speed,
       buildingLevel: solarPlantLevel,
       buildingName: 'buildings.solarPlant',
-      bonuses: energyBonuses,
-      finalProduction: energyFinal,
-      sources: energySources
+      bonuses: scaleBonuses(energyBonuses),
+      finalProduction: energyFinal * speed,
+      sources: scaleSources(energySources)
     }
   }
 }
@@ -478,7 +531,7 @@ export const calculateProductionBreakdown = (
 /**
  * 计算能量消耗详细breakdown
  */
-export const calculateConsumptionBreakdown = (planet: Planet): ConsumptionBreakdown => {
+export const calculateConsumptionBreakdown = (planet: Planet, resourceSpeed: number = 1): ConsumptionBreakdown => {
   const metalMineLevel = planet.buildings[BuildingType.MetalMine] || 0
   const crystalMineLevel = planet.buildings[BuildingType.CrystalMine] || 0
   const deuteriumSynthesizerLevel = planet.buildings[BuildingType.DeuteriumSynthesizer] || 0
@@ -487,22 +540,24 @@ export const calculateConsumptionBreakdown = (planet: Planet): ConsumptionBreakd
   const crystalConsumption = crystalMineLevel * 10 * Math.pow(1.1, crystalMineLevel)
   const deuteriumConsumption = deuteriumSynthesizerLevel * 15 * Math.pow(1.1, deuteriumSynthesizerLevel)
 
+  const speed = resourceSpeed
+
   return {
     metalMine: {
       buildingLevel: metalMineLevel,
       buildingName: 'buildings.metalMine',
-      consumption: metalConsumption
+      consumption: metalConsumption * speed
     },
     crystalMine: {
       buildingLevel: crystalMineLevel,
       buildingName: 'buildings.crystalMine',
-      consumption: crystalConsumption
+      consumption: crystalConsumption * speed
     },
     deuteriumSynthesizer: {
       buildingLevel: deuteriumSynthesizerLevel,
       buildingName: 'buildings.deuteriumSynthesizer',
-      consumption: deuteriumConsumption
+      consumption: deuteriumConsumption * speed
     },
-    total: metalConsumption + crystalConsumption + deuteriumConsumption
+    total: (metalConsumption + crystalConsumption + deuteriumConsumption) * speed
   }
 }

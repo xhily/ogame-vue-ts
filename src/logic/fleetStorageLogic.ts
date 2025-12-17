@@ -53,6 +53,26 @@ export const calculateMaxFleetStorage = (planet: Planet, technologies: Record<Te
 }
 
 /**
+ * 计算建造队列中的舰船仓储使用量
+ * @param buildQueue 建造队列
+ * @returns 队列中舰船的仓储使用量
+ */
+export const calculateQueueFleetStorageUsage = (buildQueue: Array<{ type: string; itemType: string; quantity?: number }>): number => {
+  let queueUsage = 0
+
+  for (const item of buildQueue) {
+    if (item.type === 'ship') {
+      const shipType = item.itemType as ShipType
+      const quantity = item.quantity || 0
+      const shipConfig = SHIPS[shipType]
+      queueUsage += quantity * shipConfig.storageUsage
+    }
+  }
+
+  return queueUsage
+}
+
+/**
  * 检查是否有足够的舰队仓储空间建造新舰船
  * @param planet 星球对象
  * @param shipType 要建造的舰船类型
@@ -67,10 +87,11 @@ export const hasEnoughFleetStorage = (
   technologies: Record<TechnologyType, number>
 ): boolean => {
   const currentUsage = calculateFleetStorageUsage(planet.fleet)
+  const queueUsage = calculateQueueFleetStorageUsage(planet.buildQueue)
   const maxStorage = calculateMaxFleetStorage(planet, technologies)
   const newShipUsage = SHIPS[shipType].storageUsage * quantity
 
-  return currentUsage + newShipUsage <= maxStorage
+  return currentUsage + queueUsage + newShipUsage <= maxStorage
 }
 
 /**
@@ -92,4 +113,47 @@ export const getMaxBuildableShips = (planet: Planet, shipType: ShipType, technol
   if (availableStorage <= 0) return 0
 
   return Math.floor(availableStorage / shipStorageUsage)
+}
+
+/**
+ * 安全地添加舰船到星球（会检查舰队仓储容量上限）
+ * @param planet 星球对象
+ * @param fleet 要添加的舰船
+ * @param technologies 玩家的科技等级
+ * @returns 实际添加的舰船数量和溢出的舰船数量
+ */
+export const addFleetSafely = (
+  planet: Planet,
+  fleet: Partial<Record<ShipType, number>>,
+  technologies: Record<TechnologyType, number>
+): { added: Partial<Record<ShipType, number>>; overflow: Partial<Record<ShipType, number>> } => {
+  const maxStorage = calculateMaxFleetStorage(planet, technologies)
+  let currentUsage = calculateFleetStorageUsage(planet.fleet)
+
+  const added: Partial<Record<ShipType, number>> = {}
+  const overflow: Partial<Record<ShipType, number>> = {}
+
+  for (const [shipType, count] of Object.entries(fleet)) {
+    if (count <= 0) continue
+
+    const ship = shipType as ShipType
+    const shipStorageUsage = SHIPS[ship].storageUsage
+
+    // 计算可以添加多少艘（不超过容量上限）
+    const spaceAvailable = Math.max(0, maxStorage - currentUsage)
+    const maxCanAdd = shipStorageUsage > 0 ? Math.floor(spaceAvailable / shipStorageUsage) : count
+    const actuallyAdded = Math.min(count, maxCanAdd)
+    const overflowed = count - actuallyAdded
+    if (actuallyAdded > 0) {
+      planet.fleet[ship] = (planet.fleet[ship] || 0) + actuallyAdded
+      added[ship] = actuallyAdded
+      currentUsage += actuallyAdded * shipStorageUsage
+    }
+
+    if (overflowed > 0) {
+      overflow[ship] = overflowed
+    }
+  }
+
+  return { added, overflow }
 }
