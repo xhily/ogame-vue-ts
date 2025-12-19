@@ -201,16 +201,26 @@
 
     <!-- 主内容区 -->
     <SidebarInset>
-      <div class="flex flex-col h-full pt-[60px]">
+      <div class="flex flex-col h-full" :class="Capacitor.isNativePlatform() ? 'pt-[80px]' : 'pt-[60px]'">
         <!-- 顶部资源栏 - 固定定位 -->
         <header
           v-if="planet"
-          class="fixed top-0 right-0 left-0 z-40 bg-card border-b px-4 sm:px-6 py-3 shadow-md"
-          :class="sidebarOpen ? 'lg:left-[var(--sidebar-width)]' : 'lg:left-[var(--sidebar-width-icon)]'"
+          ref="header"
+          class="fixed top-0 right-0 left-0 z-40 bg-card border-b px-4 sm:px-6 shadow-md"
+          :class="[
+            sidebarOpen ? 'lg:left-[var(--sidebar-width)]' : 'lg:left-[var(--sidebar-width-icon)]',
+            Capacitor.isNativePlatform() ? 'py-6' : 'py-3'
+          ]"
         >
           <div class="flex flex-col gap-3">
             <!-- 第一行：菜单、资源预览、状态 -->
-            <div class="grid items-center gap-3 sm:gap-6" style="grid-template-columns: auto 1fr auto">
+            <div
+              class="grid items-center gap-3 sm:gap-6"
+              style="grid-template-columns: auto 1fr auto"
+              :class="{
+                'relative top-3': Capacitor.isNativePlatform()
+              }"
+            >
               <!-- 左侧：汉堡菜单（移动端）/ 占位（PC端） -->
               <div>
                 <SidebarTrigger class="lg:hidden" data-tutorial="mobile-menu" />
@@ -221,7 +231,7 @@
               <div class="min-w-0 overflow-hidden">
                 <div
                   class="resource-bar flex items-center gap-3 sm:gap-6 justify-start sm:justify-center"
-                  :class="resourceBarExpanded ? 'hidden' : 'overflow-x-auto'"
+                  :class="[resourceBarExpanded ? 'hidden' : 'overflow-x-auto']"
                 >
                   <div
                     v-for="resourceType in resourceTypes"
@@ -283,8 +293,11 @@
         >
           <div
             v-if="planet && resourceBarExpanded"
-            class="fixed top-[60px] right-0 left-0 z-30 bg-card border-b px-4 py-3 shadow-md lg:hidden"
-            :class="sidebarOpen ? 'lg:left-[var(--sidebar-width)]' : 'lg:left-[var(--sidebar-width-icon)]'"
+            class="fixed right-0 left-0 z-30 bg-card border-b px-4 py-3 shadow-md lg:hidden"
+            :class="[
+              sidebarOpen ? 'lg:left-[var(--sidebar-width)]' : 'lg:left-[var(--sidebar-width-icon)]',
+              Capacitor.isNativePlatform() ? 'top-[80px]' : 'top-[60px]'
+            ]"
           >
             <div class="grid grid-cols-2 gap-3">
               <div v-for="resourceType in resourceTypes" :key="resourceType.key" class="bg-muted/50 rounded-lg p-2.5">
@@ -394,19 +407,14 @@
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
-
     <!-- 详情弹窗 -->
     <DetailDialog />
-
     <!-- 更新弹窗 -->
     <UpdateDialog v-model:open="showUpdateDialog" :version-info="updateInfo" />
-
     <!-- 弱引导提示系统 -->
     <HintToast />
-
     <!-- Toast 通知 -->
     <Sonner position="top-center" />
-
     <!-- 重命名星球对话框 -->
     <Dialog v-model:open="renameDialogOpen">
       <DialogContent class="sm:max-w-md">
@@ -2090,6 +2098,7 @@
           }
         })
       }
+
       // Android 返回键退出确认
       if (Capacitor.isNativePlatform()) {
         CapacitorApp.addListener('backButton', ({ canGoBack }) => {
