@@ -333,6 +333,9 @@
   } from 'lucide-vue-next'
   import { saveAs } from 'file-saver'
   import { toast } from 'vue-sonner'
+  import { Capacitor } from '@capacitor/core'
+  import { Filesystem, Directory } from '@capacitor/filesystem'
+  import { Share } from '@capacitor/share'
   import pkg from '../../package.json'
   import { checkLatestVersion, canCheckVersion } from '@/utils/versionCheck'
   import type { VersionInfo } from '@/utils/versionCheck'
@@ -523,7 +526,25 @@
 
       const fileName = `${pkg.name}-${new Date().toISOString().slice(0, 10)}-${Date.now()}.json`
       const jsonString = JSON.stringify(exportData, null, 2)
-      saveAs(new Blob([jsonString], { type: 'application/json' }), fileName)
+
+      // Android 使用 Capacitor Filesystem + Share
+      if (Capacitor.isNativePlatform()) {
+        // 写入文件到缓存目录
+        const result = await Filesystem.writeFile({
+          path: fileName,
+          data: jsonString,
+          directory: Directory.Cache
+        })
+        // 分享文件让用户选择保存位置
+        await Share.share({
+          title: t('settings.exportData'),
+          url: result.uri,
+          dialogTitle: t('settings.exportData')
+        })
+      } else {
+        // Web 使用 file-saver
+        saveAs(new Blob([jsonString], { type: 'application/json' }), fileName)
+      }
       toast.success(t('settings.exportSuccess'))
     } catch (error) {
       console.error('Export failed:', error)
