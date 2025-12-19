@@ -65,8 +65,8 @@
             <h3 class="font-medium">{{ t('settings.gameSpeed') }}</h3>
             <p class="text-sm text-muted-foreground">{{ t('settings.gameSpeedDesc') }}</p>
           </div>
-	          <div class="flex items-center gap-2 sm:gap-4 w-full sm:w-auto">
-	            <div class="flex items-center gap-2 flex-1 sm:flex-initial">
+          <div class="flex items-center gap-2 sm:gap-4 w-full sm:w-auto">
+            <div class="flex items-center gap-2 flex-1 sm:flex-initial">
               <Button @click="decreaseSpeed" variant="outline" size="sm" :disabled="gameStore.gameSpeed <= 0.5">-</Button>
               <span class="min-w-[60px] text-center font-medium">{{ gameStore.gameSpeed }}x</span>
               <Button @click="increaseSpeed" variant="outline" size="sm" :disabled="gameStore.gameSpeed >= 10">+</Button>
@@ -107,9 +107,12 @@
           </div>
 
           <!-- 页面聚焦时不发送 -->
-          <div class="flex items-center justify-between pl-4 border-l-2" :class="{ 'opacity-50 pointer-events-none': !gameStore.notificationSettings?.browser }">
+          <div
+            class="flex items-center justify-between pl-4 border-l-2"
+            :class="{ 'opacity-50 pointer-events-none': !gameStore.notificationSettings?.browser }"
+          >
             <Label class="font-normal">{{ t('settings.suppressInFocus') }}</Label>
-             <Switch
+            <Switch
               :checked="gameStore.notificationSettings?.suppressInFocus"
               @update:checked="updateSuppressSetting"
               :disabled="!gameStore.notificationSettings?.browser"
@@ -123,26 +126,29 @@
             <h3 class="font-medium">{{ t('settings.inAppNotifications') }}</h3>
             <p class="text-sm text-muted-foreground">{{ t('settings.inAppNotificationsDesc') || t('settings.inAppNotifications') }}</p>
           </div>
-          <Switch
-            :checked="gameStore.notificationSettings?.inApp"
-            @update:checked="(val: boolean) => updateInAppSetting(val)"
-          />
+          <Switch :checked="gameStore.notificationSettings?.inApp" @update:checked="(val: boolean) => updateInAppSetting(val)" />
         </div>
 
         <!-- 具体通知类型 -->
         <div class="border rounded-lg overflow-hidden" :class="{ 'opacity-50 pointer-events-none': areMainSwitchesOff }">
-           <div
+          <div
             class="flex items-center justify-between p-4 bg-muted/50 cursor-pointer select-none"
             @click="!areMainSwitchesOff && (isTypesExpanded = !isTypesExpanded)"
           >
             <div class="space-y-1">
               <h3 class="font-medium">{{ t('settings.notificationTypes') }}</h3>
               <p class="text-sm text-muted-foreground">
-                {{ areMainSwitchesOff ? t('settings.notificationsDisabled') : (isTypesExpanded ? t('settings.collapseTypes') : t('settings.expandTypes')) }}
+                {{
+                  areMainSwitchesOff
+                    ? t('settings.notificationsDisabled')
+                    : isTypesExpanded
+                    ? t('settings.collapseTypes')
+                    : t('settings.expandTypes')
+                }}
               </p>
             </div>
             <Button variant="ghost" size="sm" class="h-8 w-8 p-0">
-               <component :is="isTypesExpanded ? ChevronUp : ChevronDown" class="h-4 w-4" />
+              <component :is="isTypesExpanded ? ChevronUp : ChevronDown" class="h-4 w-4" />
             </Button>
           </div>
 
@@ -157,13 +163,61 @@
             </div>
             <!-- 研究完成 -->
             <div class="flex items-center justify-between">
-               <Label class="font-normal cursor-pointer" @click="toggleType('research')">{{ t('settings.researchComplete') }}</Label>
-               <Switch
+              <Label class="font-normal cursor-pointer" @click="toggleType('research')">{{ t('settings.researchComplete') }}</Label>
+              <Switch
                 :checked="gameStore.notificationSettings?.types.research"
                 @update:checked="(val: boolean) => updateTypeSetting('research', val)"
               />
             </div>
           </div>
+        </div>
+      </CardContent>
+    </Card>
+
+    <!-- 帮助提示设置 -->
+    <Card>
+      <CardHeader>
+        <CardTitle>{{ t('hints.hintsEnabled') }}</CardTitle>
+        <CardDescription>{{ t('hints.hintsEnabledDesc') }}</CardDescription>
+      </CardHeader>
+      <CardContent class="space-y-4">
+        <!-- 启用/禁用提示 -->
+        <div class="flex items-center justify-between p-4 border rounded-lg">
+          <div class="space-y-1">
+            <h3 class="font-medium">{{ t('hints.hintsEnabled') }}</h3>
+            <p class="text-sm text-muted-foreground">{{ t('hints.hintsEnabledDesc') }}</p>
+          </div>
+          <Switch :checked="hintsEnabled" @update:checked="setHintsEnabled" />
+        </div>
+
+        <!-- 重置提示 -->
+        <div class="flex items-center justify-between p-4 border rounded-lg">
+          <div class="space-y-1">
+            <h3 class="font-medium">{{ t('hints.resetHints') }}</h3>
+            <p class="text-sm text-muted-foreground">{{ t('hints.resetHintsDesc') }}</p>
+          </div>
+          <Button @click="handleResetHints" variant="outline">
+            <RotateCcw class="mr-2 h-4 w-4" />
+            {{ t('settings.reset') }}
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+
+    <!-- 显示设置 -->
+    <Card>
+      <CardHeader>
+        <CardTitle>{{ t('settings.displaySettings') }}</CardTitle>
+        <CardDescription>{{ t('settings.displaySettingsDesc') }}</CardDescription>
+      </CardHeader>
+      <CardContent class="space-y-4">
+        <!-- 背景动画 -->
+        <div class="flex items-center justify-between p-4 border rounded-lg">
+          <div class="space-y-1">
+            <h3 class="font-medium">{{ t('settings.backgroundAnimation') }}</h3>
+            <p class="text-sm text-muted-foreground">{{ t('settings.backgroundAnimationDesc') }}</p>
+          </div>
+          <Switch :checked="gameStore.player.backgroundEnabled ?? false" @update:checked="updateBackgroundSetting" />
         </div>
       </CardContent>
     </Card>
@@ -198,6 +252,11 @@
         <div class="pt-2 border-t space-y-2">
           <h3 class="text-sm font-medium">{{ t('settings.community') }}</h3>
           <div class="flex flex-col gap-2">
+            <!-- Privacy Policy -->
+            <Button variant="outline" class="w-full justify-start" @click="openPrivacy">
+              <Shield class="mr-2 h-4 w-4" />
+              {{ t('settings.privacyPolicy') }}
+            </Button>
             <!-- GitHub -->
             <Button variant="outline" class="w-full justify-start" @click="openGithub">
               <ExternalLink class="mr-2 h-4 w-4" />
@@ -234,6 +293,9 @@
 
     <!-- 更新对话框 -->
     <UpdateDialog v-model:open="showUpdateDialog" :version-info="updateInfo" />
+
+    <!-- 隐私协议弹窗 -->
+    <PrivacyDialog v-model:open="showPrivacyDialog" />
   </div>
 </template>
 
@@ -255,15 +317,31 @@
     AlertDialogHeader,
     AlertDialogTitle
   } from '@/components/ui/alert-dialog'
-  import { Download, Upload, Trash2, ExternalLink, MessagesSquare, Play, Pause, RefreshCw, ChevronDown, ChevronUp } from 'lucide-vue-next'
+  import {
+    Download,
+    Upload,
+    Trash2,
+    ExternalLink,
+    MessagesSquare,
+    Play,
+    Pause,
+    RefreshCw,
+    ChevronDown,
+    ChevronUp,
+    RotateCcw,
+    Shield
+  } from 'lucide-vue-next'
   import { saveAs } from 'file-saver'
   import { toast } from 'vue-sonner'
   import pkg from '../../package.json'
   import { checkLatestVersion, canCheckVersion } from '@/utils/versionCheck'
   import type { VersionInfo } from '@/utils/versionCheck'
   import UpdateDialog from '@/components/UpdateDialog.vue'
+  import PrivacyDialog from '@/components/PrivacyDialog.vue'
+  import { useHints } from '@/composables/useHints'
 
   const { t } = useI18n()
+  const { hintsEnabled, setHintsEnabled, resetHints } = useHints()
   const gameStore = useGameStore()
 
   const fileInputRef = ref<HTMLInputElement>()
@@ -278,7 +356,7 @@
 
   const isTypesExpanded = ref(false)
 
-  // Ensure notification settings exist
+  // 确保通知设置存在
   if (!gameStore.notificationSettings) {
     gameStore.notificationSettings = {
       browser: false,
@@ -293,7 +371,7 @@
     return !s?.browser && !s?.inApp
   })
 
-  // Auto-collapse if main switches are off
+  // 当主开关关闭时自动折叠
   // watch(areMainSwitchesOff, (val) => {
   //   if (val) isTypesExpanded.value = false
   // })
@@ -310,13 +388,13 @@
     }
   }
 
-  const updateTypeSetting = (key: string, val: boolean) => {
+  const updateTypeSetting = (key: 'construction' | 'research', val: boolean) => {
     if (gameStore.notificationSettings) {
       gameStore.notificationSettings.types[key] = val
     }
   }
 
-  const toggleType = (key: string) => {
+  const toggleType = (key: 'construction' | 'research') => {
     if (gameStore.notificationSettings) {
       const current = gameStore.notificationSettings.types[key]
       gameStore.notificationSettings.types[key] = !current
@@ -383,6 +461,14 @@
 
   const openQQGroup = () => {
     window.open(`https://qm.qq.com/q/${pkg.id}`, '_blank')
+  }
+
+  // 隐私协议弹窗状态
+  const showPrivacyDialog = ref(false)
+
+  // 打开隐私协议弹窗
+  const openPrivacy = () => {
+    showPrivacyDialog.value = true
   }
 
   // 手动检查版本
@@ -514,6 +600,7 @@
 
   // 清除数据
   const handleClearData = () => {
+    gameStore.isPaused = true
     confirmTitle.value = t('settings.clearConfirmTitle')
     confirmMessage.value = t('settings.clearConfirmMessage')
     showConfirmDialog.value = true
@@ -582,5 +669,16 @@
     if (fileInputRef.value) {
       fileInputRef.value.value = ''
     }
+  }
+
+  // 重置提示
+  const handleResetHints = () => {
+    resetHints()
+    toast.success(t('hints.resetHints'))
+  }
+
+  // 更新背景设置
+  const updateBackgroundSetting = (val: boolean) => {
+    gameStore.player.backgroundEnabled = val
   }
 </script>

@@ -1,4 +1,13 @@
 export default {
+  home: {
+    subtitle: '星々を征服せよ',
+    startGame: 'ゲーム開始',
+    privacyAgreement: 'プライバシーポリシー',
+    privacyAgreementDesc: 'ゲームを開始する前に、プライバシーポリシーをお読みになり、同意してください。',
+    agreeToPrivacy: '読んで同意しました',
+    viewFullPolicy: '全文を見る',
+    agreeAndStart: '同意して開始'
+  },
   common: {
     confirm: '確認',
     cancel: 'キャンセル',
@@ -36,7 +45,8 @@ export default {
     requirementsNotMet: '必要条件が満たされていません',
     current: '現在',
     level: 'レベル',
-    gmModeActivated: 'GMモードが有効になりました！ナビゲーションメニューをご確認ください。'
+    gmModeActivated: 'GMモードが有効になりました！ナビゲーションメニューをご確認ください。',
+    view: '表示'
   },
   errors: {
     requirementsNotMet: '前提条件を満たしていません',
@@ -58,7 +68,8 @@ export default {
     buildingLevelZero: '建物レベルが0のため、解体できません',
     researchQueueFull: '研究キューが満杯です',
     moonExists: '月は既に存在します',
-    insufficientDebris: '残骸フィールドが不足しています'
+    insufficientDebris: '残骸フィールドが不足しています',
+    launchFailed: '発射に失敗しました'
   },
   nav: {
     overview: '概要',
@@ -70,9 +81,11 @@ export default {
     officers: '士官',
     simulator: 'シミュレーター',
     galaxy: '銀河',
-    diplomacy: 'Diplomacy',
+    diplomacy: '外交',
+    achievements: '実績',
     messages: 'メッセージ',
     settings: '設定',
+    guide: 'ゲームガイド',
     gm: 'GM'
   },
   sidebar: {
@@ -98,6 +111,14 @@ export default {
     hour: '時間',
     noEnergy: 'エネルギー不足'
   },
+  energy: {
+    lowWarning: 'エネルギー不足！資源生産が停止しています！',
+    severeWarning: 'エネルギー不足！資源生産が停止しています！',
+    criticalWarning: 'エネルギー不足！資源生産が停止しています！',
+    noProduction: 'エネルギー不足！資源生産が停止しています！',
+    deficitDetail: 'エネルギー不足: {deficit}、発電所を建設してください',
+    buildSolarPlant: '発電所を建設'
+  },
   planet: {
     planet: '惑星',
     moon: '月',
@@ -113,7 +134,13 @@ export default {
     homePlanet: '母星',
     planetPrefix: '惑星',
     moonSuffix: 'の月',
-    colonyPrefix: 'コロニー'
+    colonyPrefix: 'コロニー',
+    renamePlanet: '惑星名を変更',
+    renamePlanetTitle: '惑星名を変更',
+    newPlanetName: '新しい名前',
+    planetNamePlaceholder: '新しい惑星名を入力',
+    rename: '名前変更',
+    renameSuccess: '惑星名を {name} に変更しました'
   },
   player: {
     points: '総ポイント'
@@ -284,7 +311,8 @@ export default {
     hyperspaceTechnology: 'ハイパースペースジャンプ技術',
     plasmaTechnology: 'プラズマ兵器技術',
     computerTechnology: '研究キューと艦隊任務スロットを増加、レベル毎に+1キュー+1スロット（最大10レベル）',
-    espionageTechnology: 'スパイ探査機の効果を向上、レベル毎に偵察深度+1。偵察レベル=自分のレベル-相手のレベル+探査機数/5。≥-1で艦隊表示、≥1で防御表示、≥3で建物表示、≥5で技術表示',
+    espionageTechnology:
+      'スパイ探査機の効果を向上、レベル毎に偵察深度+1。偵察レベル=自分のレベル-相手のレベル+探査機数/5。≥-1で艦隊表示、≥1で防御表示、≥3で建物表示、≥5で技術表示',
     weaponsTechnology: '艦船と防御の攻撃力をレベル毎に10%増加',
     shieldingTechnology: '艦船と防御のシールドをレベル毎に10%増加',
     armourTechnology: '艦船と防御の装甲をレベル毎に10%増加',
@@ -317,8 +345,8 @@ export default {
     darkMatterSpecialist: 'ダークマター採取効率を向上'
   },
   queue: {
-    title: '建設キュー',
-    empty: '進行中のタスクはありません',
+    title: '進行中のタスク',
+    empty: '進行中のキューはありません',
     buildQueue: '建設キュー',
     researchQueue: '研究キュー',
     building: '建設中',
@@ -331,7 +359,14 @@ export default {
     confirmCancel: 'キャンセルしますか？資源の50%が返還されます。',
     level: 'レベル',
     gmModeActivated: '',
-    upgradeToLevel: 'レベルにアップグレード'
+    upgradeToLevel: 'レベルにアップグレード',
+    tabs: {
+      all: 'すべて',
+      buildings: '建物',
+      research: '研究',
+      ships: '艦船',
+      defense: '防衛'
+    }
   },
   shipyard: {
     attack: '攻撃力',
@@ -409,6 +444,7 @@ export default {
   shipyardView: {
     title: '造船所',
     fleetStorage: '艦隊ストレージ',
+    owned: '所有',
     attack: '攻撃力',
     missileAttack: 'ミサイル攻撃',
     shield: 'シールド',
@@ -459,8 +495,10 @@ export default {
     available: '利用可能',
     all: '全て',
     targetCoordinates: '目標座標',
+    targetType: '目標タイプ',
+    planet: '惑星',
+    moon: '月',
     galaxy: '銀河',
-    diplomacy: 'Diplomacy',
     system: '星系',
     position: '位置',
     missionType: 'ミッションタイプ',
@@ -504,7 +542,30 @@ export default {
     noDeathstar: '破壊ミッションにはデススターが必要です',
     giftMode: 'ギフトモード',
     giftModeDescription: '資源を贈り物として送る',
-    estimatedReputationGain: '推定評判獲得'
+    estimatedReputationGain: '推定評判獲得',
+    // 艦隊プリセット
+    fleetPresets: '艦隊プリセット',
+    fleetPresetsDescription: 'よく使う艦隊構成を保存して素早く派遣（最大3つ）',
+    savePreset: 'プリセット保存',
+    noPresets: 'プリセットなし、艦隊を選択して「プリセット保存」をクリック',
+    shipTypes: '種の艦船',
+    editPreset: 'プリセット内容を編集',
+    renamePreset: '名前変更',
+    deletePreset: 'プリセット削除',
+    editingPresetHint: 'プリセット編集中、艦隊構成を変更して「保存」をクリック',
+    presetLimitReached: 'プリセット上限到達',
+    presetLimitReachedMessage: '最大{max}個のプリセットまで',
+    presetError: '保存失敗',
+    presetNoShips: '艦船を1隻以上選択してください',
+    presetDefaultName: 'プリセット {number}',
+    savePresetTitle: '艦隊プリセットを保存',
+    savePresetDescription: 'この艦隊構成に名前を付ける',
+    renamePresetTitle: 'プリセット名変更',
+    renamePresetDescription: '新しいプリセット名を入力',
+    presetName: 'プリセット名',
+    presetNamePlaceholder: 'プリセット名を入力',
+    deletePresetTitle: 'プリセット削除',
+    deletePresetMessage: 'プリセット「{name}」を削除しますか？この操作は取り消せません。'
   },
   officersView: {
     title: '士官',
@@ -544,7 +605,6 @@ export default {
     title: '銀河',
     selectCoordinates: '座標選択',
     galaxy: '銀河',
-    diplomacy: 'Diplomacy',
     selectGalaxy: '銀河を選択',
     system: '星系',
     selectSystem: '星系を選択',
@@ -585,7 +645,8 @@ export default {
     sendGift: 'ギフト送信',
     debris: '破片',
     giftPlanetTitle: 'ギフト送信',
-    giftPlanetMessage: '惑星[{coordinates}]にリソースを贈りますか？\n\n艦隊ページに移動して輸送船を選択し、リソースを積載してください。'
+    giftPlanetMessage: '惑星[{coordinates}]にリソースを贈りますか？\n\n艦隊ページに移動して輸送船を選択し、リソースを積載してください。',
+    npcPlanetName: '{name}の惑星'
   },
   messagesView: {
     title: 'メッセージセンター',
@@ -619,6 +680,7 @@ export default {
     targetPlanet: '目標惑星',
     attackerRemaining: '攻撃側残存',
     defenderRemaining: '防御側残存',
+    allDestroyed: '全て破壊',
     moonChance: '月生成確率',
     showRoundDetails: 'ラウンド詳細表示',
     hideRoundDetails: 'ラウンド詳細非表示',
@@ -684,19 +746,56 @@ export default {
     activityDescription: '',
     npcActivityMessage: '',
     arrivalTime: '',
-    npcActivityTip: ''
+    npcActivityTip: '',
+    clearMessages: 'メッセージをクリア',
+    clearMessageTypes: 'クリアするメッセージタイプを選択',
+    clearBattleReports: '戦闘レポート',
+    clearSpyReports: '偵察レポート',
+    clearSpiedNotifications: '偵察通知',
+    clearMissionReports: 'ミッションレポート',
+    clearNPCActivity: 'NPCアクティビティ',
+    clearGiftNotifications: 'ギフト通知',
+    clearGiftRejected: '拒否されたギフト',
+    clearNow: '今すぐクリア'
   },
   missionReports: {
     transportSuccess: '輸送ミッションが正常に完了しました',
     transportFailed: '輸送ミッションが失敗しました',
+    transportFailedTargetNotFound: '輸送失敗：目標惑星が存在しません',
+    transportFailedGiftRejected: '輸送失敗：贈り物が拒否されました',
     colonizeSuccess: '植民ミッション成功、新しい惑星が確立されました',
     colonizeFailed: '植民ミッションが失敗しました',
+    colonizeFailedOccupied: '植民失敗：目標位置は既に他の惑星に占有されています',
+    colonizeFailedMaxColonies: '植民失敗：コロニー数の上限に達しました。天体物理学を研究して上限を増やしてください。',
+    spySuccess: 'スパイミッションが正常に完了しました',
+    spyFailed: 'スパイミッションが失敗しました',
+    spyFailedTargetNotFound: 'スパイ失敗：目標惑星が存在しません',
     deploySuccess: '配備ミッションが正常に完了しました',
     deployFailed: '配備ミッションが失敗しました',
+    deployFailedTargetNotFound: '配備失敗：目標惑星が存在しません',
+    deployFailedNotOwnPlanet: '配備失敗：目標惑星はあなたのものではありません',
     recycleSuccess: '回収ミッションが正常に完了しました',
     recycleFailed: '回収ミッションが失敗しました。目標位置にデブリがありません',
+    recycleFailedNoDebris: '回収失敗：目標位置にデブリフィールドがありません',
+    recycleFailedDebrisEmpty: '回収失敗：デブリフィールドは既に空です',
     destroySuccess: '惑星破壊ミッションが正常に実行されました',
-    destroyFailed: '惑星破壊ミッションが失敗しました'
+    destroyFailed: '惑星破壊ミッションが失敗しました',
+    destroyFailedTargetNotFound: '破壊失敗：目標惑星が存在しません',
+    destroyFailedOwnPlanet: '破壊失敗：自分の惑星を破壊することはできません',
+    destroyFailedNoDeathstar: '破壊失敗：ミッションを実行するデススターがありません',
+    destroyFailedChance: '破壊失敗：確率判定に失敗しました（成功率：{chance}%）',
+    missileAttackSuccess: 'ミサイル攻撃成功',
+    missileAttackFailed: 'ミサイル攻撃失敗、目標惑星が存在しません',
+    missileAttackIntercepted: '全てのミサイルが迎撃されました',
+    hits: '命中',
+    expeditionResources: '探検隊が資源を発見しました！',
+    expeditionDarkMatter: '探検隊がダークマターを発見しました！',
+    expeditionFleet: '探検隊が廃棄された艦船を発見しました！',
+    expeditionPiratesAttack: '探検隊が海賊に襲撃され、一部の艦船を失いました',
+    expeditionPiratesEscaped: '探検隊が海賊に遭遇しましたが、無事に脱出しました',
+    expeditionAliensAttack: '探検隊がエイリアンに襲撃され、一部の艦船を失いました',
+    expeditionAliensEscaped: '探検隊がエイリアンに遭遇しましたが、無事に脱出しました',
+    expeditionNothing: '探検隊は何も発見できませんでした'
   },
   simulatorView: {
     title: '戦闘シミュレーター',
@@ -787,6 +886,7 @@ export default {
     community: 'コミュニティ',
     github: 'GitHubリポジトリ',
     qqGroup: 'QQグループ',
+    privacyPolicy: 'プライバシーポリシー',
     notifications: '通知設定',
     notificationsDesc: 'ゲーム内の通知アラートを管理',
     notificationTypes: '通知タイプ',
@@ -868,6 +968,7 @@ export default {
     completeQueuesSuccess: ''
   },
   alerts: {
+    incomingFleets: '{count}機の敵艦隊が接近中',
     npcSpyIncoming: 'NPC偵察プローブが接近中',
     npcAttackIncoming: 'NPC艦隊攻撃が接近中！',
     npcFleetIncoming: 'NPC艦隊が接近中',
@@ -878,6 +979,32 @@ export default {
     detectionFailed: '偵察が発見されなかった',
     npcSpiedYourPlanet: 'NPCがあなたの惑星を偵察しました',
     npcAttackedYourPlanet: 'NPCがあなたの惑星を攻撃しました'
+  },
+  enemyAlert: {
+    title: '敵警報',
+    markAllRead: 'すべて既読',
+    noAlerts: '警報なし',
+    fleetSize: '艦隊規模',
+    ships: '隻',
+    viewFleet: '艦隊を見る',
+    alertDetails: '警報詳細',
+    targetInfo: 'ターゲット情報',
+    arrivalTime: '到着時間',
+    countdown: 'カウントダウン',
+    viewMessages: 'メッセージを見る',
+    arrived: '到着済み',
+    missionType: {
+      spy: '偵察',
+      attack: '攻撃',
+      recycle: '回収',
+      unknown: '不明'
+    },
+    warning: {
+      spy: '敵の偵察が接近中！',
+      attack: '敵の攻撃が接近中！',
+      recycle: '敵があなたの近くでデブリを回収中！',
+      unknown: '敵艦隊が接近中！'
+    }
   },
   diplomacy: {
     title: '外交',
@@ -911,16 +1038,30 @@ export default {
     more: 'その他',
     actions: {
       gift: 'ギフトを送る',
-      viewPlanets: '惑星を表示'
+      viewPlanets: '惑星を表示',
+      addNote: 'メモを追加',
+      editNote: 'メモを編集'
     },
+    note: 'メモ',
+    notePlaceholder: 'メモを入力...',
+    noteEmpty: 'メモなし',
     lastEvent: '最後のイベント',
-    reportDetails: '',
-    eventDescription: '',
-    reputationChange: '',
-    before: '',
-    after: '',
-    statusChange: '',
-    viewDiplomacy: '',
+    reportDetails: '外交レポート詳細',
+    eventDescription: 'イベント説明',
+    reputationChange: '評判変化',
+    before: '前',
+    after: '後',
+    statusChange: '関係状態変化',
+    viewDiplomacy: '外交ページを表示',
+    eventType: {
+      gift: 'リソースを贈呈',
+      attack: '攻撃を開始',
+      allyAttacked: '同盟を攻撃',
+      spy: '偵察を実施',
+      stealDebris: '残骸を略奪',
+      destroyPlanet: '惑星を破壊',
+      unknown: '不明なイベント'
+    },
     events: {
       gift: 'ギフト送信',
       attack: '攻撃',
@@ -957,6 +1098,49 @@ export default {
       allyOutraged: '{allyName}はあなたが同盟{targetName}の{planetName}を破壊したことに激怒しています',
       npcEliminated: 'NPC {npcName}は完全に排除されました',
       npcEliminatedMessage: 'あなたは{npcName}のすべての惑星を破壊しました！この勢力は完全に壊滅しました。'
+    },
+    searchPlaceholder: 'NPC名で検索...',
+    viewMode: {
+      card: 'カード',
+      list: 'リスト'
+    },
+    diagnostic: {
+      button: 'NPC状態診断',
+      title: 'NPC状態診断',
+      description: 'プレイヤーポイント：{points}、偵察間隔：{spyInterval}分、攻撃間隔：{attackInterval}分、攻撃確率：{attackProb}%',
+      noData: 'NPCデータがありません',
+      difficulty: '難易度',
+      difficultyLevels: {
+        easy: '簡単',
+        medium: '普通',
+        hard: '難しい'
+      },
+      reputation: '評判',
+      spyProbes: '偵察機数',
+      fleetPower: '艦隊戦力',
+      canSpy: '偵察可能',
+      canAttack: '攻撃可能',
+      attackProbability: '攻撃確率',
+      nextSpy: '次の偵察',
+      nextAttack: '次の攻撃',
+      yes: 'はい',
+      no: 'いいえ',
+      timeFormat: '{min}分{sec}秒',
+      anytime: 'いつでも',
+      statusExplanation: '状態説明',
+      noRelation: '関係なし',
+      noRelationNeutral: '関係なし（中立）',
+      reasons: {
+        friendlyNoAction: '友好関係、行動しない',
+        neutralNoAction: '中立関係、行動しない',
+        hostileWillAct: '敵対関係、行動する可能性あり',
+        noRelationNeutral: '外交関係なし、中立として扱う',
+        insufficientProbes: '偵察機不足（現在：{current}、必要：{required}）',
+        noFleet: '戦闘艦隊がない',
+        spyCooldown: '偵察クールダウン中（{min}分{sec}秒）',
+        attackCooldown: '攻撃クールダウン中（{min}分{sec}秒）',
+        notSpiedYet: '未偵察、先に偵察が必要'
+      }
     }
   },
   pagination: {
@@ -971,6 +1155,53 @@ export default {
     title: 'ページが見つかりません',
     description: '申し訳ございません。お探しのページは存在しません',
     goHome: 'ホームに戻る'
+  },
+  privacy: {
+    title: 'プライバシーポリシー',
+    sections: {
+      introduction: {
+        title: 'はじめに',
+        content:
+          'このプライバシーポリシーは、OGame-Vue-Tsがお客様のデータをどのように取り扱うかを説明しています。私たちはお客様のプライバシーの保護に取り組んでおり、このゲームはユーザーのプライバシーを完全に尊重して設計されています。'
+      },
+      dataCollection: {
+        title: 'データ収集',
+        content: 'このゲームは、以下のデータのみをブラウザにローカルで収集・保存します：',
+        items: {
+          gameProgress: 'ゲームの進行状況（建物レベル、艦隊、資源など）',
+          settings: 'ゲーム設定（通知設定、表示オプションなど）',
+          language: '言語設定'
+        }
+      },
+      dataStorage: {
+        title: 'データ保存',
+        content:
+          'すべてのデータはブラウザのローカルストレージ（localStorage）に保存されます。これは、お客様のデータが常にお客様自身のデバイスに留まることを意味し、私たちはお客様のゲームデータにアクセス、閲覧、収集することはできません。'
+      },
+      noServer: {
+        title: 'サーバー通信なし',
+        content:
+          'このゲームは完全にオフラインのシングルプレイヤーゲームです。アップデート確認機能（GitHubからバージョン情報を取得）を除き、ゲームはいかなるサーバーとも通信しません。お客様のゲームデータがデバイスから離れることはありません。'
+      },
+      thirdParty: {
+        title: 'サードパーティサービス',
+        content:
+          'このゲームは、訪問者統計とトラフィックソースを追跡するためにサードパーティの分析サービスを使用しています。これにより、利用パターンを理解し、ゲーム体験を向上させることができます。この分析データは匿名であり、個人を特定できる情報は含まれていません。広告サービスやその他の商業的追跡ツールは使用していません。'
+      },
+      dataControl: {
+        title: 'データ管理',
+        content: 'お客様はご自身のデータを完全に管理できます：',
+        items: {
+          export: 'いつでもゲームデータをエクスポートできます',
+          import: 'バックアップファイルからデータをインポートできます',
+          delete: 'ブラウザデータの削除またはゲーム内の「データ削除」機能を使用してすべてのデータを削除できます'
+        }
+      },
+      contact: {
+        title: 'お問い合わせ',
+        content: 'このプライバシーポリシーについてご質問がある場合は、以下よりお問い合わせください：'
+      }
+    }
   },
   time: {
     days: '日',
@@ -1004,6 +1235,169 @@ export default {
         content:
           '右上のキューアイコンをクリックして建設進度を確認できます。他のページを閲覧し続けることができます。建設はバックグラウンドで進行します。'
       }
+    }
+  },
+  hints: {
+    close: '閉じる',
+    gotIt: '了解',
+    dontShowAgain: '今後表示しない',
+    resetHints: 'ヒントをリセット',
+    resetHintsDesc: 'すべてのヒントを再表示',
+    hintsEnabled: 'ヒントを有効化',
+    hintsEnabledDesc: 'ページ訪問時にヘルプヒントを表示',
+    overview: {
+      title: '惑星概要',
+      message: 'ここで惑星の資源、艦隊状況、生産詳細を確認できます。進捗を監視するために定期的にチェックしましょう！'
+    },
+    buildings: {
+      title: '建物',
+      message:
+        'ここで建物を建設・アップグレードします。まず太陽光発電所でエネルギーを確保し、次に資源鉱山を建設。ヒント：ロボット工場で建設速度アップ！'
+    },
+    research: {
+      title: '研究ラボ',
+      message: '技術を研究して新しい船を解放、戦闘力を向上、文明を発展させましょう。エネルギー技術から始めるのがおすすめ！'
+    },
+    shipyard: {
+      title: '造船所',
+      message: '船を建造して探索、資源輸送、帝国防衛に活用。貨物船は惑星間で資源を運びます。'
+    },
+    fleet: {
+      title: '艦隊司令',
+      message: '船をミッションに派遣：敵を攻撃、資源を輸送、新惑星を植民、または残骸場を探索。'
+    },
+    galaxy: {
+      title: '銀河マップ',
+      message: '銀河を探索して植民可能な空き惑星、回収可能な残骸場、攻撃対象の敵を見つけましょう。まずスパイプローブで偵察！'
+    },
+    diplomacy: {
+      title: '外交',
+      message: 'NPCとの関係を管理。贈り物で評判を上げるか、敵対攻撃を受けるか。敵の同盟者もあなたに敵対するかも！'
+    },
+    messages: {
+      title: 'メッセージ',
+      message: 'ここで戦闘レポート、スパイレポート、外交通知を確認。あなたの活動と敵との遭遇を追跡。'
+    },
+    defense: {
+      title: '惑星防衛',
+      message: '防衛施設を建設して攻撃から惑星を守りましょう。シールドとタレットで侵略者を威嚇！'
+    },
+    officers: {
+      title: '士官',
+      message: '士官を雇用して様々なボーナスを獲得！司令官は建設を加速、地質学者は資源生産を向上、提督は艦隊能力を強化。'
+    },
+    simulator: {
+      title: '戦闘シミュレーター',
+      message: '攻撃前に戦闘結果をシミュレート。双方の艦隊と技術レベルを入力して、勝敗と損失を予測。'
+    },
+    achievements: {
+      title: '実績システム',
+      message: 'ゲーム目標を達成して実績をアンロックし、ダークマター報酬を獲得！実績には複数のティアがあり、高い目標に挑戦してより良い報酬を手に入れましょう。'
+    },
+    settings: {
+      title: '設定',
+      message: 'ここでゲームデータの管理、通知設定、セーブのエクスポート/インポートができます。定期的にバックアップを！'
+    },
+    gm: {
+      title: 'GM管理パネル',
+      message: 'GMモードでは資源、建物、技術レベルを素早く変更できます。テストや完全なゲームコンテンツの体験に使用。'
+    }
+  },
+  achievements: {
+    title: '実績',
+    unlocked: '実績解除',
+    progress: '進捗',
+    nextTier: '次のティア',
+    maxTierReached: '最高ティア達成',
+    tiers: {
+      bronze: 'ブロンズ',
+      silver: 'シルバー',
+      gold: 'ゴールド',
+      platinum: 'プラチナ',
+      diamond: 'ダイヤモンド'
+    },
+    categories: {
+      resource: '資源',
+      building: '建設',
+      combat: '戦闘',
+      mission: 'ミッション',
+      diplomacy: '外交'
+    },
+    names: {
+      metalCollector: 'メタルコレクター',
+      crystalCollector: 'クリスタルコレクター',
+      deuteriumCollector: 'デューテリウムコレクター',
+      darkMatterCollector: 'ダークマターコレクター',
+      resourceConsumer: '資源消費者',
+      masterBuilder: 'マスタービルダー',
+      researcher: '研究者',
+      shipwright: '造船士',
+      fortifier: '要塞化者',
+      warmonger: '戦争屋',
+      conqueror: '征服者',
+      defender: '防衛者',
+      fleetDestroyer: '艦隊破壊者',
+      debrisCreator: '残骸生成者',
+      fleetSacrifice: '艦隊犠牲者',
+      defenseSacrifice: '防衛犠牲者',
+      pilot: 'パイロット',
+      transporter: '輸送者',
+      cargoMaster: '貨物マスター',
+      colonizer: '植民者',
+      spy: 'スパイマスター',
+      deployer: '配備者',
+      explorer: '探検家',
+      luckyExplorer: '幸運な探検家',
+      recycler: 'リサイクラー',
+      scavenger: 'スカベンジャー',
+      destroyer: '破壊者',
+      fuelBurner: '燃料消費者',
+      diplomat: '外交官',
+      nemesis: '宿敵',
+      generous: '寛大な者',
+      philanthropist: '博愛者',
+      target: '標的',
+      watched: '監視下',
+      robbed: '略奪される',
+      lostToNPC: 'NPCに奪われた'
+    },
+    descriptions: {
+      metalCollector: '総メタル生産量',
+      crystalCollector: '総クリスタル生産量',
+      deuteriumCollector: '総デューテリウム生産量',
+      darkMatterCollector: '総ダークマター生産量',
+      resourceConsumer: '総資源消費量',
+      masterBuilder: '建物アップグレード総数',
+      researcher: '研究完了総数',
+      shipwright: '艦船生産総数',
+      fortifier: '防衛施設建設総数',
+      warmonger: '攻撃開始回数',
+      conqueror: '攻撃勝利回数',
+      defender: '防衛成功回数',
+      fleetDestroyer: '防衛で破壊した敵艦隊数',
+      debrisCreator: '戦闘で生成した残骸総量',
+      fleetSacrifice: '艦隊損失総数',
+      defenseSacrifice: '防衛で損失した防衛施設数',
+      pilot: '飛行ミッション総数',
+      transporter: '輸送ミッション総数',
+      cargoMaster: '輸送資源総量',
+      colonizer: '植民した惑星数',
+      spy: 'スパイミッション完了数',
+      deployer: '配備ミッション完了数',
+      explorer: '遠征総数',
+      luckyExplorer: '遠征成功回数',
+      recycler: 'リサイクルミッション総数',
+      scavenger: 'リサイクル資源総量',
+      destroyer: '破壊した惑星数',
+      fuelBurner: '燃料消費総量',
+      diplomat: '友好的なNPCの数',
+      nemesis: '敵対的なNPCの数',
+      generous: '贈り物送信回数',
+      philanthropist: '贈与資源総量',
+      target: 'NPCに攻撃された回数',
+      watched: 'NPCにスパイされた回数',
+      robbed: 'NPCに残骸を回収された回数',
+      lostToNPC: 'NPCに奪われた残骸資源総量'
     }
   }
 }

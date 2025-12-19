@@ -194,6 +194,7 @@
   import * as buildingValidation from '@/logic/buildingValidation'
   import * as publicLogic from '@/logic/publicLogic'
   import * as officerLogic from '@/logic/officerLogic'
+  import * as gameLogic from '@/logic/gameLogic'
 
   const gameStore = useGameStore()
   const detailDialog = useDetailDialogStore()
@@ -227,8 +228,9 @@
     return (Object.values(BuildingType) as BuildingType[]).filter(buildingType => {
       const config = BUILDINGS.value[buildingType]
       if (planet.value!.isMoon) {
-        // 月球只能建造月球专属建筑
-        return config.moonOnly === true
+        // 月球可以建造：月球专属建筑 + 非行星专属建筑（如机器人工厂、船坞、机库等）
+        // OGame规则：月球不能建造 planetOnly 的建筑（矿场、研究实验室、纳米工厂等）
+        return config.planetOnly !== true
       } else {
         // 行星不能建造月球专属建筑
         return config.moonOnly !== true
@@ -245,6 +247,12 @@
       gameStore.player.officers
     )
     if (!validation.valid) return { success: false, reason: validation.reason }
+
+    // 追踪资源消耗（在扣除前计算成本）
+    const currentLevel = gameStore.currentPlanet.buildings[buildingType] || 0
+    const cost = buildingLogic.calculateBuildingCost(buildingType, currentLevel + 1)
+    gameLogic.trackResourceConsumption(gameStore.player, cost)
+
     const queueItem = buildingValidation.executeBuildingUpgrade(gameStore.currentPlanet, buildingType, gameStore.player.officers)
     gameStore.currentPlanet.buildQueue.push(queueItem)
     return { success: true }

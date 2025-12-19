@@ -1,5 +1,5 @@
 import type { NPC, Planet, Player } from '@/types/game'
-import { TechnologyType, BuildingType, ShipType } from '@/types/game'
+import { TechnologyType, BuildingType, ShipType, DefenseType } from '@/types/game'
 import { BUILDINGS, SHIPS, TECHNOLOGIES } from '@/config/gameConfig'
 import * as buildingLogic from './buildingLogic'
 import * as researchLogic from './researchLogic'
@@ -417,7 +417,7 @@ export const autoBuildNPCFleet = (npc: NPC): void => {
 /**
  * 为NPC生成资源(模拟资源生产)
  */
-export const generateNPCResources = (npc: NPC, deltaSeconds: number, config: DynamicDifficultyConfig): void => {
+export const generateNPCResources = (npc: NPC, deltaSeconds: number, config: DynamicDifficultyConfig, gameSpeed: number = 1): void => {
   const planet = npc.planets[0]
   if (!planet) return
 
@@ -433,11 +433,14 @@ export const generateNPCResources = (npc: NPC, deltaSeconds: number, config: Dyn
   const deuteriumProduction = 10 * deuteriumLevel * Math.pow(1.1, deuteriumLevel) * config.resourceGrowthRate
   const darkMatterProduction = ((25 * darkMatterLevel * Math.pow(1.5, darkMatterLevel)) / 3600) * config.resourceGrowthRate
 
+  // 应用游戏速度倍率到时间
+  const effectiveDeltaSeconds = deltaSeconds * gameSpeed
+
   // 增加资源
-  planet.resources.metal += metalProduction * deltaSeconds
-  planet.resources.crystal += crystalProduction * deltaSeconds
-  planet.resources.deuterium += deuteriumProduction * deltaSeconds
-  planet.resources.darkMatter += darkMatterProduction * deltaSeconds
+  planet.resources.metal += metalProduction * effectiveDeltaSeconds
+  planet.resources.crystal += crystalProduction * effectiveDeltaSeconds
+  planet.resources.deuterium += deuteriumProduction * effectiveDeltaSeconds
+  planet.resources.darkMatter += darkMatterProduction * effectiveDeltaSeconds
 
   // 确保不超过存储上限
   const metalStorage = planet.buildings[BuildingType.MetalStorage] || 0
@@ -455,12 +458,12 @@ export const generateNPCResources = (npc: NPC, deltaSeconds: number, config: Dyn
  * 主NPC成长更新函数
  * 应该在游戏循环中定期调用
  */
-export const updateNPCGrowth = (npc: NPC, gameState: NPCGrowthGameState, deltaSeconds: number): void => {
+export const updateNPCGrowth = (npc: NPC, gameState: NPCGrowthGameState, deltaSeconds: number, gameSpeed: number = 1): void => {
   // 使用动态难度（基于玩家积分）而不是固定难度
   const config = calculateDynamicDifficulty(gameState.player.points)
 
-  // 1. 持续生成资源
-  generateNPCResources(npc, deltaSeconds, config)
+  // 1. 持续生成资源（应用游戏速度倍率）
+  generateNPCResources(npc, deltaSeconds, config, gameSpeed)
 
   // 2. 定期评估并调整实力(使用静态计数器或时间戳)
   const now = Date.now()
@@ -628,4 +631,348 @@ export const initializeNPCDiplomacy = (npcs: NPC[]): void => {
       }
     }
   })
+}
+
+// ==================== 距离难度系统 ====================
+
+/**
+ * 计算NPC星球到玩家母星的距离
+ * 银河系距离权重最大，星系次之，位置最小
+ */
+export const calculateDistanceToHomeworld = (
+  npcPosition: { galaxy: number; system: number; position: number },
+  homeworldPosition: { galaxy: number; system: number; position: number }
+): number => {
+  const galaxyDistance = Math.abs(npcPosition.galaxy - homeworldPosition.galaxy)
+  const systemDistance = Math.abs(npcPosition.system - homeworldPosition.system)
+  const positionDistance = Math.abs(npcPosition.position - homeworldPosition.position)
+
+  // 银河系跨度权重最大
+  return galaxyDistance * 100 + systemDistance * 10 + positionDistance
+}
+
+/**
+ * 基于距离计算难度等级（1-无限）
+ */
+export const calculateDifficultyLevel = (distance: number): number => {
+  if (distance <= 10) return 1 // 新手
+  if (distance <= 30) return 2 // 简单
+  if (distance <= 60) return 3 // 普通
+  if (distance <= 100) return 4 // 困难
+  if (distance <= 200) return 5 // 专家
+  if (distance <= 400) return 6 // 大师
+  // 超过400继续增长
+  return 6 + Math.floor((distance - 400) / 200)
+}
+
+/**
+ * 距离难度倍率配置
+ */
+export interface DistanceDifficultyMultipliers {
+  buildingMultiplier: number
+  techMultiplier: number
+  fleetMultiplier: number
+  resourceMultiplier: number
+  defenseMultiplier: number
+}
+
+/**
+ * 基于距离计算实力倍率
+ * 使用对数增长，确保数值合理
+ *
+ * 建筑等级上限：30
+ * 科技等级上限：20
+ *
+ * 建筑等级示例（baseLevel=5）：
+ * - 距离 0: 5级
+ * - 距离 10: 8级
+ * - 距离 50: 14级
+ * - 距离 100: 18级
+ * - 距离 200: 22级
+ * - 距离 400: 26级
+ * - 距离 800+: 30级（上限）
+ */
+export const calculateDistanceDifficultyMultiplier = (distance: number): DistanceDifficultyMultipliers => {
+  // 使用对数增长，确保建筑等级在合理范围内
+  // 公式: 1 + ln(1 + distance) * 0.8
+  // 这样可以确保最大建筑倍率约为6倍（5*6=30）
+  const logMultiplier = 1 + Math.log(1 + distance) * 0.8
+
+  // 限制建筑倍率最大为6（因为基础等级是5，5*6=30）
+  const buildingMultiplier = Math.min(6, Math.max(1, Math.round(logMultiplier)))
+
+  // 科技倍率稍低，上限4倍（5*4=20）
+  const techMultiplier = Math.min(4, Math.max(1, Math.round(logMultiplier * 0.7)))
+
+  // 舰队倍率：使用更平缓的增长
+  // 基础舰队10艘，最大约500艘左右
+  const fleetMultiplier = Math.min(50, Math.max(1, Math.round(logMultiplier * 8)))
+
+  // 资源倍率：限制最大20倍，避免Infinity
+  const resourceMultiplier = Math.min(20, Math.max(1, logMultiplier * 3))
+
+  // 防御倍率
+  const defenseMultiplier = Math.min(30, Math.max(1, Math.round(logMultiplier * 5)))
+
+  return {
+    buildingMultiplier,
+    techMultiplier,
+    fleetMultiplier,
+    resourceMultiplier,
+    defenseMultiplier
+  }
+}
+
+/**
+ * 基于距离难度初始化NPC星球
+ * 替代旧的 initializeNPCStartingPower
+ *
+ * 建筑等级上限：30
+ * 科技等级上限：20
+ * 资源上限：基于仓储建筑等级计算 (10000 * 2^level)
+ * 舰队数量：基于船坞等级和难度等级合理计算
+ */
+export const initializeNPCByDistance = (
+  npc: NPC,
+  homeworldPosition: { galaxy: number; system: number; position: number }
+): void => {
+  const planet = npc.planets[0]
+  if (!planet) return
+
+  const distance = calculateDistanceToHomeworld(planet.position, homeworldPosition)
+  const multipliers = calculateDistanceDifficultyMultiplier(distance)
+
+  // 保存距离和难度等级到NPC
+  npc.distanceToHomeworld = distance
+  npc.difficultyLevel = calculateDifficultyLevel(distance)
+
+  // 基础等级 * 倍率，并限制上限
+  const baseLevel = 5
+  const MAX_BUILDING_LEVEL = 30
+  const MAX_TECH_LEVEL = 20
+
+  const targetBuildingLevel = Math.min(MAX_BUILDING_LEVEL, Math.max(1, Math.floor(baseLevel * multipliers.buildingMultiplier)))
+  const targetTechLevel = Math.min(MAX_TECH_LEVEL, Math.max(1, Math.floor(baseLevel * multipliers.techMultiplier)))
+
+  // 设置资源建筑（上限30）
+  planet.buildings[BuildingType.MetalMine] = Math.min(MAX_BUILDING_LEVEL, targetBuildingLevel)
+  planet.buildings[BuildingType.CrystalMine] = Math.min(MAX_BUILDING_LEVEL, Math.max(1, Math.floor(targetBuildingLevel * 0.8)))
+  planet.buildings[BuildingType.DeuteriumSynthesizer] = Math.min(MAX_BUILDING_LEVEL, Math.max(1, Math.floor(targetBuildingLevel * 0.6)))
+  planet.buildings[BuildingType.SolarPlant] = Math.min(MAX_BUILDING_LEVEL, targetBuildingLevel + 2)
+
+  // 设置设施建筑
+  planet.buildings[BuildingType.RoboticsFactory] = Math.min(15, Math.max(1, Math.floor(targetBuildingLevel * 0.5)))
+  planet.buildings[BuildingType.Shipyard] = Math.min(12, Math.max(1, Math.floor(targetBuildingLevel * 0.4)))
+  planet.buildings[BuildingType.ResearchLab] = Math.min(12, Math.max(1, Math.floor(targetBuildingLevel * 0.4)))
+
+  // 设置仓储（上限10级，对应10000*2^10=10,240,000容量）
+  const storageLevel = Math.min(10, Math.max(1, Math.floor(targetBuildingLevel * 0.3)))
+  planet.buildings[BuildingType.MetalStorage] = storageLevel
+  planet.buildings[BuildingType.CrystalStorage] = storageLevel
+  planet.buildings[BuildingType.DeuteriumTank] = storageLevel
+
+  // 设置科技（上限20）
+  npc.technologies[TechnologyType.EnergyTechnology] = Math.min(MAX_TECH_LEVEL, targetTechLevel)
+  npc.technologies[TechnologyType.ComputerTechnology] = Math.min(MAX_TECH_LEVEL, Math.max(1, Math.floor(targetTechLevel * 0.8)))
+  npc.technologies[TechnologyType.WeaponsTechnology] = Math.min(MAX_TECH_LEVEL, Math.max(1, Math.floor(targetTechLevel * 0.7)))
+  npc.technologies[TechnologyType.ShieldingTechnology] = Math.min(MAX_TECH_LEVEL, Math.max(1, Math.floor(targetTechLevel * 0.7)))
+  npc.technologies[TechnologyType.ArmourTechnology] = Math.min(MAX_TECH_LEVEL, Math.max(1, Math.floor(targetTechLevel * 0.7)))
+  npc.technologies[TechnologyType.CombustionDrive] = Math.min(MAX_TECH_LEVEL, Math.max(1, Math.floor(targetTechLevel * 0.6)))
+  npc.technologies[TechnologyType.EspionageTechnology] = Math.min(MAX_TECH_LEVEL, Math.max(1, Math.floor(targetTechLevel * 0.5)))
+
+  // 计算舰队仓储容量（船坞每级+1000）
+  const shipyardLevel = planet.buildings[BuildingType.Shipyard] || 1
+  const fleetStorageCapacity = shipyardLevel * 1000
+
+  // 基于难度等级和船坞容量计算舰队数量
+  // 难度等级1-7对应不同的舰队规模
+  const difficultyLevel = npc.difficultyLevel || 1
+  const fleetScale = Math.min(1, difficultyLevel / 7) // 0.14 ~ 1.0
+
+  // 设置舰队（基于船坞容量和难度等级）
+  // 总舰队数量不超过船坞容量的80%
+  const maxTotalFleet = Math.floor(fleetStorageCapacity * 0.8)
+  const baseFleetCount = Math.floor(maxTotalFleet * fleetScale)
+
+  // 分配舰队比例
+  planet.fleet[ShipType.EspionageProbe] = Math.max(5, Math.floor(baseFleetCount * 0.05))
+  planet.fleet[ShipType.LightFighter] = Math.floor(baseFleetCount * 0.35)
+  planet.fleet[ShipType.HeavyFighter] = Math.floor(baseFleetCount * 0.20)
+  planet.fleet[ShipType.Cruiser] = Math.floor(baseFleetCount * 0.15)
+  planet.fleet[ShipType.Battleship] = Math.floor(baseFleetCount * 0.05)
+  planet.fleet[ShipType.SmallCargo] = Math.floor(baseFleetCount * 0.10)
+  planet.fleet[ShipType.Recycler] = Math.floor(baseFleetCount * 0.10)
+
+  // 设置防御设施（基于难度等级，合理范围）
+  const defenseScale = difficultyLevel * 5
+  planet.defense[DefenseType.RocketLauncher] = Math.floor(defenseScale * 2)
+  planet.defense[DefenseType.LightLaser] = Math.floor(defenseScale * 1.5)
+  planet.defense[DefenseType.HeavyLaser] = Math.floor(defenseScale * 0.8)
+  planet.defense[DefenseType.GaussCannon] = Math.floor(defenseScale * 0.3)
+  planet.defense[DefenseType.IonCannon] = Math.floor(defenseScale * 0.3)
+  // 高级防御设施只有高难度NPC才有
+  if (difficultyLevel >= 4) {
+    planet.defense[DefenseType.PlasmaTurret] = Math.floor(defenseScale * 0.1)
+    planet.defense[DefenseType.SmallShieldDome] = 1
+  }
+  if (difficultyLevel >= 6) {
+    planet.defense[DefenseType.LargeShieldDome] = 1
+  }
+
+  // 设置资源（基于仓储建筑等级计算容量上限）
+  // 容量公式：10000 * 2^level
+  const metalCapacity = 10000 * Math.pow(2, planet.buildings[BuildingType.MetalStorage] || 0)
+  const crystalCapacity = 10000 * Math.pow(2, planet.buildings[BuildingType.CrystalStorage] || 0)
+  const deuteriumCapacity = 10000 * Math.pow(2, planet.buildings[BuildingType.DeuteriumTank] || 0)
+  const darkMatterCapacity = 1000 * Math.pow(2, planet.buildings[BuildingType.DarkMatterTank] || 0)
+
+  // 资源设置为容量的50%-80%（基于难度等级）
+  const resourceFillRate = 0.5 + (difficultyLevel / 7) * 0.3
+  planet.resources.metal = Math.floor(metalCapacity * resourceFillRate)
+  planet.resources.crystal = Math.floor(crystalCapacity * resourceFillRate)
+  planet.resources.deuterium = Math.floor(deuteriumCapacity * resourceFillRate)
+  planet.resources.darkMatter = Math.floor(darkMatterCapacity * resourceFillRate)
+}
+
+/**
+ * 基于距离的NPC成长配置
+ */
+export interface DistanceBasedGrowthConfig {
+  resourceGrowthRate: number
+  buildingGrowthSpeed: number
+  techGrowthSpeed: number
+  checkInterval: number
+}
+
+/**
+ * 根据距离计算NPC成长配置
+ */
+export const calculateDistanceBasedGrowthConfig = (distance: number): DistanceBasedGrowthConfig => {
+  const multipliers = calculateDistanceDifficultyMultiplier(distance)
+
+  return {
+    resourceGrowthRate: multipliers.resourceMultiplier,
+    buildingGrowthSpeed: multipliers.buildingMultiplier,
+    techGrowthSpeed: multipliers.techMultiplier,
+    checkInterval: 180 // 3分钟检查一次
+  }
+}
+
+/**
+ * 基于距离更新NPC成长
+ * 替代旧的 updateNPCGrowth 中基于玩家积分的逻辑
+ */
+export const updateNPCGrowthByDistance = (
+  npc: NPC,
+  homeworldPosition: { galaxy: number; system: number; position: number },
+  deltaSeconds: number,
+  gameSpeed: number = 1
+): void => {
+  const planet = npc.planets[0]
+  if (!planet) return
+
+  // 如果没有距离信息，先计算
+  if (npc.distanceToHomeworld === undefined) {
+    npc.distanceToHomeworld = calculateDistanceToHomeworld(planet.position, homeworldPosition)
+    npc.difficultyLevel = calculateDifficultyLevel(npc.distanceToHomeworld)
+  }
+
+  const config = calculateDistanceBasedGrowthConfig(npc.distanceToHomeworld)
+
+  // 1. 持续生成资源（应用游戏速度倍率）
+  generateNPCResourcesByDistance(npc, deltaSeconds, config, gameSpeed)
+
+  // 2. 定期评估并调整实力
+  const now = Date.now()
+  const lastGrowthCheck = (npc as any).lastGrowthCheck || 0
+
+  if (now - lastGrowthCheck >= config.checkInterval * 1000) {
+    ;(npc as any).lastGrowthCheck = now
+
+    // 计算目标实力（基于距离倍率）
+    const multipliers = calculateDistanceDifficultyMultiplier(npc.distanceToHomeworld)
+    const baseLevel = 5
+    const targetBuildingLevel = Math.floor(baseLevel * multipliers.buildingMultiplier)
+    const targetTechLevel = Math.floor(baseLevel * multipliers.techMultiplier)
+
+    // 获取当前平均建筑等级
+    let totalBuildingLevels = 0
+    let buildingCount = 0
+    Object.values(planet.buildings).forEach(level => {
+      totalBuildingLevels += level
+      buildingCount++
+    })
+    const avgBuildingLevel = buildingCount > 0 ? totalBuildingLevels / buildingCount : 0
+
+    // 获取当前平均科技等级
+    const techLevels = Object.values(npc.technologies)
+    const avgTechLevel = techLevels.length > 0 ? techLevels.reduce((sum, level) => sum + level, 0) / techLevels.length : 0
+
+    // 如果实力不足，进行升级
+    if (avgBuildingLevel < targetBuildingLevel) {
+      autoUpgradeNPCBuildings(npc)
+    }
+
+    if (avgTechLevel < targetTechLevel) {
+      autoResearchNPCTechnologies(npc)
+    }
+
+    // 计算目标舰队战力
+    const targetFleetPower = 1000 * multipliers.fleetMultiplier
+    let currentFleetPower = 0
+    Object.entries(planet.fleet).forEach(([shipType, count]) => {
+      const shipConfig = SHIPS[shipType as ShipType]
+      const power = shipConfig.attack + shipConfig.shield + shipConfig.armor / 10
+      currentFleetPower += power * (count as number)
+    })
+
+    if (currentFleetPower < targetFleetPower) {
+      autoBuildNPCFleet(npc)
+    }
+  }
+}
+
+/**
+ * 基于距离生成NPC资源
+ */
+export const generateNPCResourcesByDistance = (
+  npc: NPC,
+  deltaSeconds: number,
+  config: DistanceBasedGrowthConfig,
+  gameSpeed: number = 1
+): void => {
+  const planet = npc.planets[0]
+  if (!planet) return
+
+  // 基于建筑等级计算资源产量
+  const metalMineLevel = planet.buildings[BuildingType.MetalMine] || 0
+  const crystalMineLevel = planet.buildings[BuildingType.CrystalMine] || 0
+  const deuteriumLevel = planet.buildings[BuildingType.DeuteriumSynthesizer] || 0
+  const darkMatterLevel = planet.buildings[BuildingType.DarkMatterCollector] || 0
+
+  // 简化的资源产量计算(每秒产量)
+  const metalProduction = 30 * metalMineLevel * Math.pow(1.1, metalMineLevel) * config.resourceGrowthRate
+  const crystalProduction = 20 * crystalMineLevel * Math.pow(1.1, crystalMineLevel) * config.resourceGrowthRate
+  const deuteriumProduction = 10 * deuteriumLevel * Math.pow(1.1, deuteriumLevel) * config.resourceGrowthRate
+  const darkMatterProduction = ((25 * darkMatterLevel * Math.pow(1.5, darkMatterLevel)) / 3600) * config.resourceGrowthRate
+
+  // 应用游戏速度倍率到时间
+  const effectiveDeltaSeconds = deltaSeconds * gameSpeed
+
+  // 增加资源
+  planet.resources.metal += metalProduction * effectiveDeltaSeconds
+  planet.resources.crystal += crystalProduction * effectiveDeltaSeconds
+  planet.resources.deuterium += deuteriumProduction * effectiveDeltaSeconds
+  planet.resources.darkMatter += darkMatterProduction * effectiveDeltaSeconds
+
+  // 确保不超过存储上限
+  const metalStorage = planet.buildings[BuildingType.MetalStorage] || 0
+  const crystalStorage = planet.buildings[BuildingType.CrystalStorage] || 0
+  const deuteriumStorage = planet.buildings[BuildingType.DeuteriumTank] || 0
+  const darkMatterStorage = planet.buildings[BuildingType.DarkMatterTank] || 0
+
+  planet.resources.metal = Math.min(planet.resources.metal, 10000 * Math.pow(2, metalStorage))
+  planet.resources.crystal = Math.min(planet.resources.crystal, 10000 * Math.pow(2, crystalStorage))
+  planet.resources.deuterium = Math.min(planet.resources.deuterium, 10000 * Math.pow(2, deuteriumStorage))
+  planet.resources.darkMatter = Math.min(planet.resources.darkMatter, 1000 * Math.pow(2, darkMatterStorage))
 }

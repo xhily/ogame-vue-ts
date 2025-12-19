@@ -1,7 +1,7 @@
 <template>
   <div v-if="planet" class="container mx-auto p-4 sm:p-6">
     <!-- 未解锁遮罩 -->
-    <!-- <UnlockRequirement :required-building="BuildingType.ResearchLab" :required-level="1" /> -->
+    <UnlockRequirement :required-building="BuildingType.ResearchLab" :required-level="1" />
 
     <h1 class="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6">{{ t('researchView.title') }}</h1>
 
@@ -107,12 +107,14 @@
     AlertDialogHeader,
     AlertDialogTitle
   } from '@/components/ui/alert-dialog'
+  import UnlockRequirement from '@/components/UnlockRequirement.vue'
   import CardUnlockOverlay from '@/components/CardUnlockOverlay.vue'
   import { Check, X } from 'lucide-vue-next'
   import { formatNumber, getResourceCostColor } from '@/utils/format'
   import * as publicLogic from '@/logic/publicLogic'
   import * as researchLogic from '@/logic/researchLogic'
   import * as researchValidation from '@/logic/researchValidation'
+  import * as gameLogic from '@/logic/gameLogic'
 
   const gameStore = useGameStore()
   const detailDialog = useDetailDialogStore()
@@ -146,6 +148,11 @@
     )
     if (!validation.valid) return false
     const currentLevel = gameStore.player.technologies[techType] || 0
+
+    // 追踪资源消耗（在扣除前计算成本）
+    const cost = researchLogic.calculateTechnologyCost(techType, currentLevel + 1)
+    gameLogic.trackResourceConsumption(gameStore.player, cost)
+
     const { queueItem } = researchValidation.executeTechnologyResearch(
       gameStore.currentPlanet,
       techType,

@@ -1,4 +1,13 @@
 export default {
+  home: {
+    subtitle: 'Conquer the Stars',
+    startGame: 'Start Game',
+    privacyAgreement: 'Privacy Agreement',
+    privacyAgreementDesc: 'Please read and agree to our privacy policy before starting the game.',
+    agreeToPrivacy: 'I have read and agree to',
+    viewFullPolicy: 'View Full Policy',
+    agreeAndStart: 'Agree & Start'
+  },
   common: {
     confirm: 'Confirm',
     cancel: 'Cancel',
@@ -35,7 +44,8 @@ export default {
     requirementsNotMet: 'Requirements Not Met',
     current: 'Current',
     level: 'Level',
-    gmModeActivated: 'GM Mode Activated! Check the navigation menu.'
+    gmModeActivated: 'GM Mode Activated! Check the navigation menu.',
+    view: 'View'
   },
   errors: {
     requirementsNotMet: 'Requirements not met',
@@ -57,7 +67,8 @@ export default {
     buildingLevelZero: 'Building level is 0, cannot demolish',
     researchQueueFull: 'Research queue full',
     moonExists: 'Moon already exists',
-    insufficientDebris: 'Insufficient debris field'
+    insufficientDebris: 'Insufficient debris field',
+    launchFailed: 'Launch failed'
   },
   nav: {
     overview: 'Overview',
@@ -70,6 +81,7 @@ export default {
     simulator: 'Simulator',
     galaxy: 'Galaxy',
     diplomacy: 'Diplomacy',
+    achievements: 'Achievements',
     messages: 'Messages',
     settings: 'Settings',
     gm: 'GM'
@@ -97,6 +109,14 @@ export default {
     hour: 'hour',
     noEnergy: 'No Energy'
   },
+  energy: {
+    lowWarning: 'Energy deficit! Resource production stopped!',
+    severeWarning: 'Energy deficit! Resource production stopped!',
+    criticalWarning: 'Energy deficit! Resource production stopped!',
+    noProduction: 'Energy deficit! Resource production stopped!',
+    deficitDetail: 'Energy deficit: {deficit}, build more power plants',
+    buildSolarPlant: 'Build Power Plant'
+  },
   planet: {
     planet: 'Planet',
     moon: 'Moon',
@@ -112,7 +132,13 @@ export default {
     homePlanet: 'Home Planet',
     planetPrefix: 'Planet',
     moonSuffix: "'s Moon",
-    colonyPrefix: 'Colony'
+    colonyPrefix: 'Colony',
+    renamePlanet: 'Rename Planet',
+    renamePlanetTitle: 'Rename Planet',
+    newPlanetName: 'New Name',
+    planetNamePlaceholder: 'Enter new planet name',
+    rename: 'Rename',
+    renameSuccess: 'Planet renamed to {name}'
   },
   player: {
     points: 'Total Points'
@@ -282,7 +308,8 @@ export default {
     hyperspaceTechnology: 'Hyperspace jump technology',
     plasmaTechnology: 'Plasma weapon technology',
     computerTechnology: 'Increases research queue and fleet mission slots, +1 queue +1 slot per level (max 10 levels)',
-    espionageTechnology: 'Improves spy probe effectiveness, +1 espionage level per level. Spy level = your level - enemy level + probes/5. ≥-1 shows fleet, ≥1 shows defense, ≥3 shows buildings, ≥5 shows technologies',
+    espionageTechnology:
+      'Improves spy probe effectiveness, +1 espionage level per level. Spy level = your level - enemy level + probes/5. ≥-1 shows fleet, ≥1 shows defense, ≥3 shows buildings, ≥5 shows technologies',
     weaponsTechnology: 'Increases ship and defense attack power by 10% per level',
     shieldingTechnology: 'Increases ship and defense shields by 10% per level',
     armourTechnology: 'Increases ship and defense armour by 10% per level',
@@ -315,8 +342,8 @@ export default {
     darkMatterSpecialist: 'Improves dark matter collection efficiency'
   },
   queue: {
-    title: 'Build Queue',
-    empty: 'No active tasks',
+    title: 'Active Tasks',
+    empty: 'No active queues',
     buildQueueBonus: 'Build Queue',
     spaceBonus: 'Space Bonus',
     buildSpeedBonus: 'Build Speed Bonus',
@@ -332,7 +359,14 @@ export default {
     confirmCancel: 'Are you sure you want to cancel? 50% of resources will be refunded.',
     level: 'Level',
     quantity: 'Quantity',
-    upgradeToLevel: 'Upgrade to Level'
+    upgradeToLevel: 'Upgrade to Level',
+    tabs: {
+      all: 'All',
+      buildings: 'Buildings',
+      research: 'Research',
+      ships: 'Ships',
+      defense: 'Defense'
+    }
   },
   overview: {
     title: 'Planet Overview',
@@ -394,6 +428,7 @@ export default {
   shipyardView: {
     title: 'Shipyard',
     fleetStorage: 'Fleet Storage',
+    owned: 'Owned',
     attack: 'Attack',
     missileAttack: 'Missile Attack',
     shield: 'Shield',
@@ -457,6 +492,9 @@ export default {
     available: 'Available',
     all: 'All',
     targetCoordinates: 'Target Coordinates',
+    targetType: 'Target Type',
+    planet: 'Planet',
+    moon: 'Moon',
     galaxy: 'Galaxy',
     system: 'System',
     position: 'Position',
@@ -503,7 +541,47 @@ export default {
     noDeathstar: 'Deathstar required for destruction mission',
     giftMode: 'Gift Mode',
     giftModeDescription: 'Send resources as a gift to',
-    estimatedReputationGain: 'Estimated reputation gain'
+    estimatedReputationGain: 'Estimated reputation gain',
+    // Fleet presets
+    fleetPresets: 'Fleet Presets',
+    fleetPresetsDescription: 'Save common fleet configurations for quick dispatch (max 3)',
+    savePreset: 'Save Preset',
+    noPresets: 'No presets yet, select fleet and click "Save Preset" to create',
+    shipTypes: 'ship types',
+    editPreset: 'Edit preset content',
+    renamePreset: 'Rename',
+    deletePreset: 'Delete preset',
+    editingPresetHint: 'Editing preset, modify fleet configuration and click "Save" to update',
+    presetLimitReached: 'Preset limit reached',
+    presetLimitReachedMessage: 'Maximum of {max} presets allowed',
+    presetError: 'Save failed',
+    presetNoShips: 'Please select at least one ship first',
+    presetDefaultName: 'Preset {number}',
+    savePresetTitle: 'Save Fleet Preset',
+    savePresetDescription: 'Name this fleet configuration',
+    renamePresetTitle: 'Rename Preset',
+    renamePresetDescription: 'Enter a new preset name',
+    presetName: 'Preset Name',
+    presetNamePlaceholder: 'Enter preset name',
+    deletePresetTitle: 'Delete Preset',
+    deletePresetMessage: 'Are you sure you want to delete preset "{name}"? This action cannot be undone.',
+    // Jump Gate
+    jumpGate: 'Jump Gate',
+    jumpGateDescription: 'Use the Jump Gate to instantly transfer fleet to another moon with Jump Gate',
+    jumpGateNotAvailable: 'Jump Gate Not Available',
+    jumpGateRequiresMoon: 'Jump Gate can only be used on moons',
+    jumpGateNotBuilt: 'Current moon does not have a Jump Gate',
+    jumpGateCooldown: 'Jump Gate Cooling Down',
+    jumpGateCooldownRemaining: 'Cooldown Remaining',
+    jumpGateReady: 'Jump Gate Ready',
+    jumpGateSelectTarget: 'Select Target Moon',
+    jumpGateNoTargetMoons: 'No available target moons (requires Jump Gate and cooldown complete)',
+    jumpGateSelectFleet: 'Select Fleet to Transfer',
+    jumpGateTransfer: 'Transfer Fleet',
+    jumpGateSuccess: 'Jump Gate Transfer Successful',
+    jumpGateSuccessMessage: 'Fleet has been instantly transferred to {target}',
+    jumpGateFailed: 'Jump Gate Transfer Failed',
+    jumpGateFailedMessage: 'Please check Jump Gate status and fleet configuration'
   },
   officersView: {
     title: 'Officers',
@@ -590,7 +668,27 @@ export default {
     debris: 'Debris',
     giftPlanetTitle: 'Send Gift',
     giftPlanetMessage:
-      'Are you sure you want to send resources as a gift to planet [{coordinates}]?\n\nPlease go to the fleet page to select transport ships and load resources.'
+      'Are you sure you want to send resources as a gift to planet [{coordinates}]?\n\nPlease go to the fleet page to select transport ships and load resources.',
+    npcPlanetName: "{name}'s Planet",
+    // Sensor Phalanx Scan
+    phalanxScan: 'Phalanx Scan',
+    phalanxScanTitle: 'Sensor Phalanx Scan',
+    phalanxScanDescription: 'Scanning fleet activity at planet [{coordinates}]',
+    phalanxNoMoon: 'Requires a moon with Sensor Phalanx to scan',
+    phalanxOutOfRange: 'Target is out of scan range',
+    phalanxRange: 'Scan Range',
+    phalanxCost: 'Scan Cost',
+    phalanxNoFleets: 'No fleet activity detected',
+    phalanxFleetDetected: '{count} fleet(s) detected',
+    phalanxMission: 'Mission',
+    phalanxOrigin: 'Origin',
+    phalanxDestination: 'Destination',
+    phalanxArrival: 'Arrival',
+    phalanxReturn: 'Return',
+    phalanxStatus: 'Status',
+    phalanxStatusOutbound: 'Outbound',
+    phalanxStatusReturning: 'Returning',
+    phalanxInsufficientDeuterium: 'Insufficient Deuterium'
   },
   messagesView: {
     title: 'Messages',
@@ -622,6 +720,9 @@ export default {
     buildings: 'Buildings',
     unread: 'Unread',
     targetPlanet: 'Target Planet',
+    attackerRemaining: 'Attacker Remaining',
+    defenderRemaining: 'Defender Remaining',
+    allDestroyed: 'All destroyed',
     spied: 'Spied',
     spiedNotification: 'Spied Notification',
     noSpiedNotifications: 'No spied notifications',
@@ -681,19 +782,57 @@ export default {
     activityDescription: 'Activity Description',
     npcActivityMessage: '{npc} is {activity} at {position}',
     arrivalTime: 'Arrival Time',
-    npcActivityTip: 'NPCs may collect debris from battles. You can try to reach the location first if you want to compete for resources'
+    npcActivityTip: 'NPCs may collect debris from battles. You can try to reach the location first if you want to compete for resources',
+    // Clear messages
+    clearMessages: 'Clear Messages',
+    clearMessageTypes: 'Select message types to clear',
+    clearBattleReports: 'Battle Reports',
+    clearSpyReports: 'Spy Reports',
+    clearSpiedNotifications: 'Spied Notifications',
+    clearMissionReports: 'Mission Reports',
+    clearNPCActivity: 'NPC Activity',
+    clearGiftNotifications: 'Gift Notifications',
+    clearGiftRejected: 'Rejected Gifts',
+    clearNow: 'Clear Now'
   },
   missionReports: {
     transportSuccess: 'Transport mission completed successfully',
     transportFailed: 'Transport mission failed',
+    transportFailedTargetNotFound: 'Transport failed: Target planet does not exist',
+    transportFailedGiftRejected: 'Transport failed: Gift was rejected',
     colonizeSuccess: 'Colonization mission successful, new planet established',
     colonizeFailed: 'Colonization mission failed',
+    colonizeFailedOccupied: 'Colonization failed: Target position is already occupied by another planet',
+    colonizeFailedMaxColonies: 'Colonization failed: Maximum number of colonies reached. Research Astrophysics to increase the limit.',
+    spySuccess: 'Espionage mission completed successfully',
+    spyFailed: 'Espionage mission failed',
+    spyFailedTargetNotFound: 'Espionage failed: Target planet does not exist',
     deploySuccess: 'Deployment mission completed successfully',
     deployFailed: 'Deployment mission failed',
+    deployFailedTargetNotFound: 'Deployment failed: Target planet does not exist',
+    deployFailedNotOwnPlanet: 'Deployment failed: Target planet does not belong to you',
     recycleSuccess: 'Recycling mission completed successfully',
     recycleFailed: 'Recycling mission failed, no debris at target location',
+    recycleFailedNoDebris: 'Recycling failed: No debris field at target location',
+    recycleFailedDebrisEmpty: 'Recycling failed: Debris field has been cleared',
     destroySuccess: 'Planet destruction mission executed successfully',
-    destroyFailed: 'Planet destruction mission failed'
+    destroyFailed: 'Planet destruction mission failed',
+    destroyFailedTargetNotFound: 'Destruction failed: Target planet does not exist',
+    destroyFailedOwnPlanet: 'Destruction failed: Cannot destroy your own planet',
+    destroyFailedNoDeathstar: 'Destruction failed: No Death Star to execute the mission',
+    destroyFailedChance: 'Destruction failed: Probability check failed (Success rate: {chance}%)',
+    missileAttackSuccess: 'Missile attack successful',
+    missileAttackFailed: 'Missile attack failed, target planet does not exist',
+    missileAttackIntercepted: 'All missiles intercepted',
+    hits: 'hits',
+    expeditionResources: 'The expedition found resources!',
+    expeditionDarkMatter: 'The expedition found dark matter!',
+    expeditionFleet: 'The expedition found abandoned ships!',
+    expeditionPiratesAttack: 'The expedition was attacked by pirates and lost some ships',
+    expeditionPiratesEscaped: 'The expedition encountered pirates but escaped successfully',
+    expeditionAliensAttack: 'The expedition was attacked by aliens and lost some ships',
+    expeditionAliensEscaped: 'The expedition encountered aliens but escaped successfully',
+    expeditionNothing: 'The expedition found nothing'
   },
   simulatorView: {
     title: 'Battle Simulator',
@@ -789,6 +928,11 @@ export default {
     community: 'Community',
     github: 'GitHub Repository',
     qqGroup: 'QQ Group',
+    privacyPolicy: 'Privacy Policy',
+    displaySettings: 'Display Settings',
+    displaySettingsDesc: 'Adjust visual effects',
+    backgroundAnimation: 'Background Animation',
+    backgroundAnimationDesc: 'Show starfield/particle background animation (may affect performance)',
     notifications: 'Notification Settings',
     notificationsDesc: 'Manage in-game notification alerts',
     notificationTypes: 'Notification Types',
@@ -872,6 +1016,7 @@ export default {
       'Completed {buildingCount} building queues, {researchCount} research queues, {missionCount} fleet missions, {missileCount} missile attacks'
   },
   alerts: {
+    incomingFleets: '{count} Incoming Enemy Fleets',
     npcSpyIncoming: 'NPC Spy Probe Incoming',
     npcAttackIncoming: 'NPC Fleet Attack Incoming!',
     npcFleetIncoming: 'NPC Fleet Approaching',
@@ -882,6 +1027,32 @@ export default {
     detectionFailed: 'Spy not detected',
     npcSpiedYourPlanet: 'NPC spied your planet',
     npcAttackedYourPlanet: 'NPC attacked your planet'
+  },
+  enemyAlert: {
+    title: 'Enemy Alert',
+    markAllRead: 'Mark All Read',
+    noAlerts: 'No alerts',
+    fleetSize: 'Fleet Size',
+    ships: 'ships',
+    viewFleet: 'View Fleet',
+    alertDetails: 'Alert Details',
+    targetInfo: 'Target Info',
+    arrivalTime: 'Arrival Time',
+    countdown: 'Countdown',
+    viewMessages: 'View Messages',
+    arrived: 'Arrived',
+    missionType: {
+      spy: 'Spy',
+      attack: 'Attack',
+      recycle: 'Recycle',
+      unknown: 'Unknown'
+    },
+    warning: {
+      spy: 'Enemy spy incoming!',
+      attack: 'Enemy attack incoming!',
+      recycle: 'Enemy is recycling debris near you!',
+      unknown: 'Enemy fleet incoming!'
+    }
   },
   diplomacy: {
     title: 'Diplomacy',
@@ -915,8 +1086,13 @@ export default {
     more: 'more',
     actions: {
       gift: 'Send Gift',
-      viewPlanets: 'View Planets'
+      viewPlanets: 'View Planets',
+      addNote: 'Add Note',
+      editNote: 'Edit Note'
     },
+    note: 'Note',
+    notePlaceholder: 'Enter note...',
+    noteEmpty: 'No note',
     lastEvent: 'Last Event',
     reportDetails: 'Diplomatic Report Details',
     eventDescription: 'Event Description',
@@ -925,6 +1101,15 @@ export default {
     after: 'After',
     statusChange: 'Status Change',
     viewDiplomacy: 'View Diplomacy Page',
+    eventType: {
+      gift: 'Sent resources',
+      attack: 'Launched an attack',
+      allyAttacked: 'Attacked an ally',
+      spy: 'Conducted espionage',
+      stealDebris: 'Stole debris',
+      destroyPlanet: 'Destroyed a planet',
+      unknown: 'Unknown event'
+    },
     events: {
       gift: 'Sent Gift',
       attack: 'Attack',
@@ -961,6 +1146,50 @@ export default {
       allyOutraged: "{allyName} is outraged that you destroyed their ally {targetName}'s {planetName}",
       npcEliminated: 'NPC {npcName} has been completely eliminated',
       npcEliminatedMessage: "You destroyed all of {npcName}'s planets! This faction has been completely wiped out."
+    },
+    searchPlaceholder: 'Search NPC name...',
+    viewMode: {
+      card: 'Card',
+      list: 'List'
+    },
+    diagnostic: {
+      button: 'NPC Diagnostic',
+      title: 'NPC Status Diagnostic',
+      description:
+        'Player points: {points}, Spy interval: {spyInterval}min, Attack interval: {attackInterval}min, Attack probability: {attackProb}%',
+      noData: 'No NPC data',
+      difficulty: 'Difficulty',
+      difficultyLevels: {
+        easy: 'Easy',
+        medium: 'Medium',
+        hard: 'Hard'
+      },
+      reputation: 'Reputation',
+      spyProbes: 'Spy Probes',
+      fleetPower: 'Fleet Power',
+      canSpy: 'Can Spy',
+      canAttack: 'Can Attack',
+      attackProbability: 'Attack Probability',
+      nextSpy: 'Next Spy',
+      nextAttack: 'Next Attack',
+      yes: 'Yes',
+      no: 'No',
+      timeFormat: '{min}m {sec}s',
+      anytime: 'Anytime',
+      statusExplanation: 'Status Explanation',
+      noRelation: 'No Relation',
+      noRelationNeutral: 'No Relation (Neutral)',
+      reasons: {
+        friendlyNoAction: 'Friendly relationship, will not act',
+        neutralNoAction: 'Neutral relationship, will not act',
+        hostileWillAct: 'Hostile relationship, may take action',
+        noRelationNeutral: 'No diplomatic relation, treated as neutral',
+        insufficientProbes: 'Insufficient probes (Current: {current}, Required: {required})',
+        noFleet: 'No combat fleet',
+        spyCooldown: 'Spy on cooldown ({min}m {sec}s)',
+        attackCooldown: 'Attack on cooldown ({min}m {sec}s)',
+        notSpiedYet: 'Not yet spied, need to spy first'
+      }
     }
   },
   pagination: {
@@ -974,6 +1203,53 @@ export default {
     title: 'Page Not Found',
     description: 'Sorry, the page you are looking for does not exist',
     goHome: 'Go Home'
+  },
+  privacy: {
+    title: 'Privacy Policy',
+    sections: {
+      introduction: {
+        title: 'Introduction',
+        content:
+          'This privacy policy explains how OGame-Vue-Ts handles your data. We are committed to protecting your privacy, and this game is designed with complete respect for user privacy.'
+      },
+      dataCollection: {
+        title: 'Data Collection',
+        content: 'This game only collects and stores the following data locally in your browser:',
+        items: {
+          gameProgress: 'Game progress (building levels, fleets, resources, etc.)',
+          settings: 'Game settings (notification preferences, display options, etc.)',
+          language: 'Language preference'
+        }
+      },
+      dataStorage: {
+        title: 'Data Storage',
+        content:
+          "All data is stored in your browser's local storage (localStorage). This means your data always remains on your own device, and we cannot access, view, or collect any of your game data."
+      },
+      noServer: {
+        title: 'No Server Communication',
+        content:
+          'This game is a completely offline single-player game. Except for the update check feature (which fetches version information from GitHub), the game does not communicate with any server. Your game data never leaves your device.'
+      },
+      thirdParty: {
+        title: 'Third-Party Services',
+        content:
+          'This game uses third-party analytics services to track visitor statistics and traffic sources, helping us understand usage patterns and improve the gaming experience. This analytics data is anonymous and does not contain any personally identifiable information. We do not use any advertising services or other commercial tracking tools.'
+      },
+      dataControl: {
+        title: 'Data Control',
+        content: 'You have complete control over your data:',
+        items: {
+          export: 'You can export your game data at any time',
+          import: 'You can import data from backup files',
+          delete: 'You can delete all data by clearing browser data or using the in-game "Clear Data" feature'
+        }
+      },
+      contact: {
+        title: 'Contact Us',
+        content: 'If you have any questions about this privacy policy, please contact us via:'
+      }
+    }
   },
   time: {
     days: 'days',
@@ -1130,6 +1406,174 @@ export default {
         content:
           "Great! You've mastered the basics. Continue building Crystal and Deuterium facilities, then explore other features. Remember: energy first, then resources!"
       }
+    }
+  },
+  hints: {
+    close: 'Close',
+    gotIt: 'Got it',
+    dontShowAgain: "Don't show again",
+    resetHints: 'Reset Hints',
+    resetHintsDesc: 'Show all hints again',
+    hintsEnabled: 'Enable Hints',
+    hintsEnabledDesc: 'Show helpful hints when visiting pages',
+    overview: {
+      title: 'Planet Overview',
+      message: 'Here you can see your planet resources, fleet status, and production details. Check back often to monitor your progress!'
+    },
+    buildings: {
+      title: 'Buildings',
+      message:
+        'Build and upgrade structures here. Start with Solar Plant for energy, then resource mines. Tip: Robotics Factory speeds up construction!'
+    },
+    research: {
+      title: 'Research Lab',
+      message:
+        'Research technologies to unlock new ships, improve combat, and advance your civilization. Energy Technology is a great start!'
+    },
+    shipyard: {
+      title: 'Shipyard',
+      message: 'Build ships to explore, transport resources, and defend your empire. Cargo ships help move resources between planets.'
+    },
+    fleet: {
+      title: 'Fleet Command',
+      message: 'Send your ships on missions: attack enemies, transport resources, colonize new planets, or explore debris fields.'
+    },
+    galaxy: {
+      title: 'Galaxy Map',
+      message:
+        'Explore the galaxy to find empty planets to colonize, debris fields to harvest, and enemies to attack. Use spy probes first!'
+    },
+    diplomacy: {
+      title: 'Diplomacy',
+      message:
+        'Manage relations with NPCs. Send gifts to improve reputation, or face hostile attacks. Allies of your enemies may turn hostile too!'
+    },
+    messages: {
+      title: 'Messages',
+      message: 'View battle reports, spy reports, and diplomatic notifications here. Keep track of your activities and enemy encounters.'
+    },
+    defense: {
+      title: 'Planetary Defense',
+      message: 'Build defense structures to protect your planet from attacks. Shield domes and turrets can deter raiders!'
+    },
+    officers: {
+      title: 'Officers',
+      message:
+        'Recruit officers to gain various bonuses! Commander speeds up construction, Geologist boosts resource production, Admiral enhances fleet capabilities.'
+    },
+    simulator: {
+      title: 'Battle Simulator',
+      message: 'Simulate battle outcomes before attacking. Enter both fleets and tech levels to predict victory, losses, and loot.'
+    },
+    achievements: {
+      title: 'Achievement System',
+      message: 'Complete game objectives to unlock achievements and earn Dark Matter rewards! Achievements have multiple tiers - aim for higher challenges to get better rewards.'
+    },
+    settings: {
+      title: 'Settings',
+      message: 'Manage game data, adjust notifications, export/import saves here. Remember to backup your progress regularly!'
+    },
+    gm: {
+      title: 'GM Panel',
+      message:
+        'GM mode allows quick modification of resources, buildings, and tech levels. Use it for testing or experiencing full game content.'
+    }
+  },
+  achievements: {
+    title: 'Achievements',
+    unlocked: 'Achievement Unlocked',
+    progress: 'Progress',
+    nextTier: 'Next Tier',
+    maxTierReached: 'Max Tier Reached',
+    tiers: {
+      bronze: 'Bronze',
+      silver: 'Silver',
+      gold: 'Gold',
+      platinum: 'Platinum',
+      diamond: 'Diamond'
+    },
+    categories: {
+      resource: 'Resource',
+      building: 'Building',
+      combat: 'Combat',
+      mission: 'Mission',
+      diplomacy: 'Diplomacy'
+    },
+    names: {
+      metalCollector: 'Metal Collector',
+      crystalCollector: 'Crystal Collector',
+      deuteriumCollector: 'Deuterium Collector',
+      darkMatterCollector: 'Dark Matter Collector',
+      resourceConsumer: 'Resource Consumer',
+      masterBuilder: 'Master Builder',
+      researcher: 'Researcher',
+      shipwright: 'Shipwright',
+      fortifier: 'Fortifier',
+      warmonger: 'Warmonger',
+      conqueror: 'Conqueror',
+      defender: 'Defender',
+      fleetDestroyer: 'Fleet Destroyer',
+      debrisCreator: 'Debris Creator',
+      fleetSacrifice: 'Fleet Sacrifice',
+      defenseSacrifice: 'Defense Sacrifice',
+      pilot: 'Pilot',
+      transporter: 'Transporter',
+      cargoMaster: 'Cargo Master',
+      colonizer: 'Colonizer',
+      spy: 'Spy Master',
+      deployer: 'Deployer',
+      explorer: 'Explorer',
+      luckyExplorer: 'Lucky Explorer',
+      recycler: 'Recycler',
+      scavenger: 'Scavenger',
+      destroyer: 'Destroyer',
+      fuelBurner: 'Fuel Burner',
+      diplomat: 'Diplomat',
+      nemesis: 'Nemesis',
+      generous: 'Generous',
+      philanthropist: 'Philanthropist',
+      target: 'Target',
+      watched: 'Watched',
+      robbed: 'Robbed',
+      lostToNPC: 'Lost to NPC'
+    },
+    descriptions: {
+      metalCollector: 'Total metal produced',
+      crystalCollector: 'Total crystal produced',
+      deuteriumCollector: 'Total deuterium produced',
+      darkMatterCollector: 'Total dark matter produced',
+      resourceConsumer: 'Total resources consumed',
+      masterBuilder: 'Total buildings upgraded',
+      researcher: 'Total researches completed',
+      shipwright: 'Total ships produced',
+      fortifier: 'Total defenses built',
+      warmonger: 'Total attacks launched',
+      conqueror: 'Total attacks won',
+      defender: 'Total defenses successful',
+      fleetDestroyer: 'Enemy fleet destroyed in defense',
+      debrisCreator: 'Total debris created from battles',
+      fleetSacrifice: 'Total fleet lost',
+      defenseSacrifice: 'Total defenses lost in defense',
+      pilot: 'Total flight missions',
+      transporter: 'Total transport missions',
+      cargoMaster: 'Total resources transported',
+      colonizer: 'Planets colonized',
+      spy: 'Spy missions completed',
+      deployer: 'Deploy missions completed',
+      explorer: 'Total expeditions',
+      luckyExplorer: 'Successful expeditions',
+      recycler: 'Total recycling missions',
+      scavenger: 'Total resources recycled',
+      destroyer: 'Planets destroyed',
+      fuelBurner: 'Total fuel consumed',
+      diplomat: 'Number of friendly NPCs',
+      nemesis: 'Number of hostile NPCs',
+      generous: 'Total gifts sent',
+      philanthropist: 'Total resources gifted',
+      target: 'Times attacked by NPC',
+      watched: 'Times spied by NPC',
+      robbed: 'Times debris recycled by NPC',
+      lostToNPC: 'Total debris resources lost to NPC'
     }
   }
 }

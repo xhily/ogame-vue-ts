@@ -234,24 +234,7 @@ export const handleGiftArrival = (
   // 计算好感度增加值
   const reputationGain = calculateGiftReputationGain(mission.cargo)
 
-  // 更新玩家对NPC的关系
-  if (!player.diplomaticRelations) {
-    player.diplomaticRelations = {}
-  }
-
-  const relation = getOrCreateRelation(player.diplomaticRelations, player.id, targetNpc.id)
-  player.diplomaticRelations[targetNpc.id] = updateReputation(
-    relation,
-    reputationGain,
-    DET.GiftResources,
-    t('diplomacy.reports.giftedResources', locale, {
-      metal: mission.cargo.metal.toString(),
-      crystal: mission.cargo.crystal.toString(),
-      deuterium: mission.cargo.deuterium.toString()
-    })
-  )
-
-  // 也更新NPC对玩家的关系（双向好感度）
+  // 更新NPC对玩家的关系（统一使用 npc.relations）
   if (!targetNpc.relations) {
     targetNpc.relations = {}
   }
@@ -261,7 +244,11 @@ export const handleGiftArrival = (
     npcRelation,
     reputationGain,
     DET.GiftResources,
-    t('diplomacy.reports.receivedGiftFromPlayer', locale)
+    t('diplomacy.reports.giftedResources', locale, {
+      metal: mission.cargo.metal.toString(),
+      crystal: mission.cargo.crystal.toString(),
+      deuterium: mission.cargo.deuterium.toString()
+    })
   )
 
   // 生成外交报告
@@ -362,20 +349,7 @@ export const handleAttackReputation = (
     reputationLoss = REPUTATION_CHANGES.ATTACK_WIN
   }
 
-  // 更新玩家对被攻击NPC的关系
-  if (!attacker.diplomaticRelations) {
-    attacker.diplomaticRelations = {}
-  }
-
-  const relation = getOrCreateRelation(attacker.diplomaticRelations, attacker.id, defender.id)
-  attacker.diplomaticRelations[defender.id] = updateReputation(
-    relation,
-    reputationLoss,
-    DET.Attack,
-    t('diplomacy.reports.attackedNpc', locale, { npcName: defender.name })
-  )
-
-  // 更新被攻击NPC对玩家的关系
+  // 更新NPC对玩家的关系（统一使用 npc.relations）
   if (!defender.relations) {
     defender.relations = {}
   }
@@ -495,19 +469,7 @@ export const handleDebrisRecycleReputation = (player: Player, debrisPosition: Po
 
   if (npcOwner) {
     // 这是在NPC星球位置回收残骸，视为抢夺
-    if (!player.diplomaticRelations) {
-      player.diplomaticRelations = {}
-    }
-
-    const relation = getOrCreateRelation(player.diplomaticRelations, player.id, npcOwner.id)
-    player.diplomaticRelations[npcOwner.id] = updateReputation(
-      relation,
-      REPUTATION_CHANGES.STEAL_DEBRIS,
-      DET.StealDebris,
-      t('diplomacy.reports.stoleDebrisFromTerritory', locale, { npcName: npcOwner.name })
-    )
-
-    // 更新NPC对玩家的关系
+    // 更新NPC对玩家的关系（统一使用 npc.relations）
     if (!npcOwner.relations) {
       npcOwner.relations = {}
     }
@@ -517,7 +479,7 @@ export const handleDebrisRecycleReputation = (player: Player, debrisPosition: Po
       npcRelation,
       REPUTATION_CHANGES.STEAL_DEBRIS,
       DET.StealDebris,
-      t('diplomacy.reports.playerStoleDebris', locale)
+      t('diplomacy.reports.stoleDebrisFromTerritory', locale, { npcName: npcOwner.name })
     )
 
     // 生成外交报告
@@ -550,34 +512,7 @@ export const handlePlanetDestructionReputation = (
   const { HOSTILE_THRESHOLD } = DIPLOMATIC_CONFIG
   const now = Date.now()
 
-  // 更新玩家对被摧毁星球所有者的关系 - 直接设为敌对
-  if (!attacker.diplomaticRelations) {
-    attacker.diplomaticRelations = {}
-  }
-
-  const relation = getOrCreateRelation(attacker.diplomaticRelations, attacker.id, planetOwner.id)
-  const eventDescription = t('diplomacy.reports.destroyedNpcPlanet', locale, {
-    npcName: planetOwner.name,
-    planetName: destroyedPlanet.name
-  })
-
-  attacker.diplomaticRelations[planetOwner.id] = {
-    ...relation,
-    reputation: HOSTILE_THRESHOLD, // 直接设为敌对阈值
-    status: RS.Hostile,
-    lastUpdated: now,
-    history: [
-      ...(relation.history || []),
-      {
-        timestamp: now,
-        change: HOSTILE_THRESHOLD - relation.reputation,
-        reason: DET.DestroyPlanet,
-        details: eventDescription
-      }
-    ]
-  }
-
-  // 更新星球所有者对玩家的关系 - 直接设为敌对
+  // 更新星球所有者对玩家的关系 - 直接设为敌对（统一使用 npc.relations）
   if (!planetOwner.relations) {
     planetOwner.relations = {}
   }
@@ -703,11 +638,8 @@ const generateDiplomaticReport = (
     player.diplomaticReports = []
   }
 
-  if (!player.diplomaticRelations) {
-    player.diplomaticRelations = {}
-  }
-
-  const relation = player.diplomaticRelations[npc.id] || initializeDiplomaticRelation(player.id, npc.id)
+  // 使用 npc.relations 作为唯一数据源
+  const relation = npc.relations?.[player.id] || initializeDiplomaticRelation(npc.id, player.id)
   const oldStatus = relation.status
   const newReputation = Math.max(
     DIPLOMATIC_CONFIG.MIN_REPUTATION,
@@ -809,19 +741,6 @@ export const acceptNPCGift = (player: Player, npc: NPC, giftNotification: GiftNo
     t('diplomacy.reports.giftedResourcesToPlayer', locale)
   )
 
-  // 也更新玩家对NPC的关系（收到礼物会增加好感）
-  if (!player.diplomaticRelations) {
-    player.diplomaticRelations = {}
-  }
-
-  const playerRelation = getOrCreateRelation(player.diplomaticRelations, player.id, npc.id)
-  player.diplomaticRelations[npc.id] = updateReputation(
-    playerRelation,
-    giftNotification.expectedReputationGain,
-    DET.GiftResources,
-    t('diplomacy.reports.receivedGiftFromNpc', locale, { npcName: npc.name })
-  )
-
   // 生成外交报告
   generateDiplomaticReport(
     player,
@@ -893,15 +812,15 @@ export const rejectNPCGift = (player: Player, npc: NPC, giftNotification: GiftNo
 export const handleNPCElimination = (eliminatedNpc: NPC, player: Player, allNpcs: NPC[], locale: Locale): void => {
   const { HOSTILE_THRESHOLD } = DIPLOMATIC_CONFIG
 
-  // 1. 将玩家对该NPC的关系设为最低（敌对状态）
-  if (!player.diplomaticRelations) {
-    player.diplomaticRelations = {}
+  // 1. 将NPC对玩家的关系设为最低（敌对状态）
+  if (!eliminatedNpc.relations) {
+    eliminatedNpc.relations = {}
   }
 
-  const relation = getOrCreateRelation(player.diplomaticRelations, player.id, eliminatedNpc.id)
+  const relation = getOrCreateRelation(eliminatedNpc.relations, eliminatedNpc.id, player.id)
   const now = Date.now()
 
-  player.diplomaticRelations[eliminatedNpc.id] = {
+  eliminatedNpc.relations[player.id] = {
     ...relation,
     reputation: HOSTILE_THRESHOLD, // 设为敌对阈值
     status: RS.Hostile,

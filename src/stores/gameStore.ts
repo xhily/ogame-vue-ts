@@ -10,9 +10,12 @@ import type {
   SpiedNotification,
   NPCActivityNotification,
   IncomingFleetAlert,
-  MissileAttack
+  MissileAttack,
+  AchievementStats,
+  AchievementProgress
 } from '@/types/game'
 import { TechnologyType, OfficerType } from '@/types/game'
+import { initializeAchievementStats, initializeAchievements } from '@/logic/achievementLogic'
 import type { Locale } from '@/locales'
 import pkg from '../../package.json'
 import { encryptData, decryptData } from '@/utils/crypto'
@@ -41,7 +44,9 @@ export const useGameStore = defineStore('game', {
       giftRejectedNotifications: [],
       points: 0,
       isGMEnabled: false, // 明确设置 GM 模式默认为 false
-      lastVersionCheckTime: 0 // 最后一次检查版本的时间戳，默认为0
+      lastVersionCheckTime: 0, // 最后一次检查版本的时间戳，默认为0
+      achievementStats: initializeAchievementStats() as AchievementStats,
+      achievements: initializeAchievements() as Record<string, AchievementProgress>
     } as Player,
     currentPlanetId: '',
     isDark: '',

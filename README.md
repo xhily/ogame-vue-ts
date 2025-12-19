@@ -5,11 +5,12 @@
 
   一个基于 Vue 3 和 TypeScript 构建的现代化 OGame 太空策略游戏。
 
+  [![GitHub Release](https://img.shields.io/github/v/release/setube/ogame-vue-ts?style=flat&logo=github&label=Release)](https://github.com/setube/ogame-vue-ts/releases/latest)
   [![License: CC BY-NC 4.0](https://img.shields.io/badge/License-CC%20BY--NC%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc/4.0/)
   [![Vue 3](https://img.shields.io/badge/Vue-3.5-brightgreen.svg)](https://vuejs.org/)
   [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue.svg)](https://www.typescriptlang.org/)
   [![Vite](https://img.shields.io/badge/Vite-7.2-646CFF.svg)](https://vitejs.dev/)
-  [![Go](https://img.shields.io/badge/Go-1.25-79D4FD.svg)](https://golang.org/)
+  [![Go](https://img.shields.io/badge/Go-1.23-79D4FD.svg)](https://golang.org/)
 
   [English](README-EN.md) | 简体中文
 
@@ -53,23 +54,21 @@ OGame Vue TS 是一款受经典 OGame 游戏启发的单机版、基于浏览器
 
 #### 服务端
 
-[Windows](/releases/latest/download/ogame-windows-amd64.exe)
-
-[Linux amd64](/releases/latest/download/ogame-linux-amd64)
-
-[Linux arm64](/releases/latest/download/ogame-linux-arm64)
-
-[MacOS Intel](/releases/latest/download/ogame-macos-amd64)
-
-[MacOS](/releases/latest/download/ogame-macos-arm64)
+[![Windows](https://img.shields.io/badge/Windows-x64-0078D6?style=flat&logo=windows)](https://github.com/setube/ogame-vue-ts/releases/latest/download/ogame-server-win.exe)
+[![Linux x64](https://img.shields.io/badge/Linux-x64-FCC624?style=flat&logo=linux&logoColor=black)](https://github.com/setube/ogame-vue-ts/releases/latest/download/ogame-server-linux)
+[![Linux ARM64](https://img.shields.io/badge/Linux-ARM64-FCC624?style=flat&logo=linux&logoColor=black)](https://github.com/setube/ogame-vue-ts/releases/latest/download/ogame-server-linux-arm64)
 
 #### 桌面版
 
-[Windows](/releases/latest/download/OGame.Setup.exe)
+[![Windows](https://img.shields.io/badge/Windows-Setup-0078D6?style=flat&logo=windows)](https://github.com/setube/ogame-vue-ts/releases/latest/download/OGame.Setup.exe)
+[![Linux](https://img.shields.io/badge/Linux-AppImage-FCC624?style=flat&logo=linux&logoColor=black)](https://github.com/setube/ogame-vue-ts/releases/latest/download/OGame.AppImage)
+[![macOS](https://img.shields.io/badge/macOS-DMG-000000?style=flat&logo=apple)](https://github.com/setube/ogame-vue-ts/releases/latest/download/OGame-mac.dmg)
 
-[Ubuntu](/releases/latest/download/OGame.AppImage)
+#### Android
 
-[MacOS](/releases/latest/download/OGame-mac.dmg)
+[![ARM64](https://img.shields.io/badge/Android-ARM64-3DDC84?style=flat&logo=android&logoColor=white)](https://github.com/setube/ogame-vue-ts/releases/latest/download/OGame-1.4.0-arm64-v8a.APK)
+[![ARMv7](https://img.shields.io/badge/Android-ARMv7-3DDC84?style=flat&logo=android&logoColor=white)](https://github.com/setube/ogame-vue-ts/releases/latest/download/OGame-1.4.0-armeabi-v7a.APK)
+[![x64](https://img.shields.io/badge/Android-x64-3DDC84?style=flat&logo=android&logoColor=white)](https://github.com/setube/ogame-vue-ts/releases/latest/download/OGame-1.4.0-x86_64.APK)
 
 ### 环境要求
 
@@ -107,57 +106,6 @@ pnpm build
 
 # 预览生产构建
 pnpm preview
-```
-
-## 项目结构
-
-```
-ogame-vue-ts/
-├── public/               # 静态资源
-│   └── logo.svg         # 应用图标
-├── src/
-│   ├── assets/          # 动态资源
-│   ├── components/      # Vue 组件
-│   │   └── ui/         # shadcn-vue UI 组件
-│   ├── composables/    # Vue 组合式函数
-│   ├── config/         # 游戏配置
-│   ├── lib/            # 工具库
-│   ├── locales/        # 国际化翻译文件
-│   ├── logic/          # 游戏逻辑模块
-│   │   ├── buildingLogic.ts      # 建筑逻辑
-│   │   ├── buildingValidation.ts # 建筑验证
-│   │   ├── fleetLogic.ts         # 舰队逻辑
-│   │   ├── moonLogic.ts          # 月球逻辑
-│   │   ├── moonValidation.ts     # 月球验证
-│   │   ├── researchLogic.ts      # 研究逻辑
-│   │   ├── researchValidation.ts # 研究验证
-│   │   ├── shipLogic.ts          # 舰船逻辑
-│   │   └── shipValidation.ts     # 舰船验证
-│   ├── router/         # Vue Router 路由配置
-│   ├── stores/         # Pinia 状态存储
-│   ├── types/          # TypeScript 类型定义
-│   ├── utils/          # 工具函数
-│   ├── views/          # 页面组件
-│   │   ├── OverviewView.vue        # 概览页面
-│   │   ├── BuildingsView.vue       # 建筑页面
-│   │   ├── ResearchView.vue        # 研究页面
-│   │   ├── ShipyardView.vue        # 船坞页面
-│   │   ├── DefenseView.vue         # 防御页面
-│   │   ├── FleetView.vue           # 舰队页面
-│   │   ├── GalaxyView.vue          # 银河页面
-│   │   ├── OfficersView.vue        # 军官页面
-│   │   ├── BattleSimulatorView.vue # 战斗模拟器
-│   │   ├── MessagesView.vue        # 消息页面
-│   │   └── SettingsView.vue        # 设置页面
-│   ├── App.vue         # 根组件
-│   ├── main.ts         # 应用入口
-│   └── style.css       # 全局样式
-├── .github/
-│   └── ISSUE_TEMPLATE/ # GitHub issue 模板
-├── LICENSE             # CC BY-NC 4.0 许可证
-├── package.json        # 项目依赖
-├── tsconfig.json       # TypeScript 配置
-└── vite.config.ts      # Vite 配置
 ```
 
 ## 支持的语言
@@ -212,13 +160,6 @@ ogame-vue-ts/
 ## 贡献
 
 欢迎贡献！请随时提交 issue 或 pull request。
-
-### Issue 模板
-我们提供以下中英文 issue 模板：
-- BUG反馈 / Bug Report
-- 功能请求 / Feature Request
-- 文档改进 / Documentation Improvement
-- 反馈建议 / Feedback & Suggestion
 
 ## 许可证
 

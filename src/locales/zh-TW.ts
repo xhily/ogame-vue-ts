@@ -1,4 +1,13 @@
 export default {
+  home: {
+    subtitle: '征服星辰大海',
+    startGame: '開始遊戲',
+    privacyAgreement: '隱私協議',
+    privacyAgreementDesc: '開始遊戲前，請閱讀並同意我們的隱私協議。',
+    agreeToPrivacy: '我已閱讀並同意',
+    viewFullPolicy: '查看完整協議',
+    agreeAndStart: '同意並開始'
+  },
   common: {
     confirm: '確認',
     cancel: '取消',
@@ -36,7 +45,8 @@ export default {
     requirementsNotMet: '前置條件未滿足',
     current: '當前',
     level: '等級',
-    gmModeActivated: 'GM 模式已啟用！請查看導航選單。'
+    gmModeActivated: 'GM 模式已啟用！請查看導航選單。',
+    view: '查看'
   },
   errors: {
     requirementsNotMet: '不滿足前置條件',
@@ -58,7 +68,8 @@ export default {
     buildingLevelZero: '建築等級為0，無法拆除',
     researchQueueFull: '研究隊列已滿',
     moonExists: '已存在月球',
-    insufficientDebris: '殘骸場不足'
+    insufficientDebris: '殘骸場不足',
+    launchFailed: '發射失敗'
   },
   nav: {
     overview: '總覽',
@@ -70,9 +81,11 @@ export default {
     officers: '軍官',
     simulator: '模擬',
     galaxy: '星系',
-    diplomacy: 'Diplomacy',
+    diplomacy: '外交',
+    achievements: '成就',
     messages: '訊息',
     settings: '設定',
+    guide: '遊戲指南',
     gm: 'GM'
   },
   sidebar: {
@@ -98,6 +111,14 @@ export default {
     hour: '小時',
     noEnergy: '電力不足'
   },
+  energy: {
+    lowWarning: '電力不足，資源生產已停止！',
+    severeWarning: '電力不足，資源生產已停止！',
+    criticalWarning: '電力不足，資源生產已停止！',
+    noProduction: '電力不足，資源生產已停止！',
+    deficitDetail: '電力缺口: {deficit}，請建造更多電站',
+    buildSolarPlant: '建造電站'
+  },
   planet: {
     planet: '星球',
     moon: '月球',
@@ -113,7 +134,13 @@ export default {
     homePlanet: '母星',
     planetPrefix: '星球',
     moonSuffix: '的月球',
-    colonyPrefix: '殖民地'
+    colonyPrefix: '殖民地',
+    renamePlanet: '重命名星球',
+    renamePlanetTitle: '重命名星球',
+    newPlanetName: '新名稱',
+    planetNamePlaceholder: '輸入新的星球名稱',
+    rename: '重命名',
+    renameSuccess: '星球已重命名為 {name}'
   },
   player: {
     points: '總積分'
@@ -286,7 +313,8 @@ export default {
     hyperspaceTechnology: '超空間跳躍技術',
     plasmaTechnology: '等離子武器技術',
     computerTechnology: '增加研究佇列和艦隊任務槽位，每級+1佇列+1槽位（最多10級）',
-    espionageTechnology: '提高間諜探測效果，每級提高1級偵查深度。偵察等級=己方等級-對方等級+偵察船數/5。≥-1顯示艦隊，≥1顯示防禦，≥3顯示建築，≥5顯示科技',
+    espionageTechnology:
+      '提高間諜探測效果，每級提高1級偵查深度。偵察等級=己方等級-對方等級+偵察船數/5。≥-1顯示艦隊，≥1顯示防禦，≥3顯示建築，≥5顯示科技',
     weaponsTechnology: '提高艦船和防禦的攻擊力，每級+10%',
     shieldingTechnology: '提高艦船和防禦的護盾值，每級+10%',
     armourTechnology: '提高艦船和防禦的裝甲值，每級+10%',
@@ -319,8 +347,8 @@ export default {
     darkMatterSpecialist: '提升暗物質採集效率'
   },
   queue: {
-    title: '建造佇列',
-    empty: '當前沒有進行中的任務',
+    title: '進行中的任務',
+    empty: '當前沒有進行中的隊列',
     buildQueue: '建造佇列',
     researchQueue: '研究佇列',
     building: '建造中',
@@ -333,7 +361,14 @@ export default {
     confirmCancel: '確定要取消嗎？將返還50%的資源。',
     level: '等級',
     gmModeActivated: '',
-    upgradeToLevel: '升級到等級'
+    upgradeToLevel: '升級到等級',
+    tabs: {
+      all: '全部',
+      buildings: '建築',
+      research: '研究',
+      ships: '艦船',
+      defense: '防禦'
+    }
   },
   overview: {
     title: '星球總覽',
@@ -397,6 +432,7 @@ export default {
   shipyardView: {
     title: '船塢',
     fleetStorage: '艦隊倉儲',
+    owned: '擁有',
     attack: '攻擊力',
     missileAttack: '導彈攻擊',
     shield: '護盾',
@@ -461,8 +497,10 @@ export default {
     available: '可用',
     all: '全部',
     targetCoordinates: '目標座標',
+    targetType: '目標類型',
+    planet: '行星',
+    moon: '月球',
     galaxy: '銀河系',
-    diplomacy: 'Diplomacy',
     system: '星系',
     position: '位置',
     missionType: '任務類型',
@@ -506,7 +544,30 @@ export default {
     noDeathstar: '需要死星才能執行毀滅任務',
     giftMode: '贈送模式',
     giftModeDescription: '將資源作為禮物贈送給',
-    estimatedReputationGain: '預計好感度增加'
+    estimatedReputationGain: '預計好感度增加',
+    // 艦隊預設
+    fleetPresets: '艦隊預設',
+    fleetPresetsDescription: '儲存常用的艦隊配置，快速派遣（最多3個）',
+    savePreset: '儲存預設',
+    noPresets: '暫無預設，選擇艦隊後點擊「儲存預設」建立',
+    shipTypes: '種艦船',
+    editPreset: '編輯預設內容',
+    renamePreset: '重新命名',
+    deletePreset: '刪除預設',
+    editingPresetHint: '正在編輯預設，修改艦隊配置後點擊「儲存」更新預設內容',
+    presetLimitReached: '預設數量已滿',
+    presetLimitReachedMessage: '最多只能儲存 {max} 個預設',
+    presetError: '儲存失敗',
+    presetNoShips: '請先選擇至少一艘艦船',
+    presetDefaultName: '預設 {number}',
+    savePresetTitle: '儲存艦隊預設',
+    savePresetDescription: '為這個艦隊配置命名',
+    renamePresetTitle: '重新命名預設',
+    renamePresetDescription: '輸入新的預設名稱',
+    presetName: '預設名稱',
+    presetNamePlaceholder: '輸入預設名稱',
+    deletePresetTitle: '刪除預設',
+    deletePresetMessage: '確定要刪除預設「{name}」嗎？此操作不可撤銷。'
   },
   officersView: {
     title: '軍官',
@@ -546,7 +607,6 @@ export default {
     title: '星系',
     selectCoordinates: '選擇座標',
     galaxy: '銀河系',
-    diplomacy: 'Diplomacy',
     selectGalaxy: '選擇銀河系',
     system: '星系',
     selectSystem: '選擇星系',
@@ -587,7 +647,8 @@ export default {
     sendGift: '贈送禮物',
     debris: '殘骸',
     giftPlanetTitle: '贈送禮物',
-    giftPlanetMessage: '確定要向星球 [{coordinates}] 贈送資源嗎？\n\n請前往艦隊頁面選擇運輸船並裝載資源。'
+    giftPlanetMessage: '確定要向星球 [{coordinates}] 贈送資源嗎？\n\n請前往艦隊頁面選擇運輸船並裝載資源。',
+    npcPlanetName: '{name}的星球'
   },
   messagesView: {
     title: '訊息中心',
@@ -621,6 +682,7 @@ export default {
     targetPlanet: '目標星球',
     attackerRemaining: '攻擊方剩餘',
     defenderRemaining: '防守方剩餘',
+    allDestroyed: '全部摧毀',
     moonChance: '月球生成機率',
     showRoundDetails: '顯示回合詳情',
     hideRoundDetails: '隱藏回合詳情',
@@ -686,19 +748,56 @@ export default {
     activityDescription: '',
     npcActivityMessage: '',
     arrivalTime: '',
-    npcActivityTip: ''
+    npcActivityTip: '',
+    clearMessages: '清空訊息',
+    clearMessageTypes: '選擇要清空的訊息類型',
+    clearBattleReports: '戰鬥報告',
+    clearSpyReports: '間諜報告',
+    clearSpiedNotifications: '被偵查通知',
+    clearMissionReports: '任務報告',
+    clearNPCActivity: 'NPC活動',
+    clearGiftNotifications: '禮物通知',
+    clearGiftRejected: '拒絕記錄',
+    clearNow: '立即清空'
   },
   missionReports: {
     transportSuccess: '運輸任務成功完成',
     transportFailed: '運輸任務失敗',
+    transportFailedTargetNotFound: '運輸失敗：目標星球不存在',
+    transportFailedGiftRejected: '運輸失敗：禮物被拒絕',
     colonizeSuccess: '殖民任務成功，新星球已建立',
     colonizeFailed: '殖民任務失敗',
+    colonizeFailedOccupied: '殖民失敗：目標位置已被其他星球佔用',
+    colonizeFailedMaxColonies: '殖民失敗：已達到殖民地數量上限。研究天體物理學可增加上限。',
+    spySuccess: '偵查任務成功完成',
+    spyFailed: '偵查任務失敗',
+    spyFailedTargetNotFound: '偵查失敗：目標星球不存在',
     deploySuccess: '部署任務成功完成',
     deployFailed: '部署任務失敗',
+    deployFailedTargetNotFound: '部署失敗：目標星球不存在',
+    deployFailedNotOwnPlanet: '部署失敗：目標星球不屬於你',
     recycleSuccess: '回收任務成功完成',
     recycleFailed: '回收任務失敗，目標位置沒有殘骸',
+    recycleFailedNoDebris: '回收失敗：目標位置沒有殘骸場',
+    recycleFailedDebrisEmpty: '回收失敗：殘骸場已被清空',
     destroySuccess: '行星毀滅任務成功執行',
-    destroyFailed: '行星毀滅任務失敗'
+    destroyFailed: '行星毀滅任務失敗',
+    destroyFailedTargetNotFound: '毀滅失敗：目標星球不存在',
+    destroyFailedOwnPlanet: '毀滅失敗：無法摧毀自己的星球',
+    destroyFailedNoDeathstar: '毀滅失敗：沒有死星執行任務',
+    destroyFailedChance: '毀滅失敗：概率判定失敗（成功率：{chance}%）',
+    expeditionResources: '探險隊發現了資源！',
+    expeditionDarkMatter: '探險隊發現了暗物質！',
+    expeditionFleet: '探險隊發現了廢棄的艦船！',
+    expeditionPiratesAttack: '探險隊遭遇海盜襲擊，損失了部分艦船',
+    expeditionPiratesEscaped: '探險隊遭遇海盜，但成功逃脫',
+    expeditionAliensAttack: '探險隊遭遇外星人襲擊，損失了部分艦船',
+    expeditionAliensEscaped: '探險隊遭遇外星人，但成功逃脫',
+    expeditionNothing: '探險隊什麼也沒有發現',
+    missileAttackSuccess: '導彈攻擊成功！',
+    missileAttackFailed: '導彈攻擊失敗',
+    missileAttackIntercepted: '導彈被攔截',
+    hits: '命中'
   },
   simulatorView: {
     title: '戰鬥模擬器',
@@ -789,6 +888,7 @@ export default {
     community: '社群',
     github: 'GitHub 儲存庫',
     qqGroup: 'QQ 交流群',
+    privacyPolicy: '隱私協議',
     notifications: '通知設定',
     notificationsDesc: '管理遊戲內的通知提醒',
     notificationTypes: '通知類型',
@@ -870,6 +970,7 @@ export default {
     completeQueuesSuccess: ''
   },
   alerts: {
+    incomingFleets: '{count}支敵方艦隊來襲',
     npcSpyIncoming: 'NPC偵查即將到達',
     npcAttackIncoming: 'NPC艦隊來襲！',
     npcFleetIncoming: 'NPC艦隊接近',
@@ -880,6 +981,32 @@ export default {
     detectionFailed: '偵查未被發現',
     npcSpiedYourPlanet: 'NPC偵查了你的星球',
     npcAttackedYourPlanet: 'NPC攻擊了你的星球'
+  },
+  enemyAlert: {
+    title: '敵方警報',
+    markAllRead: '全部已讀',
+    noAlerts: '暫無警報',
+    fleetSize: '艦隊規模',
+    ships: '艘',
+    viewFleet: '查看艦隊',
+    alertDetails: '警報詳情',
+    targetInfo: '目標資訊',
+    arrivalTime: '到達時間',
+    countdown: '倒數計時',
+    viewMessages: '查看訊息',
+    arrived: '已到達',
+    missionType: {
+      spy: '偵查',
+      attack: '攻擊',
+      recycle: '回收',
+      unknown: '未知'
+    },
+    warning: {
+      spy: '敵方偵查即將到達！',
+      attack: '敵方攻擊即將到達！',
+      recycle: '敵方正在回收你附近的殘骸！',
+      unknown: '敵方艦隊即將到達！'
+    }
   },
   diplomacy: {
     title: '外交',
@@ -913,8 +1040,13 @@ export default {
     more: '更多',
     actions: {
       gift: '贈送禮物',
-      viewPlanets: '查看星球'
+      viewPlanets: '查看星球',
+      addNote: '新增備註',
+      editNote: '編輯備註'
     },
+    note: '備註',
+    notePlaceholder: '輸入備註...',
+    noteEmpty: '無備註',
     lastEvent: '最近事件',
     reportDetails: '外交報告詳情',
     eventDescription: '事件描述',
@@ -923,6 +1055,15 @@ export default {
     after: '之後',
     statusChange: '關係狀態變化',
     viewDiplomacy: '查看外交頁面',
+    eventType: {
+      gift: '贈送了資源',
+      attack: '發起了攻擊',
+      allyAttacked: '攻擊了盟友',
+      spy: '進行了偵查',
+      stealDebris: '搶奪了殘骸',
+      destroyPlanet: '摧毀了星球',
+      unknown: '未知事件'
+    },
     events: {
       gift: '已贈送禮物',
       attack: '攻擊',
@@ -959,6 +1100,49 @@ export default {
       allyOutraged: '{allyName}對你摧毀盟友{targetName}的{planetName}感到憤怒',
       npcEliminated: 'NPC {npcName}已被徹底消滅',
       npcEliminatedMessage: '你消滅了{npcName}的所有星球！該勢力已被徹底摧毀。'
+    },
+    searchPlaceholder: '搜索NPC名稱...',
+    viewMode: {
+      card: '卡片',
+      list: '列表'
+    },
+    diagnostic: {
+      button: 'NPC狀態診斷',
+      title: 'NPC狀態診斷',
+      description: '當前玩家積分：{points}，偵查間隔：{spyInterval}分鐘，攻擊間隔：{attackInterval}分鐘，攻擊概率：{attackProb}%',
+      noData: '暫無NPC數據',
+      difficulty: '難度',
+      difficultyLevels: {
+        easy: '簡單',
+        medium: '普通',
+        hard: '困難'
+      },
+      reputation: '好感度',
+      spyProbes: '偵察機數量',
+      fleetPower: '艦隊戰力',
+      canSpy: '可以偵查',
+      canAttack: '可以攻擊',
+      attackProbability: '攻擊概率',
+      nextSpy: '下次偵查',
+      nextAttack: '下次攻擊',
+      yes: '是',
+      no: '否',
+      timeFormat: '{min}分{sec}秒',
+      anytime: '隨時可能',
+      statusExplanation: '狀態說明',
+      noRelation: '無關係',
+      noRelationNeutral: '無關係（中立）',
+      reasons: {
+        friendlyNoAction: '關係友好，不會主動行動',
+        neutralNoAction: '關係中立，不會主動行動',
+        hostileWillAct: '關係敵對，可能採取行動',
+        noRelationNeutral: '無外交關係，視為中立',
+        insufficientProbes: '偵察機不足（當前：{current}，需要：{required}）',
+        noFleet: '沒有戰鬥艦隊',
+        spyCooldown: '偵查冷卻中（{min}分{sec}秒）',
+        attackCooldown: '攻擊冷卻中（{min}分{sec}秒）',
+        notSpiedYet: '尚未偵查過，需要先進行偵查'
+      }
     }
   },
   pagination: {
@@ -973,6 +1157,52 @@ export default {
     title: '找不到頁面',
     description: '抱歉，您訪問的頁面不存在',
     goHome: '返回首頁'
+  },
+  privacy: {
+    title: '隱私協議',
+    sections: {
+      introduction: {
+        title: '簡介',
+        content: '本隱私協議說明了 OGame-Vue-Ts 如何處理您的資料。我們致力於保護您的隱私，本遊戲的設計完全尊重用戶隱私。'
+      },
+      dataCollection: {
+        title: '資料收集',
+        content: '本遊戲僅在您的本地瀏覽器中收集和存儲以下資料：',
+        items: {
+          gameProgress: '遊戲進度（建築等級、艦隊、資源等）',
+          settings: '遊戲設定（通知偏好、顯示選項等）',
+          language: '語言偏好'
+        }
+      },
+      dataStorage: {
+        title: '資料存儲',
+        content:
+          '所有資料均存儲在您瀏覽器的本地存儲（localStorage）中。這意味著您的資料始終保留在您自己的設備上，我們無法訪問、查看或收集任何您的遊戲資料。'
+      },
+      noServer: {
+        title: '無伺服器通訊',
+        content:
+          '本遊戲是一個完全離線的單機遊戲。除了檢查更新功能（從 GitHub 獲取版本資訊）外，遊戲不會與任何伺服器通訊。您的遊戲資料永遠不會離開您的設備。'
+      },
+      thirdParty: {
+        title: '第三方服務',
+        content:
+          '本遊戲使用第三方流量分析服務來統計訪問量和流量來源，幫助我們了解用戶使用情況並改進遊戲體驗。這些分析資料是匿名的，不包含任何個人身份資訊。我們不使用任何廣告服務或其他商業追蹤工具。'
+      },
+      dataControl: {
+        title: '資料控制',
+        content: '您對自己的資料擁有完全控制權：',
+        items: {
+          export: '您可以隨時匯出遊戲資料',
+          import: '您可以從備份檔案匯入資料',
+          delete: '您可以通過清除瀏覽器資料或使用遊戲內的「清除資料」功能來刪除所有資料'
+        }
+      },
+      contact: {
+        title: '聯繫我們',
+        content: '如果您對本隱私協議有任何問題，請通過以下方式聯繫我們：'
+      }
+    }
   },
   time: {
     days: '天',
@@ -1002,6 +1232,305 @@ export default {
       waitBuild: {
         title: '建造佇列',
         content: '點擊右上角的佇列圖示可以查看建造進度。您可以繼續瀏覽其他頁面，建造會在背景進行。'
+      }
+    }
+  },
+  hints: {
+    close: '關閉',
+    gotIt: '知道了',
+    dontShowAgain: '不再顯示',
+    resetHints: '重置提示',
+    resetHintsDesc: '重新顯示所有提示',
+    hintsEnabled: '啟用提示',
+    hintsEnabledDesc: '訪問頁面時顯示幫助提示',
+    overview: {
+      title: '星球總覽',
+      message: '在這裡查看星球資源、艦隊狀態和生產詳情。經常查看以監控進度！'
+    },
+    buildings: {
+      title: '建築',
+      message: '在這裡建造和升級建築。先建太陽能電站獲取能量，然後是資源礦。提示：機器人工廠可加速建造！'
+    },
+    research: {
+      title: '研究實驗室',
+      message: '研究科技以解鎖新艦船、提升戰鬥力和推進文明。能量科技是個好起點！'
+    },
+    shipyard: {
+      title: '船塢',
+      message: '建造艦船來探索、運輸資源和保衛帝國。貨船可以在星球之間運送資源。'
+    },
+    fleet: {
+      title: '艦隊指揮',
+      message: '派遣艦船執行任務：攻擊敵人、運輸資源、殖民新星球或探索廢墟場。'
+    },
+    galaxy: {
+      title: '星系地圖',
+      message: '探索星系尋找可殖民的空星球、可回收的廢墟場和可攻擊的敵人。先用間諜探測器偵查！'
+    },
+    diplomacy: {
+      title: '外交',
+      message: '管理與NPC的關係。送禮可提升聲望，否則可能遭受敵對攻擊。敵人的盟友也可能對你敵對！'
+    },
+    messages: {
+      title: '訊息',
+      message: '在這裡查看戰鬥報告、間諜報告和外交通知。追蹤你的活動和敵人遭遇。'
+    },
+    defense: {
+      title: '星球防禦',
+      message: '建造防禦設施保護星球免受攻擊。護盾和砲塔可以威懾襲擊者！'
+    },
+    officers: {
+      title: '軍官',
+      message: '招募軍官獲得各種加成！指揮官加速建造，地質學家提升資源產量，上將增強艦隊能力。'
+    },
+    simulator: {
+      title: '戰鬥模擬器',
+      message: '在發動攻擊前模擬戰鬥結果。輸入雙方艦隊和科技等級，預測勝負和損失。'
+    },
+    achievements: {
+      title: '成就系統',
+      message: '完成各類遊戲目標解鎖成就，獲得暗物質獎勵！成就分為多個等級，挑戰更高難度獲得更豐厚的獎勵。'
+    },
+    settings: {
+      title: '設置',
+      message: '在這裡管理遊戲數據、調整通知設置、導出/導入存檔。記得定期備份你的進度！'
+    },
+    gm: {
+      title: 'GM管理面板',
+      message: 'GM模式可以快速修改資源、建築、科技等級。用於測試或體驗完整遊戲內容。'
+    }
+  },
+  achievements: {
+    title: '成就',
+    unlocked: '成就解鎖',
+    progress: '進度',
+    nextTier: '下一等級',
+    maxTierReached: '已達最高等級',
+    tiers: {
+      bronze: '青銅',
+      silver: '白銀',
+      gold: '黃金',
+      platinum: '白金',
+      diamond: '鑽石'
+    },
+    categories: {
+      resource: '資源',
+      building: '建造',
+      combat: '戰鬥',
+      mission: '任務',
+      diplomacy: '外交'
+    },
+    names: {
+      metalCollector: '金屬收藏家',
+      crystalCollector: '晶體收藏家',
+      deuteriumCollector: '重氫收藏家',
+      darkMatterCollector: '暗物質收藏家',
+      resourceConsumer: '資源消耗者',
+      masterBuilder: '建造大師',
+      researcher: '科學家',
+      shipwright: '造船匠',
+      fortifier: '防禦專家',
+      warmonger: '好戰者',
+      conqueror: '征服者',
+      defender: '防禦者',
+      fleetDestroyer: '艦隊毀滅者',
+      debrisCreator: '殘骸製造者',
+      fleetSacrifice: '艦隊犧牲者',
+      defenseSacrifice: '防禦犧牲者',
+      pilot: '飛行員',
+      transporter: '運輸專家',
+      cargoMaster: '貨運大師',
+      colonizer: '殖民者',
+      spy: '間諜大師',
+      deployer: '部署專家',
+      explorer: '探險家',
+      luckyExplorer: '幸運探險家',
+      recycler: '回收專家',
+      scavenger: '拾荒者',
+      destroyer: '毀滅者',
+      fuelBurner: '燃料消耗者',
+      diplomat: '外交官',
+      nemesis: '宿敵',
+      generous: '慷慨者',
+      philanthropist: '慈善家',
+      target: '目標',
+      watched: '被監視',
+      robbed: '被搶奪',
+      lostToNPC: '資源損失者'
+    },
+    descriptions: {
+      metalCollector: '累計生產金屬',
+      crystalCollector: '累計生產晶體',
+      deuteriumCollector: '累計生產重氫',
+      darkMatterCollector: '累計生產暗物質',
+      resourceConsumer: '累計消耗資源',
+      masterBuilder: '累計升級建築次數',
+      researcher: '累計完成研究次數',
+      shipwright: '累計生產艦船數量',
+      fortifier: '累計建造防禦設施',
+      warmonger: '發起攻擊次數',
+      conqueror: '攻擊勝利次數',
+      defender: '防禦成功次數',
+      fleetDestroyer: '防禦中消滅的敵方艦隊數量',
+      debrisCreator: '戰鬥中產生的殘骸資源總量',
+      fleetSacrifice: '損失的艦隊總數',
+      defenseSacrifice: '防禦中損失的防禦設施數量',
+      pilot: '完成飛行任務次數',
+      transporter: '運輸任務次數',
+      cargoMaster: '運輸資源總量',
+      colonizer: '成功殖民星球次數',
+      spy: '執行偵查任務次數',
+      deployer: '執行部署任務次數',
+      explorer: '遠征總次數',
+      luckyExplorer: '遠征成功次數',
+      recycler: '回收任務次數',
+      scavenger: '回收資源總量',
+      destroyer: '摧毀星球次數',
+      fuelBurner: '消耗燃料總量',
+      diplomat: '友好NPC數量',
+      nemesis: '敵對NPC數量',
+      generous: '送禮次數',
+      philanthropist: '贈送資源總量',
+      target: '被NPC攻擊次數',
+      watched: '被NPC偵查次數',
+      robbed: '被NPC回收殘骸次數',
+      lostToNPC: '被NPC回收的殘骸資源總量'
+    }
+  },
+  guide: {
+    title: '遊戲指南',
+    tableOfContents: '目錄',
+    quickstart: {
+      title: '新手入門',
+      description: '快速了解遊戲核心機制，開始你的星際征程',
+      step1: {
+        title: '建造資源礦場',
+        content1: '資源是發展的基礎。首先建造金屬礦、晶體礦和重氫合成器。',
+        item1: '金屬礦 - 產出金屬，是最基礎的資源',
+        item2: '晶體礦 - 產出晶體，用於高級建築和艦船',
+        item3: '重氫合成器 - 產出重氫，用於燃料和高級科技',
+        item4: '建議優先發展金屬礦，其次晶體礦'
+      },
+      step2: {
+        title: '確保能源供應',
+        content1: '礦場需要電力才能運作。建造太陽能電站提供電力。',
+        item1: '太陽能電站 - 提供基礎電力，無需消耗資源',
+        item2: '核聚變反應堆 - 後期可用，消耗重氫但產電量更高'
+      },
+      step3: {
+        title: '建設基礎設施',
+        content1: '設施是發展的重要支撐。',
+        item1: '機器人工廠 - 加速所有建築的建造速度',
+        item2: '船塢 - 用於建造艦船和防禦設施',
+        item3: '研究實驗室 - 用於研發科技'
+      },
+      step4: {
+        title: '研發科技',
+        content1: '科技可以解鎖更多內容並提供加成。',
+        item1: '能量技術 - 解鎖更多科技的前置',
+        item2: '燃燒引擎 - 提高艦船速度',
+        item3: '電腦技術 - 增加可同時執行的艦隊任務數'
+      },
+      step5: {
+        title: '建造艦隊',
+        content1: '艦隊是探索和戰鬥的關鍵。',
+        item1: '小型貨船 - 用於運輸資源',
+        item2: '輕型戰鬥機 - 基礎戰鬥單位',
+        item3: '間諜衛星 - 偵查敵人情報'
+      },
+      step6: {
+        title: '探索宇宙',
+        content1: '使用艦隊探索宇宙，獲取資源和發展。',
+        item1: '偵查 - 獲取敵人情報',
+        item2: '攻擊 - 掠奪資源',
+        item3: '運輸 - 在星球間轉移資源',
+        item4: '殖民 - 建立新的殖民地'
+      }
+    },
+    buildings: {
+      title: '建築',
+      description: '了解遊戲中所有建築的功能和作用',
+      resource: { title: '資源建築' },
+      energy: { title: '能源建築' },
+      facility: { title: '設施建築' },
+      storage: { title: '倉儲建築' },
+      moon: { title: '月球建築' }
+    },
+    research: {
+      title: '研究',
+      description: '了解所有科技的功能和解鎖條件',
+      basic: { title: '基礎科技' },
+      drive: { title: '驅動科技' },
+      combat: { title: '戰鬥科技' },
+      advanced: { title: '高級科技' }
+    },
+    ships: {
+      title: '艦船',
+      description: '了解各類艦船的屬性和用途',
+      combat: { title: '戰鬥艦船' },
+      civil: { title: '民用艦船' },
+      special: { title: '特殊艦船' },
+      stats: '攻擊: {attack} | 護盾: {shield} | 速度: {speed}',
+      cargo: '載貨量: {cargo}'
+    },
+    defense: {
+      title: '防禦',
+      description: '了解各類防禦設施的屬性和作用',
+      basic: { title: '基礎防禦' },
+      advanced: { title: '高級防禦' },
+      shields: { title: '護盾與導彈' },
+      stats: '攻擊: {attack} | 護盾: {shield}'
+    },
+    systems: {
+      title: '遊戲系統',
+      description: '了解遊戲的核心系統機制',
+      resource: {
+        title: '資源系統',
+        content1: '資源是遊戲的核心，用於建造建築、研發科技和生產艦船。',
+        item1: '金屬 - 最基礎的資源，產量最高',
+        item2: '晶體 - 用於高級建築和艦船',
+        item3: '重氫 - 用於燃料和高級科技',
+        item4: '暗物質 - 稀有資源，用於購買軍官和特殊功能'
+      },
+      combat: {
+        title: '戰鬥系統',
+        content1: '戰鬥採用回合制，每輪艦船和防禦設施都會互相攻擊。',
+        item1: '攻擊力 - 決定對敵方造成的傷害',
+        item2: '護盾值 - 吸收部分傷害',
+        item3: '結構值 - 單位的生命值',
+        item4: '速射 - 某些艦船可以在一輪內多次攻擊特定目標'
+      },
+      missions: {
+        title: '艦隊任務',
+        content1: '艦隊可以執行多種類型的任務。',
+        item1: '攻擊 - 攻擊敵方星球，掠奪資源',
+        item2: '運輸 - 在自己的星球間運送資源',
+        item3: '部署 - 將艦隊永久轉移到另一個星球',
+        item4: '殖民 - 使用殖民船建立新殖民地',
+        item5: '偵查 - 使用間諜衛星獲取情報',
+        item6: '回收 - 回收戰場殘骸中的資源'
+      },
+      diplomacy: {
+        title: '外交系統',
+        content1: 'NPC勢力具有好感度系統，影響他們對你的態度。',
+        item1: '友好 - NPC不會主動攻擊你',
+        item2: '中立 - NPC可能會偵查你',
+        item3: '敵對 - NPC會主動攻擊你的星球'
+      },
+      achievements: {
+        title: '成就系統',
+        content1: '完成各類遊戲目標解鎖成就，獲得暗物質獎勵。',
+        item1: '成就分為多個等級，難度遞增',
+        item2: '完成成就可獲得暗物質獎勵',
+        item3: '成就進度會自動追蹤'
+      },
+      officers: {
+        title: '軍官系統',
+        content1: '雇傭軍官可以獲得各種加成效果。',
+        item1: '指揮官 - 減少建造時間',
+        item2: '提督 - 增加艦隊任務槽位',
+        item3: '工程師 - 減少防禦修復時間',
+        item4: '地質學家 - 增加資源產量'
       }
     }
   }

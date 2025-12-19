@@ -59,6 +59,7 @@ export const BUILDINGS: Record<BuildingType, BuildingConfig> = {
     baseTime: 15, // 减少建造时间：30→15秒
     costMultiplier: 1.5,
     spaceUsage: 2,
+    planetOnly: true, // OGame规则：月球不能建造太阳能电站
     levelRequirements: {
       15: { [BuildingType.RoboticsFactory]: 3 },
       25: { [BuildingType.RoboticsFactory]: 6, [BuildingType.ResearchLab]: 5 },
@@ -73,6 +74,7 @@ export const BUILDINGS: Record<BuildingType, BuildingConfig> = {
     baseTime: 30,
     costMultiplier: 1.8,
     spaceUsage: 4,
+    planetOnly: true, // OGame规则：月球不能建造核聚变反应堆
     requirements: {
       [TechnologyType.EnergyTechnology]: 3,
       [BuildingType.DeuteriumSynthesizer]: 5
@@ -109,6 +111,7 @@ export const BUILDINGS: Record<BuildingType, BuildingConfig> = {
     costMultiplier: 2,
     spaceUsage: 8,
     maxLevel: 10, // 最多10级（最多11个建造队列）
+    planetOnly: true, // OGame规则：月球不能建造纳米工厂
     requirements: { [BuildingType.RoboticsFactory]: 10 },
     levelRequirements: {
       3: { [BuildingType.ResearchLab]: 10, [BuildingType.Shipyard]: 8, [TechnologyType.ComputerTechnology]: 8 },
@@ -139,6 +142,7 @@ export const BUILDINGS: Record<BuildingType, BuildingConfig> = {
     costMultiplier: 1.8,
     spaceUsage: 3,
     fleetStorageBonus: 1500, // 每级增加1500舰队仓储，比船坞更高
+    planetOnly: true, // OGame规则：月球不能建造机库
     requirements: { [BuildingType.RoboticsFactory]: 1 }, // 只需要1级机器人工厂
     levelRequirements: {
       10: { [BuildingType.RoboticsFactory]: 3 },
@@ -153,6 +157,7 @@ export const BUILDINGS: Record<BuildingType, BuildingConfig> = {
     baseTime: 30, // 减少建造时间：60→30秒
     costMultiplier: 2,
     spaceUsage: 3,
+    planetOnly: true, // OGame规则：月球不能建造研究实验室
     requirements: {
       [BuildingType.MetalMine]: 3,
       [BuildingType.CrystalMine]: 3,
@@ -176,11 +181,8 @@ export const BUILDINGS: Record<BuildingType, BuildingConfig> = {
     baseTime: 15, // 减少建造时间：30→15秒
     costMultiplier: 2,
     spaceUsage: 1,
-    requirements: { [BuildingType.MetalMine]: 2 },
-    levelRequirements: {
-      8: { [BuildingType.MetalMine]: 15, [BuildingType.RoboticsFactory]: 3 },
-      12: { [BuildingType.MetalMine]: 25, [BuildingType.RoboticsFactory]: 6 }
-    }
+    planetOnly: true, // OGame规则：月球不能建造仓储（月球没有矿场）
+    requirements: { [BuildingType.MetalMine]: 1 }
   },
   [BuildingType.CrystalStorage]: {
     id: BuildingType.CrystalStorage,
@@ -190,11 +192,8 @@ export const BUILDINGS: Record<BuildingType, BuildingConfig> = {
     baseTime: 15, // 减少建造时间：30→15秒
     costMultiplier: 2,
     spaceUsage: 1,
-    requirements: { [BuildingType.CrystalMine]: 2 },
-    levelRequirements: {
-      8: { [BuildingType.CrystalMine]: 15, [BuildingType.RoboticsFactory]: 3 },
-      12: { [BuildingType.CrystalMine]: 25, [BuildingType.RoboticsFactory]: 6 }
-    }
+    planetOnly: true, // OGame规则：月球不能建造仓储（月球没有矿场）
+    requirements: { [BuildingType.CrystalMine]: 1 }
   },
   [BuildingType.DeuteriumTank]: {
     id: BuildingType.DeuteriumTank,
@@ -204,11 +203,8 @@ export const BUILDINGS: Record<BuildingType, BuildingConfig> = {
     baseTime: 15, // 减少建造时间：30→15秒
     costMultiplier: 2,
     spaceUsage: 1,
-    requirements: { [BuildingType.DeuteriumSynthesizer]: 2 },
-    levelRequirements: {
-      8: { [BuildingType.DeuteriumSynthesizer]: 15, [BuildingType.RoboticsFactory]: 3 },
-      12: { [BuildingType.DeuteriumSynthesizer]: 25, [BuildingType.RoboticsFactory]: 6 }
-    }
+    planetOnly: true, // OGame规则：月球不能建造仓储（月球没有矿场）
+    requirements: { [BuildingType.DeuteriumSynthesizer]: 1 }
   },
   [BuildingType.DarkMatterCollector]: {
     id: BuildingType.DarkMatterCollector,
@@ -255,6 +251,7 @@ export const BUILDINGS: Record<BuildingType, BuildingConfig> = {
     costMultiplier: 2,
     spaceUsage: 5,
     maxLevel: 10,
+    planetOnly: true, // OGame规则：月球不能建造导弹发射井
     requirements: {
       [BuildingType.Shipyard]: 1
     },
@@ -460,7 +457,8 @@ export const TECHNOLOGIES: Record<TechnologyType, TechnologyConfig> = {
   [TechnologyType.EspionageTechnology]: {
     id: TechnologyType.EspionageTechnology,
     name: '间谍技术',
-    description: '提高间谍探测效果，每级提高1级侦查深度。侦察等级=己方等级-对方等级+侦察船数/5。≥-1显示舰队，≥1显示防御，≥3显示建筑，≥5显示科技',
+    description:
+      '提高间谍探测效果，每级提高1级侦查深度。侦察等级=己方等级-对方等级+侦察船数/5。≥-1显示舰队，≥1显示防御，≥3显示建筑，≥5显示科技',
     baseCost: { metal: 200, crystal: 1000, deuterium: 200, darkMatter: 0, energy: 0 },
     baseTime: 60,
     costMultiplier: 2,
@@ -620,7 +618,7 @@ export const TECHNOLOGIES: Record<TechnologyType, TechnologyConfig> = {
     baseCost: { metal: 4000000, crystal: 8000000, deuterium: 4000000, darkMatter: 200000, energy: 0 },
     baseTime: 300,
     costMultiplier: 2,
-    maxLevel: 5, // 最多5级
+    maxLevel: 10,
     requirements: {
       [BuildingType.ResearchLab]: 12,
       [TechnologyType.HyperspaceTechnology]: 8,
@@ -844,7 +842,7 @@ export const SHIPS: Record<ShipType, ShipConfig> = {
     attack: 1,
     shield: 1,
     armor: 200,
-    speed: 0,
+    speed: 1, // 极低速度，可被舰队携带但非常慢
     fuelConsumption: 0,
     storageUsage: 1,
     requirements: { [BuildingType.Shipyard]: 1 }
@@ -1096,12 +1094,18 @@ export const OFFICERS: Record<OfficerType, OfficerConfig> = {
 
 // 月球配置
 export const MOON_CONFIG = {
-  minDebrisField: 100000, // 最小残骸场 (金属+晶体)
-  baseChance: 1, // 基础1%概率
-  maxChance: 20, // 最大20%概率
+  minDebrisField: 100000, // 最小残骸场 (金属+晶体) 100k = 1%概率
+  baseChance: 0, // 基础0%概率（每100k残骸增加1%）
+  maxChance: 20, // 最大20%概率（需要2M残骸）
   chancePerDebris: 100000, // 每10万资源增加1%概率
-  baseSize: 100, // 月球基础空间
-  lunarBaseSpaceBonus: 30 // 每级月球基地增加的空间
+  baseFields: 1, // 月球初始空间（OGame规则：初始只有1格）
+  lunarBaseFieldsBonus: 3, // 每级月球基地增加的空间（每级+3格，占用1格，净增2格）
+  minDiameter: 3476, // 最小月球直径(km)，1%概率时
+  maxDiameter: 8944, // 最大月球直径(km)，20%概率时保证>8000km
+  baseDiameter: 3000, // 基础直径(km)
+  diameterPerChance: 273, // 每1%概率增加的直径(km)，(8944-3476)/20≈273
+  jumpGateCooldown: 3600000 // 跳跃门冷却时间(ms) = 1小时 (OGame规则)
+  // 注：月球资源容量与行星相同（基础10000），OGame规则允许资源超过容量存储
 }
 
 // 行星配置

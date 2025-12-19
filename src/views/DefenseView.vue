@@ -180,6 +180,7 @@
   import * as publicLogic from '@/logic/publicLogic'
   import * as shipValidation from '@/logic/shipValidation'
   import * as shipLogic from '@/logic/shipLogic'
+  import * as gameLogic from '@/logic/gameLogic'
 
   const gameStore = useGameStore()
   const detailDialog = useDetailDialogStore()
@@ -236,6 +237,11 @@
     if (!currentPlanet) return { success: false }
     const validation = shipValidation.validateDefenseBuild(currentPlanet, defenseType, quantity, gameStore.player.technologies)
     if (!validation.valid) return { success: false, reason: validation.reason }
+
+    // 追踪资源消耗（在扣除前计算成本）
+    const totalCost = shipLogic.calculateDefenseCost(defenseType, quantity)
+    gameLogic.trackResourceConsumption(gameStore.player, totalCost)
+
     const queueItem = shipValidation.executeDefenseBuild(currentPlanet, defenseType, quantity, gameStore.player.officers)
     currentPlanet.buildQueue.push(queueItem)
     return { success: true }

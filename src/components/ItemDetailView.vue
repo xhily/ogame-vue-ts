@@ -679,53 +679,56 @@
       const baseCapacity = 10000
 
       // Building calculation configuration
-      const buildingCalculations: Record<string, (level: number) => Partial<{
-        production: number
-        consumption: number
-        capacity: number
-        fleetStorage: number
-        spaceBonus: number
-        buildSpeedBonus: number
-        researchSpeedBonus: number
-      }>> = {
-        metalMine: (lvl) => ({
+      const buildingCalculations: Record<
+        string,
+        (level: number) => Partial<{
+          production: number
+          consumption: number
+          capacity: number
+          fleetStorage: number
+          spaceBonus: number
+          buildSpeedBonus: number
+          researchSpeedBonus: number
+        }>
+      > = {
+        metalMine: lvl => ({
           production: Math.floor(1500 * lvl * Math.pow(1.5, lvl) * resourceBonus),
           consumption: Math.floor(10 * lvl * Math.pow(1.1, lvl))
         }),
-        crystalMine: (lvl) => ({
+        crystalMine: lvl => ({
           production: Math.floor(1000 * lvl * Math.pow(1.5, lvl) * resourceBonus),
           consumption: Math.floor(10 * lvl * Math.pow(1.1, lvl))
         }),
-        deuteriumSynthesizer: (lvl) => ({
+        deuteriumSynthesizer: lvl => ({
           production: Math.floor(500 * lvl * Math.pow(1.5, lvl) * resourceBonus),
           consumption: Math.floor(10 * lvl * Math.pow(1.1, lvl))
         }),
-        solarPlant: (lvl) => ({
+        solarPlant: lvl => ({
           production: Math.floor(50 * lvl * Math.pow(1.1, lvl) * energyBonus)
         }),
-        metalStorage: (lvl) => ({
+        metalStorage: lvl => ({
           capacity: Math.floor(baseCapacity * Math.pow(2, lvl) * storageBonus)
         }),
-        crystalStorage: (lvl) => ({
+        crystalStorage: lvl => ({
           capacity: Math.floor(baseCapacity * Math.pow(2, lvl) * storageBonus)
         }),
-        deuteriumTank: (lvl) => ({
+        deuteriumTank: lvl => ({
           capacity: Math.floor(baseCapacity * Math.pow(2, lvl) * storageBonus)
         }),
-        darkMatterCollector: (lvl) => ({
+        darkMatterCollector: lvl => ({
           capacity: 1000 + lvl * 100,
           production: Math.floor(25 * lvl * Math.pow(1.5, lvl))
         }),
-        darkMatterTank: (lvl) => ({
+        darkMatterTank: lvl => ({
           capacity: Math.floor(1000 * Math.pow(2, lvl) * storageBonus)
         }),
-        fusionReactor: (lvl) => ({
+        fusionReactor: lvl => ({
           production: Math.floor(150 * lvl * Math.pow(1.15, lvl))
         }),
-        shipyard: (lvl) => ({
+        shipyard: lvl => ({
           fleetStorage: 1000 * lvl
         }),
-        hangar: (lvl) => ({
+        hangar: lvl => ({
           fleetStorage: 500 * lvl
         }),
         terraformer: () => ({
@@ -734,13 +737,13 @@
         lunarBase: () => ({
           spaceBonus: 30
         }),
-        roboticsFactory: (lvl) => ({
+        roboticsFactory: lvl => ({
           buildSpeedBonus: lvl
         }),
-        naniteFactory: (lvl) => ({
+        naniteFactory: lvl => ({
           buildSpeedBonus: lvl * 2
         }),
-        researchLab: (lvl) => ({
+        researchLab: lvl => ({
           researchSpeedBonus: lvl
         })
       }

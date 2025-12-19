@@ -34,7 +34,7 @@ jobs:
           cache: 'pnpm'
       - uses: actions/setup-go@v5
         with:
-          go-version: '1.25'
+          go-version: '1.23'
 
       - name: Build Frontend & Server
         run: |
@@ -49,7 +49,71 @@ jobs:
           name: server-${{ matrix.goos }}-${{ matrix.goarch }}
           path: ${{ matrix.executable }}
 
-  # 2. 构建 Electron 客户端
+  # 2. 构建 Android APK (ARM64, ARMv7, x86_64)
+  build-android:
+    name: Build Android APK
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 8
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Build Frontend
+        run: |
+          pnpm install
+          pnpm run build
+
+      - name: Generate Android Icons
+        run: |
+          # 安装 ImageMagick
+          sudo apt-get update && sudo apt-get install -y imagemagick
+          # 使用 ImageMagick 生成各尺寸图标
+          convert logo.png -resize 48x48 android/app/src/main/res/mipmap-mdpi/ic_launcher.png
+          convert logo.png -resize 48x48 android/app/src/main/res/mipmap-mdpi/ic_launcher_round.png
+          convert logo.png -resize 72x72 android/app/src/main/res/mipmap-hdpi/ic_launcher.png
+          convert logo.png -resize 72x72 android/app/src/main/res/mipmap-hdpi/ic_launcher_round.png
+          convert logo.png -resize 96x96 android/app/src/main/res/mipmap-xhdpi/ic_launcher.png
+          convert logo.png -resize 96x96 android/app/src/main/res/mipmap-xhdpi/ic_launcher_round.png
+          convert logo.png -resize 144x144 android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png
+          convert logo.png -resize 144x144 android/app/src/main/res/mipmap-xxhdpi/ic_launcher_round.png
+          convert logo.png -resize 192x192 android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png
+          convert logo.png -resize 192x192 android/app/src/main/res/mipmap-xxxhdpi/ic_launcher_round.png
+          # foreground 图标需要更大（108dp with 72dp safe zone）
+          convert logo.png -resize 108x108 android/app/src/main/res/mipmap-mdpi/ic_launcher_foreground.png
+          convert logo.png -resize 162x162 android/app/src/main/res/mipmap-hdpi/ic_launcher_foreground.png
+          convert logo.png -resize 216x216 android/app/src/main/res/mipmap-xhdpi/ic_launcher_foreground.png
+          convert logo.png -resize 324x324 android/app/src/main/res/mipmap-xxhdpi/ic_launcher_foreground.png
+          convert logo.png -resize 432x432 android/app/src/main/res/mipmap-xxxhdpi/ic_launcher_foreground.png
+
+      - name: Sync Capacitor
+        run: npx cap sync android
+
+      - name: Build APK (Release)
+        working-directory: android
+        run: |
+          chmod +x ./gradlew
+          ./gradlew assembleRelease
+
+      - name: Upload APK Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-apk
+          path: android/app/build/outputs/apk/release/*.APK
+
+  # 3. 构建 Electron 客户端
   build-electron:
     name: Build Electron (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
@@ -91,9 +155,9 @@ jobs:
             pkg/*.dmg
             pkg/*.AppImage
 
-  # 3. 发布 Release
+  # 4. 发布 Release
   release:
-    needs: [ build-server, build-electron ]
+    needs: [ build-server, build-android, build-electron ]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -123,12 +187,27 @@ jobs:
           
           # 移动 Electron 安装包 (排除 unpacked 目录)
           find ./raw-assets/electron-* -type f \( -name "*.exe" -o -name "*.dmg" -o -name "*.AppImage" -o -name "*.zip" \) -exec cp {} ./final-release/ \;
+
+          # 移动 Android APK
+          find ./raw-assets/android-apk -type f -name "*.APK" -exec cp {} ./final-release/ \; || true
           
           # 检查结果
           echo "Final assets to upload:"
           ls -R ./final-release
 
-      # 3. 一次性上传，禁止重复匹配
+      # 3. 删除已存在的同名 APK 资源（避免 422 错误）
+      - name: Delete existing APK assets
+        run: |
+          VERSION=${{ steps.get_version.outputs.VERSION }}
+          # 获取 release 中的现有 assets 并删除 APK 文件
+          gh release view "$VERSION" --json assets -q '.assets[].name' 2>/dev/null | grep -i '\.APK$' | while read asset; do
+            echo "Deleting existing asset: $asset"
+            gh release delete-asset "$VERSION" "$asset" -y || true
+          done
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # 4. 一次性上传，禁止重复匹配
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:

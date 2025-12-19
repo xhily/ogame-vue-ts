@@ -7,14 +7,13 @@
 
     <!-- 标签切换 -->
     <Tabs v-model="activeTab" class="w-full">
-      <TabsList class="grid w-full grid-cols-3">
-        <TabsTrigger value="fleet">{{ t('fleetView.fleetOverview') }}</TabsTrigger>
-        <TabsTrigger value="send">{{ t('fleetView.sendFleet') }}</TabsTrigger>
-        <TabsTrigger value="missions">
-          {{ t('fleetView.flightMissions') }}
-          <Badge v-if="gameStore.player.fleetMissions.length > 0" variant="destructive" class="ml-1">
+      <TabsList :class="['grid', 'w-full', showJumpGateTab ? 'grid-cols-4' : 'grid-cols-3']">
+        <TabsTrigger v-for="tab in visibleTabs" :key="tab.value" :value="tab.value">
+          {{ t(`fleetView.${tab.labelKey}`) }}
+          <Badge v-if="tab.value === 'missions' && gameStore.player.fleetMissions.length > 0" variant="destructive" class="ml-1">
             {{ gameStore.player.fleetMissions.length }}
           </Badge>
+          <Badge v-if="tab.value === 'jumpGate' && jumpGateReady" variant="default" class="ml-1">✓</Badge>
         </TabsTrigger>
       </TabsList>
 
@@ -61,6 +60,80 @@
           </CardContent>
         </Card>
 
+        <!-- 舰队预设 -->
+        <Card>
+          <CardHeader>
+            <div class="flex justify-between items-center">
+              <div>
+                <CardTitle>{{ t('fleetView.fleetPresets') }}</CardTitle>
+                <CardDescription>{{ t('fleetView.fleetPresetsDescription') }}</CardDescription>
+              </div>
+              <Button @click="saveAsPreset" variant="outline" size="sm" :disabled="fleetPresets.length >= MAX_PRESETS">
+                <Save class="h-4 w-4 mr-1" />
+                {{ t('fleetView.savePreset') }}
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div v-if="fleetPresets.length === 0" class="text-center py-4 text-muted-foreground text-sm">
+              {{ t('fleetView.noPresets') }}
+            </div>
+            <div v-else class="space-y-2">
+              <div
+                v-for="preset in fleetPresets"
+                :key="preset.id"
+                class="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors"
+                :class="{ 'ring-2 ring-primary': editingPresetId === preset.id }"
+              >
+                <div class="flex-1 cursor-pointer" @click="loadPreset(preset)">
+                  <div class="flex items-center gap-2">
+                    <Star class="h-4 w-4 text-yellow-500" />
+                    <span class="font-medium">{{ preset.name }}</span>
+                  </div>
+                  <div class="text-xs text-muted-foreground mt-1 flex flex-wrap gap-2">
+                    <span v-if="preset.targetPosition">
+                      [{{ preset.targetPosition.galaxy }}:{{ preset.targetPosition.system }}:{{ preset.targetPosition.position }}]
+                    </span>
+                    <span v-if="preset.missionType">
+                      {{ getMissionName(preset.missionType) }}
+                    </span>
+                    <span>{{ Object.entries(preset.fleet).filter(([_, count]) => count > 0).length }} {{ t('fleetView.shipTypes') }}</span>
+                  </div>
+                </div>
+                <div class="flex items-center gap-1">
+                  <Button v-if="editingPresetId === preset.id" @click="updatePreset(preset.id)" variant="default" size="sm">
+                    {{ t('common.save') }}
+                  </Button>
+                  <Button
+                    v-if="editingPresetId !== preset.id"
+                    @click="editingPresetId = preset.id"
+                    variant="ghost"
+                    size="sm"
+                    :title="t('fleetView.editPreset')"
+                  >
+                    <Pencil class="h-4 w-4" />
+                  </Button>
+                  <Button @click.stop="startRenamePreset(preset)" variant="ghost" size="sm" :title="t('fleetView.renamePreset')">
+                    <Type class="h-4 w-4" />
+                  </Button>
+                  <Button
+                    @click.stop="deletePreset(preset.id)"
+                    variant="ghost"
+                    size="sm"
+                    class="text-destructive hover:text-destructive"
+                    :title="t('fleetView.deletePreset')"
+                  >
+                    <Trash2 class="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+            <p v-if="editingPresetId" class="text-xs text-muted-foreground mt-2">
+              {{ t('fleetView.editingPresetHint') }}
+            </p>
+          </CardContent>
+        </Card>
+
         <!-- 选择舰队 -->
         <Card>
           <CardHeader>
@@ -95,19 +168,25 @@
           <CardHeader>
             <CardTitle>{{ t('fleetView.targetCoordinates') }}</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent class="space-y-4">
             <div class="grid grid-cols-3 gap-2 sm:gap-4">
-              <div class="space-y-2">
-                <Label for="galaxy" class="text-xs sm:text-sm">{{ t('fleetView.galaxy') }}</Label>
-                <Input id="galaxy" v-model.number="targetPosition.galaxy" type="number" min="1" max="9" placeholder="1" />
+              <div v-for="coord in coordinateFields" :key="coord.key" class="space-y-2">
+                <Label :for="coord.key" class="text-xs sm:text-sm">{{ t(`fleetView.${coord.key}`) }}</Label>
+                <Input :id="coord.key" v-model.number="targetPosition[coord.key]" type="number" :min="1" :max="coord.max" placeholder="1" />
               </div>
-              <div class="space-y-2">
-                <Label for="system" class="text-xs sm:text-sm">{{ t('fleetView.system') }}</Label>
-                <Input id="system" v-model.number="targetPosition.system" type="number" min="1" max="10" placeholder="1" />
-              </div>
-              <div class="space-y-2">
-                <Label for="position" class="text-xs sm:text-sm">{{ t('fleetView.position') }}</Label>
-                <Input id="position" v-model.number="targetPosition.position" type="number" min="1" max="10" placeholder="1" />
+            </div>
+            <!-- 目标类型选择（行星/月球） -->
+            <div v-if="hasMoonAtTargetPosition" class="flex items-center gap-4 p-3 bg-muted/50 rounded-lg">
+              <span class="text-sm font-medium">{{ t('fleetView.targetType') }}:</span>
+              <div class="flex gap-2">
+                <Button @click="targetIsMoon = false" :variant="!targetIsMoon ? 'default' : 'outline'" size="sm">
+                  <Globe class="h-4 w-4 mr-1" />
+                  {{ t('fleetView.planet') }}
+                </Button>
+                <Button @click="targetIsMoon = true" :variant="targetIsMoon ? 'default' : 'outline'" size="sm">
+                  <Moon class="h-4 w-4 mr-1" />
+                  {{ t('fleetView.moon') }}
+                </Button>
               </div>
             </div>
           </CardContent>
@@ -157,52 +236,17 @@
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-              <div class="space-y-2">
-                <Label for="cargo-metal" class="text-xs sm:text-sm flex items-center gap-2">
-                  <ResourceIcon type="metal" size="sm" />
-                  {{ t('resources.metal') }} ({{ t('fleetView.available') }}: {{ formatNumber(planet.resources.metal) }})
-                </Label>
-                <Input id="cargo-metal" v-model.number="cargo.metal" type="number" min="0" :max="planet.resources.metal" placeholder="0" />
-              </div>
-              <div class="space-y-2">
-                <Label for="cargo-crystal" class="text-xs sm:text-sm flex items-center gap-2">
-                  <ResourceIcon type="crystal" size="sm" />
-                  {{ t('resources.crystal') }} ({{ t('fleetView.available') }}: {{ formatNumber(planet.resources.crystal) }})
+              <div v-for="res in cargoResourceFields" :key="res.key" class="space-y-2">
+                <Label :for="`cargo-${res.key}`" class="text-xs sm:text-sm flex items-center gap-2">
+                  <ResourceIcon :type="res.key" size="sm" />
+                  {{ t(`resources.${res.key}`) }} ({{ t('fleetView.available') }}: {{ formatNumber(planet.resources[res.key]) }})
                 </Label>
                 <Input
-                  id="cargo-crystal"
-                  v-model.number="cargo.crystal"
+                  :id="`cargo-${res.key}`"
+                  v-model.number="cargo[res.key]"
                   type="number"
                   min="0"
-                  :max="planet.resources.crystal"
-                  placeholder="0"
-                />
-              </div>
-              <div class="space-y-2">
-                <Label for="cargo-deuterium" class="text-xs sm:text-sm flex items-center gap-2">
-                  <ResourceIcon type="deuterium" size="sm" />
-                  {{ t('resources.deuterium') }} ({{ t('fleetView.available') }}: {{ formatNumber(planet.resources.deuterium) }})
-                </Label>
-                <Input
-                  id="cargo-deuterium"
-                  v-model.number="cargo.deuterium"
-                  type="number"
-                  min="0"
-                  :max="planet.resources.deuterium"
-                  placeholder="0"
-                />
-              </div>
-              <div class="space-y-2">
-                <Label for="cargo-darkMatter" class="text-xs sm:text-sm flex items-center gap-2">
-                  <ResourceIcon type="darkMatter" size="sm" />
-                  {{ t('resources.darkMatter') }} ({{ t('fleetView.available') }}: {{ formatNumber(planet.resources.darkMatter) }})
-                </Label>
-                <Input
-                  id="cargo-darkMatter"
-                  v-model.number="cargo.darkMatter"
-                  type="number"
-                  min="0"
-                  :max="planet.resources.darkMatter"
+                  :max="planet.resources[res.key]"
                   placeholder="0"
                 />
               </div>
@@ -243,9 +287,12 @@
 
       <!-- 飞行任务 -->
       <TabsContent value="missions" class="mt-4 space-y-4">
-        <Card v-if="gameStore.player.fleetMissions.length === 0">
-          <CardContent class="py-8 text-center text-muted-foreground">{{ t('fleetView.noFlightMissions') }}</CardContent>
-        </Card>
+        <Empty v-if="gameStore.player.fleetMissions.length === 0" class="border rounded-lg">
+          <EmptyContent>
+            <RocketIcon class="h-10 w-10 text-muted-foreground" />
+            <EmptyDescription>{{ t('fleetView.noFlightMissions') }}</EmptyDescription>
+          </EmptyContent>
+        </Empty>
 
         <Card v-for="mission in gameStore.player.fleetMissions" :key="mission.id">
           <CardHeader>
@@ -275,25 +322,15 @@
             </div>
 
             <!-- 携带资源 -->
-            <div v-if="mission.cargo.metal > 0 || mission.cargo.crystal > 0 || mission.cargo.deuterium > 0 || mission.cargo.darkMatter > 0">
+            <div v-if="hasCargoResources(mission.cargo)">
               <p class="text-xs sm:text-sm font-medium mb-2">{{ t('fleetView.carryingResources') }}:</p>
               <div class="flex flex-wrap gap-2 text-xs">
-                <span v-if="mission.cargo.metal > 0" class="flex items-center gap-1">
-                  <ResourceIcon type="metal" size="sm" />
-                  {{ formatNumber(mission.cargo.metal) }}
-                </span>
-                <span v-if="mission.cargo.crystal > 0" class="flex items-center gap-1">
-                  <ResourceIcon type="crystal" size="sm" />
-                  {{ formatNumber(mission.cargo.crystal) }}
-                </span>
-                <span v-if="mission.cargo.deuterium > 0" class="flex items-center gap-1">
-                  <ResourceIcon type="deuterium" size="sm" />
-                  {{ formatNumber(mission.cargo.deuterium) }}
-                </span>
-                <span v-if="mission.cargo.darkMatter > 0" class="flex items-center gap-1">
-                  <ResourceIcon type="darkMatter" size="sm" />
-                  {{ formatNumber(mission.cargo.darkMatter) }}
-                </span>
+                <template v-for="res in cargoResourceFields" :key="res.key">
+                  <span v-if="mission.cargo[res.key] > 0" class="flex items-center gap-1">
+                    <ResourceIcon :type="res.key" size="sm" />
+                    {{ formatNumber(mission.cargo[res.key]) }}
+                  </span>
+                </template>
               </div>
             </div>
 
@@ -330,6 +367,108 @@
           </CardContent>
         </Card>
       </TabsContent>
+
+      <!-- 跳跃门 -->
+      <TabsContent v-if="showJumpGateTab" value="jumpGate" class="mt-4 space-y-4">
+        <!-- 跳跃门状态 -->
+        <Card>
+          <CardHeader>
+            <CardTitle class="flex items-center gap-2">
+              <Zap class="h-5 w-5" />
+              {{ t('fleetView.jumpGate') }}
+            </CardTitle>
+            <CardDescription>{{ t('fleetView.jumpGateDescription') }}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <!-- 冷却状态 -->
+            <div v-if="!jumpGateReady" class="p-4 bg-muted/50 rounded-lg">
+              <div class="flex items-center gap-2 text-amber-600 dark:text-amber-400">
+                <Clock class="h-4 w-4" />
+                <span class="font-medium">{{ t('fleetView.jumpGateCooldown') }}</span>
+              </div>
+              <div class="mt-2 flex items-center gap-2">
+                <span class="text-sm text-muted-foreground">{{ t('fleetView.jumpGateCooldownRemaining') }}:</span>
+                <span class="font-bold">{{ formatTime(Math.floor(jumpGateCooldownRemaining / 1000)) }}</span>
+              </div>
+              <Progress :model-value="100 - (jumpGateCooldownRemaining / 3600000) * 100" class="mt-2" />
+            </div>
+            <!-- 就绪状态 -->
+            <div v-else class="p-4 bg-green-500/10 rounded-lg">
+              <div class="flex items-center gap-2 text-green-600 dark:text-green-400">
+                <Check class="h-4 w-4" />
+                <span class="font-medium">{{ t('fleetView.jumpGateReady') }}</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <!-- 选择目标月球 -->
+        <Card v-if="jumpGateReady">
+          <CardHeader>
+            <CardTitle>{{ t('fleetView.jumpGateSelectTarget') }}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div v-if="availableJumpGateMoons.length === 0" class="text-center py-4 text-muted-foreground">
+              {{ t('fleetView.jumpGateNoTargetMoons') }}
+            </div>
+            <div v-else class="space-y-2">
+              <div
+                v-for="moon in availableJumpGateMoons"
+                :key="moon.id"
+                class="p-3 border rounded-lg cursor-pointer transition-colors"
+                :class="selectedJumpGateTarget?.id === moon.id ? 'ring-2 ring-primary bg-primary/10' : 'hover:bg-muted/50'"
+                @click="selectedJumpGateTarget = moon"
+              >
+                <div class="flex items-center justify-between">
+                  <div>
+                    <span class="font-medium">{{ moon.name }}</span>
+                    <span class="text-sm text-muted-foreground ml-2">
+                      [{{ moon.position.galaxy }}:{{ moon.position.system }}:{{ moon.position.position }}]
+                    </span>
+                  </div>
+                  <Badge v-if="isJumpGateMoonReady(moon)" variant="default">{{ t('fleetView.jumpGateReady') }}</Badge>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <!-- 选择传送舰队 -->
+        <Card v-if="jumpGateReady && selectedJumpGateTarget">
+          <CardHeader>
+            <CardTitle>{{ t('fleetView.jumpGateSelectFleet') }}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+              <div v-for="(count, shipType) in planet.fleet" :key="shipType" class="space-y-2">
+                <Label :for="`jump-ship-${shipType}`" class="text-xs sm:text-sm">
+                  {{ SHIPS[shipType].name }} ({{ t('fleetView.available') }}: {{ count }})
+                </Label>
+                <div class="flex gap-2">
+                  <Input
+                    :id="`jump-ship-${shipType}`"
+                    v-model.number="jumpGateFleet[shipType]"
+                    type="number"
+                    min="0"
+                    :max="count"
+                    placeholder="0"
+                    class="text-sm"
+                  />
+                  <Button @click="jumpGateFleet[shipType] = count" variant="outline" size="sm">{{ t('fleetView.all') }}</Button>
+                </div>
+              </div>
+            </div>
+
+            <!-- 传送按钮 -->
+            <div class="mt-6">
+              <Button @click="executeJumpGateTransfer" :disabled="!canExecuteJumpGate" class="w-full">
+                <Zap class="h-4 w-4 mr-2" />
+                {{ t('fleetView.jumpGateTransfer') }}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </TabsContent>
     </Tabs>
 
     <!-- 提示对话框 -->
@@ -347,6 +486,40 @@
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
+
+    <!-- 预设名称对话框 -->
+    <AlertDialog :open="showPresetNameDialog" @update:open="showPresetNameDialog = $event">
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>
+            {{ pendingPresetAction === 'save' ? t('fleetView.savePresetTitle') : t('fleetView.renamePresetTitle') }}
+          </AlertDialogTitle>
+          <AlertDialogDescription>
+            {{ pendingPresetAction === 'save' ? t('fleetView.savePresetDescription') : t('fleetView.renamePresetDescription') }}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <div class="py-4">
+          <Label for="preset-name">{{ t('fleetView.presetName') }}</Label>
+          <Input
+            id="preset-name"
+            v-model="editingPresetName"
+            :placeholder="t('fleetView.presetNamePlaceholder')"
+            class="mt-2"
+            @keyup.enter="handlePresetNameConfirm"
+          />
+        </div>
+        <AlertDialogFooter>
+          <AlertDialogCancel
+            @click="() => { showPresetNameDialog = false; pendingPresetAction = null }"
+          >
+            {{ t('common.cancel') }}
+          </AlertDialogCancel>
+          <AlertDialogAction @click="handlePresetNameConfirm" :disabled="!editingPresetName.trim()">
+            {{ t('common.confirm') }}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   </div>
 </template>
 
@@ -357,9 +530,9 @@
   import { useI18n } from '@/composables/useI18n'
   import { useGameConfig } from '@/composables/useGameConfig'
   import { computed, ref, onMounted, onUnmounted, watch } from 'vue'
-  import { useRoute, useRouter } from 'vue-router'
+  import { useRoute } from 'vue-router'
   import { ShipType, MissionType, BuildingType, TechnologyType } from '@/types/game'
-  import type { Fleet, Resources } from '@/types/game'
+  import type { Fleet, Resources, FleetPreset } from '@/types/game'
   import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
   import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
   import { Button } from '@/components/ui/button'
@@ -380,7 +553,28 @@
     AlertDialogTitle
   } from '@/components/ui/alert-dialog'
   import UnlockRequirement from '@/components/UnlockRequirement.vue'
-  import { Sword, Package, Rocket as RocketIcon, Eye, Users, Recycle, Skull, Gift, Compass } from 'lucide-vue-next'
+  import { Empty, EmptyContent, EmptyDescription } from '@/components/ui/empty'
+  import {
+    Sword,
+    Package,
+    Rocket as RocketIcon,
+    Eye,
+    Users,
+    Recycle,
+    Skull,
+    Gift,
+    Compass,
+    Save,
+    Trash2,
+    Pencil,
+    Star,
+    Type,
+    Zap,
+    Clock,
+    Check,
+    Globe,
+    Moon
+  } from 'lucide-vue-next'
   import { formatNumber, formatTime } from '@/utils/format'
   import * as shipValidation from '@/logic/shipValidation'
   import * as fleetLogic from '@/logic/fleetLogic'
@@ -388,9 +582,10 @@
   import * as officerLogic from '@/logic/officerLogic'
   import * as publicLogic from '@/logic/publicLogic'
   import * as diplomaticLogic from '@/logic/diplomaticLogic'
+  import * as gameLogic from '@/logic/gameLogic'
+  import * as moonLogic from '@/logic/moonLogic'
 
   const route = useRoute()
-  const router = useRouter()
   const gameStore = useGameStore()
   const universeStore = useUniverseStore()
   const npcStore = useNPCStore()
@@ -415,7 +610,126 @@
     return publicLogic.getMaxFleetMissions(bonuses.additionalFleetSlots, computerTechLevel)
   })
 
-  const activeTab = ref<'fleet' | 'send' | 'missions'>('fleet')
+  const activeTab = ref<'fleet' | 'send' | 'missions' | 'jumpGate'>('fleet')
+
+  // Tab 配置
+  const fleetTabs = [
+    { value: 'fleet', labelKey: 'fleetOverview' },
+    { value: 'send', labelKey: 'sendFleet' },
+    { value: 'missions', labelKey: 'flightMissions' },
+    { value: 'jumpGate', labelKey: 'jumpGate' }
+  ] as const
+
+  // 跳跃门相关
+  const selectedJumpGateTarget = ref<typeof planet.value | null>(null)
+  const jumpGateFleet = ref<Partial<Fleet>>({
+    [ShipType.LightFighter]: 0,
+    [ShipType.HeavyFighter]: 0,
+    [ShipType.Cruiser]: 0,
+    [ShipType.Battleship]: 0,
+    [ShipType.SmallCargo]: 0,
+    [ShipType.LargeCargo]: 0,
+    [ShipType.ColonyShip]: 0,
+    [ShipType.Recycler]: 0,
+    [ShipType.EspionageProbe]: 0,
+    [ShipType.DarkMatterHarvester]: 0,
+    [ShipType.Deathstar]: 0
+  })
+
+  // 是否显示跳跃门标签页（当前在月球上且有跳跃门）
+  const showJumpGateTab = computed(() => {
+    if (!planet.value) return false
+    if (!planet.value.isMoon) return false
+    const jumpGateLevel = planet.value.buildings[BuildingType.JumpGate] || 0
+    return jumpGateLevel > 0
+  })
+
+  // 跳跃门是否就绪（冷却完成）
+  const jumpGateReady = computed(() => {
+    if (!planet.value) return false
+    return moonLogic.isJumpGateReady(planet.value)
+  })
+
+  // 跳跃门剩余冷却时间
+  const jumpGateCooldownRemaining = computed(() => {
+    if (!planet.value) return 0
+    return moonLogic.getJumpGateCooldownRemaining(planet.value)
+  })
+
+  // 可用的目标月球（有跳跃门且冷却完成的其他月球）
+  const availableJumpGateMoons = computed(() => {
+    if (!planet.value) return []
+    return gameStore.player.planets.filter(p => {
+      if (p.id === planet.value?.id) return false // 排除当前月球
+      if (!p.isMoon) return false
+      const jumpGateLevel = p.buildings[BuildingType.JumpGate] || 0
+      if (jumpGateLevel <= 0) return false
+      return moonLogic.isJumpGateReady(p)
+    })
+  })
+
+  // 检查目标月球的跳跃门是否就绪
+  const isJumpGateMoonReady = (moon: typeof planet.value) => {
+    if (!moon) return false
+    return moonLogic.isJumpGateReady(moon)
+  }
+
+  // 是否可以执行跳跃门传送
+  const canExecuteJumpGate = computed(() => {
+    if (!planet.value || !selectedJumpGateTarget.value) return false
+    if (!jumpGateReady.value) return false
+    // 检查是否选择了至少一艘舰船
+    const totalShips = Object.values(jumpGateFleet.value).reduce((sum, count) => sum + (count || 0), 0)
+    return totalShips > 0
+  })
+
+  // 执行跳跃门传送
+  const executeJumpGateTransfer = () => {
+    if (!planet.value || !selectedJumpGateTarget.value) return
+    if (!canExecuteJumpGate.value) return
+
+    const sourceMoon = planet.value
+    const targetMoon = selectedJumpGateTarget.value
+
+    // 转移舰队
+    Object.entries(jumpGateFleet.value).forEach(([shipType, count]) => {
+      if (count && count > 0) {
+        const ship = shipType as ShipType
+        // 从源月球扣除
+        if (sourceMoon.fleet[ship] >= count) {
+          sourceMoon.fleet[ship] -= count
+          // 添加到目标月球
+          targetMoon.fleet[ship] = (targetMoon.fleet[ship] || 0) + count
+        }
+      }
+    })
+
+    // 设置两个跳跃门的冷却时间
+    moonLogic.useJumpGate(sourceMoon)
+    moonLogic.useJumpGate(targetMoon)
+
+    // 重置跳跃门舰队选择
+    Object.keys(jumpGateFleet.value).forEach(key => {
+      jumpGateFleet.value[key as ShipType] = 0
+    })
+    selectedJumpGateTarget.value = null
+
+    // 显示成功对话框
+    alertDialogTitle.value = t('fleetView.jumpGateSuccess')
+    alertDialogMessage.value = t('fleetView.jumpGateSuccessMessage', {
+      target: `${targetMoon.name} [${targetMoon.position.galaxy}:${targetMoon.position.system}:${targetMoon.position.position}]`
+    })
+    alertDialogCallback.value = null
+    alertDialogOpen.value = true
+  }
+
+  // 可见的标签页（根据是否有跳跃门动态显示）
+  const visibleTabs = computed(() => {
+    if (showJumpGateTab.value) {
+      return fleetTabs
+    }
+    return fleetTabs.filter(tab => tab.value !== 'jumpGate')
+  })
 
   // 选择的舰队
   const selectedFleet = ref<Partial<Fleet>>({
@@ -435,11 +749,36 @@
   // 目标坐标
   const targetPosition = ref({ galaxy: 1, system: 1, position: 1 })
 
+  // 目标是否为月球（用于区分同坐标的行星和月球）
+  const targetIsMoon = ref(false)
+
+  // 检查目标位置是否有月球（玩家自己的）
+  const hasMoonAtTargetPosition = computed(() => {
+    return gameStore.player.planets.some(
+      p =>
+        p.isMoon &&
+        p.position.galaxy === targetPosition.value.galaxy &&
+        p.position.system === targetPosition.value.system &&
+        p.position.position === targetPosition.value.position
+    )
+  })
+
+  // 坐标字段配置
+  const coordinateFields: { key: keyof typeof targetPosition.value; max: number }[] = [
+    { key: 'galaxy', max: 9 },
+    { key: 'system', max: 10 },
+    { key: 'position', max: 10 }
+  ]
+
   // 选择的任务类型
   const selectedMission = ref<MissionType>(MissionType.Attack)
 
   // 运输资源
   const cargo = ref({ metal: 0, crystal: 0, deuterium: 0, darkMatter: 0, energy: 0 })
+
+  // 货物资源字段配置
+  type CargoKey = 'metal' | 'crystal' | 'deuterium' | 'darkMatter'
+  const cargoResourceFields: { key: CargoKey }[] = [{ key: 'metal' }, { key: 'crystal' }, { key: 'deuterium' }, { key: 'darkMatter' }]
 
   // 从 URL query 参数初始化
   onMounted(() => {
@@ -472,9 +811,6 @@
 
       // 自动切换到派遣舰队标签
       activeTab.value = 'send'
-
-      // 清除 URL 参数，保持 URL 整洁
-      router.replace({ path: '/fleet' })
     }
   })
 
@@ -499,6 +835,227 @@
 
   // 是否为赠送模式
   const isGiftMode = ref(false)
+
+  // 舰队预设相关状态
+  const MAX_PRESETS = 3
+  const editingPresetId = ref<string | null>(null)
+  const editingPresetName = ref('')
+  const showPresetNameDialog = ref(false)
+  const pendingPresetAction = ref<'save' | 'rename' | null>(null)
+
+  // 获取预设列表
+  const fleetPresets = computed(() => gameStore.player.fleetPresets || [])
+
+  // 生成唯一ID
+  const generatePresetId = (): string => {
+    return `preset_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+  }
+
+  // 保存当前配置为预设
+  const saveAsPreset = () => {
+    if (fleetPresets.value.length >= MAX_PRESETS) {
+      alertDialogTitle.value = t('fleetView.presetLimitReached')
+      alertDialogMessage.value = t('fleetView.presetLimitReachedMessage', { max: MAX_PRESETS.toString() })
+      alertDialogCallback.value = null
+      alertDialogOpen.value = true
+      return
+    }
+
+    // 检查是否有选择舰船
+    const hasShips = Object.values(selectedFleet.value).some(count => count > 0)
+    if (!hasShips) {
+      alertDialogTitle.value = t('fleetView.presetError')
+      alertDialogMessage.value = t('fleetView.presetNoShips')
+      alertDialogCallback.value = null
+      alertDialogOpen.value = true
+      return
+    }
+
+    pendingPresetAction.value = 'save'
+    editingPresetName.value = t('fleetView.presetDefaultName', { number: (fleetPresets.value.length + 1).toString() })
+    showPresetNameDialog.value = true
+  }
+
+  // 确认保存预设
+  const confirmSavePreset = () => {
+    if (!editingPresetName.value.trim()) return
+
+    // 只保存数量大于0的舰船
+    const fleetToSave: Partial<Fleet> = {}
+    for (const [shipType, count] of Object.entries(selectedFleet.value)) {
+      if (count && count > 0) {
+        fleetToSave[shipType as ShipType] = count
+      }
+    }
+
+    // 只保存数量大于0的资源
+    const cargoToSave: Partial<Resources> | undefined =
+      selectedMission.value === MissionType.Transport
+        ? {
+            metal: cargo.value.metal || 0,
+            crystal: cargo.value.crystal || 0,
+            deuterium: cargo.value.deuterium || 0,
+            darkMatter: cargo.value.darkMatter || 0
+          }
+        : undefined
+
+    const newPreset: FleetPreset = {
+      id: generatePresetId(),
+      name: editingPresetName.value.trim(),
+      fleet: fleetToSave,
+      targetPosition: {
+        galaxy: targetPosition.value.galaxy,
+        system: targetPosition.value.system,
+        position: targetPosition.value.position
+      },
+      missionType: selectedMission.value,
+      cargo: cargoToSave
+    }
+
+    if (!gameStore.player.fleetPresets) {
+      gameStore.player.fleetPresets = []
+    }
+    gameStore.player.fleetPresets.push(newPreset)
+
+    showPresetNameDialog.value = false
+    editingPresetName.value = ''
+    pendingPresetAction.value = null
+  }
+
+  // 加载预设
+  const loadPreset = (preset: FleetPreset) => {
+    // 加载舰队配置
+    Object.keys(selectedFleet.value).forEach(key => {
+      selectedFleet.value[key as ShipType] = preset.fleet[key as ShipType] || 0
+    })
+
+    // 加载目标坐标
+    if (preset.targetPosition) {
+      targetPosition.value = { ...preset.targetPosition }
+    }
+
+    // 加载任务类型
+    if (preset.missionType) {
+      selectedMission.value = preset.missionType
+    }
+
+    // 加载运输资源
+    if (preset.cargo && preset.missionType === MissionType.Transport) {
+      cargo.value = {
+        metal: preset.cargo.metal || 0,
+        crystal: preset.cargo.crystal || 0,
+        deuterium: preset.cargo.deuterium || 0,
+        darkMatter: preset.cargo.darkMatter || 0,
+        energy: 0
+      }
+    }
+  }
+
+  // 更新预设（点击预设后修改内容）
+  const updatePreset = (presetId: string) => {
+    const presetIndex = gameStore.player.fleetPresets?.findIndex(p => p.id === presetId)
+    if (presetIndex === undefined || presetIndex === -1) return
+
+    const hasShips = Object.values(selectedFleet.value).some(count => count > 0)
+    if (!hasShips) {
+      alertDialogTitle.value = t('fleetView.presetError')
+      alertDialogMessage.value = t('fleetView.presetNoShips')
+      alertDialogCallback.value = null
+      alertDialogOpen.value = true
+      return
+    }
+
+    const existingPreset = gameStore.player.fleetPresets![presetIndex]
+    if (!existingPreset) return
+
+    // 只保存数量大于0的舰船
+    const fleetToSave: Partial<Fleet> = {}
+    for (const [shipType, count] of Object.entries(selectedFleet.value)) {
+      if (count && count > 0) {
+        fleetToSave[shipType as ShipType] = count
+      }
+    }
+
+    // 只保存数量大于0的资源
+    const cargoToSave: Partial<Resources> | undefined =
+      selectedMission.value === MissionType.Transport
+        ? {
+            metal: cargo.value.metal || 0,
+            crystal: cargo.value.crystal || 0,
+            deuterium: cargo.value.deuterium || 0,
+            darkMatter: cargo.value.darkMatter || 0
+          }
+        : undefined
+
+    const updatedPreset: FleetPreset = {
+      id: existingPreset.id,
+      name: existingPreset.name,
+      fleet: fleetToSave,
+      targetPosition: {
+        galaxy: targetPosition.value.galaxy,
+        system: targetPosition.value.system,
+        position: targetPosition.value.position
+      },
+      missionType: selectedMission.value,
+      cargo: cargoToSave
+    }
+
+    gameStore.player.fleetPresets![presetIndex] = updatedPreset
+    editingPresetId.value = null
+  }
+
+  // 开始编辑预设名称
+  const startRenamePreset = (preset: FleetPreset) => {
+    // 保存要重命名的预设ID，但不进入编辑内容模式
+    editingPresetName.value = preset.name
+    pendingPresetAction.value = 'rename'
+    // 使用临时变量存储要重命名的预设ID
+    renameTargetPresetId.value = preset.id
+    showPresetNameDialog.value = true
+  }
+
+  // 要重命名的预设ID（与编辑预设内容分开）
+  const renameTargetPresetId = ref<string | null>(null)
+
+  // 确认重命名预设
+  const confirmRenamePreset = () => {
+    if (!editingPresetName.value.trim() || !renameTargetPresetId.value) return
+
+    const preset = gameStore.player.fleetPresets?.find(p => p.id === renameTargetPresetId.value)
+    if (preset) {
+      preset.name = editingPresetName.value.trim()
+    }
+
+    showPresetNameDialog.value = false
+    renameTargetPresetId.value = null
+    editingPresetName.value = ''
+    pendingPresetAction.value = null
+  }
+
+  // 删除预设
+  const deletePreset = (presetId: string) => {
+    const preset = gameStore.player.fleetPresets?.find(p => p.id === presetId)
+    if (!preset) return
+
+    alertDialogTitle.value = t('fleetView.deletePresetTitle')
+    alertDialogMessage.value = t('fleetView.deletePresetMessage', { name: preset.name })
+    alertDialogCallback.value = () => {
+      const index = gameStore.player.fleetPresets?.findIndex(p => p.id === presetId)
+      if (index !== undefined && index > -1) {
+        gameStore.player.fleetPresets!.splice(index, 1)
+      }
+    }
+    alertDialogOpen.value = true
+  }
+
+  // 处理预设名称对话框确认
+  const handlePresetNameConfirm = () => {
+    if (pendingPresetAction.value === 'save') {
+      confirmSavePreset()
+    } else if (pendingPresetAction.value === 'rename') {
+      confirmRenamePreset()
+    }
+  }
 
   // 监听目标NPC变化，当目标不再是NPC时自动禁用赠送模式
   watch(targetNpc, newValue => {
@@ -553,6 +1110,11 @@
     return cargo.value.metal + cargo.value.crystal + cargo.value.deuterium + cargo.value.darkMatter
   }
 
+  // 检查是否有携带资源
+  const hasCargoResources = (cargoData: Resources): boolean => {
+    return cargoData.metal > 0 || cargoData.crystal > 0 || cargoData.deuterium > 0 || cargoData.darkMatter > 0
+  }
+
   // 计算燃料消耗（包含货物重量影响）
   const getFuelConsumption = (): number => {
     const bonuses = officerLogic.calculateActiveBonuses(gameStore.player.officers, Date.now())
@@ -575,8 +1137,16 @@
     if (!hasShips) return { valid: false, errorKey: 'fleetView.noShipsSelected' }
 
     // 检查是否派遣到自己的星球
-    // 回收任务和部署任务除外（回收残骸可能在同位置，部署可能到自己的月球）
-    if (planet.value && selectedMission.value !== MissionType.Recycle && selectedMission.value !== MissionType.Deploy) {
+    // 回收任务、部署任务和运输任务除外：
+    // - 回收任务：可能回收同位置的残骸
+    // - 部署任务：可能部署到自己的月球
+    // - 运输任务：可能从行星向同位置的月球运输资源（OGame规则允许）
+    if (
+      planet.value &&
+      selectedMission.value !== MissionType.Recycle &&
+      selectedMission.value !== MissionType.Deploy &&
+      selectedMission.value !== MissionType.Transport
+    ) {
       const isSamePlanet =
         targetPosition.value.galaxy === planet.value.position.galaxy &&
         targetPosition.value.system === planet.value.position.system &&
@@ -623,7 +1193,8 @@
     targetPosition: { galaxy: number; system: number; position: number },
     missionType: MissionType,
     fleet: Partial<Fleet>,
-    cargo: Resources = { metal: 0, crystal: 0, deuterium: 0, darkMatter: 0, energy: 0 }
+    cargo: Resources = { metal: 0, crystal: 0, deuterium: 0, darkMatter: 0, energy: 0 },
+    isMoonTarget: boolean = false
   ): boolean => {
     if (!gameStore.currentPlanet) return false
     const currentMissions = gameStore.player.fleetMissions.length
@@ -636,6 +1207,13 @@
       gameStore.player.technologies
     )
     if (!validation.valid) return false
+
+    // 追踪燃料消耗（同时计入资源消耗和燃料统计）
+    if (validation.fuelNeeded && validation.fuelNeeded > 0) {
+      gameLogic.trackResourceConsumption(gameStore.player, { deuterium: validation.fuelNeeded })
+      gameLogic.trackFuelConsumption(gameStore.player, validation.fuelNeeded)
+    }
+
     const shouldDeductCargo = missionType === MissionType.Transport
     shipValidation.executeFleetDispatch(gameStore.currentPlanet, fleet, validation.fuelNeeded!, shouldDeductCargo, cargo)
     const distance = fleetLogic.calculateDistance(gameStore.currentPlanet.position, targetPosition)
@@ -651,6 +1229,11 @@
       cargo,
       flightTime
     )
+
+    // 如果目标是月球，设置标记
+    if (isMoonTarget) {
+      mission.targetIsMoon = true
+    }
 
     // 如果是赠送模式，标记任务
     if (missionType === MissionType.Transport && isGiftMode.value && targetNpc.value) {
@@ -687,7 +1270,8 @@
       targetPosition.value,
       selectedMission.value,
       fleet,
-      selectedMission.value === MissionType.Transport ? cargo.value : undefined
+      selectedMission.value === MissionType.Transport ? cargo.value : undefined,
+      targetIsMoon.value
     )
 
     if (success) {

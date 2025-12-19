@@ -33,69 +33,61 @@ export const migrateGameData = (): void => {
       }
     }
 
-    // 检查是否需要迁移
-    const hasOldMapData = oldData.universePlanets || oldData.debrisFields
-    if (!hasOldMapData) return
-
-    // 准备 universeStore 数据
-    const universeData: {
-      planets: Record<string, Planet>
-      debrisFields: Record<string, DebrisField>
-    } = {
-      planets: {},
-      debrisFields: {}
-    }
-
-    // 迁移星球数据（排除玩家星球）
-    if (oldData.universePlanets) {
-      const oldPlanets = oldData.universePlanets as Record<string, Planet>
-      const playerPlanets = oldData.player?.planets || []
-      const playerPlanetIds = new Set(playerPlanets.map((p: Planet) => p.id))
-      Object.entries(oldPlanets).forEach(([key, planet]) => {
-        // 只迁移非玩家星球
-        if (!playerPlanetIds.has(planet.id)) {
-          universeData.planets[key] = planet
-        }
-      })
-      delete oldData.universePlanets
-    }
-
-    // 迁移残骸场数据
-    if (oldData.debrisFields) {
-      universeData.debrisFields = oldData.debrisFields
-      delete oldData.debrisFields
-    }
+    // 标记是否有数据需要保存
+    let needsSave = false
 
     // 修复NPC数据（确保所有必需字段都存在）
     if (oldData.npcs && Array.isArray(oldData.npcs)) {
       const now = Date.now()
+      const playerId = oldData.player?.id
+
       oldData.npcs.forEach((npc: NPC) => {
         // 确保NPC有必需的时间字段，并设置随机冷却避免同时行动
         if (npc.lastSpyTime === undefined || npc.lastSpyTime === 0) {
           // 0-4分钟的随机延迟
           const randomSpyOffset = Math.random() * 240 * 1000
           npc.lastSpyTime = now - randomSpyOffset
+          needsSave = true
         }
         if (npc.lastAttackTime === undefined || npc.lastAttackTime === 0) {
           // 0-8分钟的随机延迟
           const randomAttackOffset = Math.random() * 480 * 1000
           npc.lastAttackTime = now - randomAttackOffset
+          needsSave = true
         }
         // 确保NPC有必需的数组字段
         if (!npc.fleetMissions) {
           npc.fleetMissions = []
+          needsSave = true
         }
         if (!npc.playerSpyReports) {
           npc.playerSpyReports = {}
+          needsSave = true
         }
         if (!npc.relations) {
           npc.relations = {}
+          needsSave = true
         }
         if (!npc.allies) {
           npc.allies = []
+          needsSave = true
         }
         if (!npc.enemies) {
           npc.enemies = []
+          needsSave = true
+        }
+
+        // 如果NPC与玩家没有建立关系，自动建立中立关系
+        if (playerId && !npc.relations[playerId]) {
+          npc.relations[playerId] = {
+            fromId: npc.id,
+            toId: playerId,
+            reputation: 0,
+            status: 'neutral' as const,
+            lastUpdated: now,
+            history: []
+          }
+          needsSave = true
         }
       })
     }
@@ -104,13 +96,93 @@ export const migrateGameData = (): void => {
     if (oldData.player && oldData.player.points === undefined) {
       // 积分会在游戏启动时通过 initGame 计算，这里设置为0
       oldData.player.points = 0
+      needsSave = true
     }
 
-    // 保存迁移后的数据
-    localStorage.setItem(universeStorageKey, encryptData(universeData))
-    localStorage.setItem(storageKey, encryptData(oldData))
+    // 迁移 player.diplomaticRelations 到 npc.relations
+    // 旧版本使用 player.diplomaticRelations[npcId] 存储玩家对NPC的关系
+    // 新版本统一使用 npc.relations[playerId] 存储NPC对玩家的关系
+    if (oldData.player?.diplomaticRelations && oldData.npcs && Array.isArray(oldData.npcs)) {
+      const playerId = oldData.player.id
+      const playerRelations = oldData.player.diplomaticRelations as Record<string, any>
 
-    console.log('[Migration] Game data migrated successfully')
+      Object.entries(playerRelations).forEach(([npcId, relation]) => {
+        const npc = oldData.npcs.find((n: NPC) => n.id === npcId)
+        if (npc) {
+          if (!npc.relations) {
+            npc.relations = {}
+          }
+          // 如果NPC对玩家的关系不存在，使用玩家对NPC的关系数据
+          if (!npc.relations[playerId]) {
+            npc.relations[playerId] = {
+              ...relation,
+              fromId: npcId,
+              toId: playerId
+            }
+            needsSave = true
+          } else {
+            // 如果两边都有数据，使用声望值更极端的那个（偏离0更远的）
+            const existingReputation = npc.relations[playerId].reputation || 0
+            const playerReputation = relation.reputation || 0
+            if (Math.abs(playerReputation) > Math.abs(existingReputation)) {
+              npc.relations[playerId].reputation = playerReputation
+              npc.relations[playerId].status = relation.status
+              needsSave = true
+            }
+          }
+        }
+      })
+
+      // 删除旧的 diplomaticRelations 字段
+      delete oldData.player.diplomaticRelations
+      needsSave = true
+      console.log('[Migration] Migrated player.diplomaticRelations to npc.relations')
+    }
+
+    // 检查是否需要迁移地图数据
+    const hasOldMapData = oldData.universePlanets || oldData.debrisFields
+
+    if (hasOldMapData) {
+      // 准备 universeStore 数据
+      const universeData: {
+        planets: Record<string, Planet>
+        debrisFields: Record<string, DebrisField>
+      } = {
+        planets: {},
+        debrisFields: {}
+      }
+
+      // 迁移星球数据（排除玩家星球）
+      if (oldData.universePlanets) {
+        const oldPlanets = oldData.universePlanets as Record<string, Planet>
+        const playerPlanets = oldData.player?.planets || []
+        const playerPlanetIds = new Set(playerPlanets.map((p: Planet) => p.id))
+        Object.entries(oldPlanets).forEach(([key, planet]) => {
+          // 只迁移非玩家星球
+          if (!playerPlanetIds.has(planet.id)) {
+            universeData.planets[key] = planet
+          }
+        })
+        delete oldData.universePlanets
+        needsSave = true
+      }
+
+      // 迁移残骸场数据
+      if (oldData.debrisFields) {
+        universeData.debrisFields = oldData.debrisFields
+        delete oldData.debrisFields
+        needsSave = true
+      }
+
+      // 保存universeStore数据
+      localStorage.setItem(universeStorageKey, encryptData(universeData))
+    }
+
+    // 如果有任何数据被修改，保存gameStore数据
+    if (needsSave) {
+      localStorage.setItem(storageKey, encryptData(oldData))
+      console.log('[Migration] Game data migrated successfully')
+    }
   } catch (error) {
     console.error('[Migration] Failed to migrate game data:', error)
   }

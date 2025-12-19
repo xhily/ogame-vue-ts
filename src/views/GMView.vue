@@ -77,110 +77,36 @@
         </Card>
       </TabsContent>
 
-      <!-- 建筑 -->
-      <TabsContent value="buildings" class="space-y-4">
+      <!-- 建筑/科技/舰船/防御/军官 - 统一配置渲染 -->
+      <TabsContent v-for="section in gmSections" :key="section.tabValue" :value="section.tabValue" class="space-y-4">
         <Card>
           <CardHeader>
-            <CardTitle>{{ t('gmView.modifyBuildings') }}</CardTitle>
-            <CardDescription>{{ t('gmView.buildingsDesc') }}</CardDescription>
+            <CardTitle>{{ t(section.titleKey) }}</CardTitle>
+            <CardDescription>{{ t(section.descKey) }}</CardDescription>
           </CardHeader>
           <CardContent>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div v-for="building in buildingTypes" :key="building" class="space-y-2">
-                <Label>{{ BUILDINGS[building].name }}</Label>
+              <div v-for="item in section.items" :key="item" class="space-y-2">
+                <Label>{{ section.getItemName(item) }}</Label>
                 <div class="flex gap-2">
-                  <Input v-model.number="selectedPlanet.buildings[building]" type="number" min="0" max="100" class="flex-1" />
-                  <Button @click="setBuildingLevel(building, 10)" variant="outline" size="sm">Lv 10</Button>
-                  <Button @click="setBuildingLevel(building, 30)" variant="outline" size="sm">Lv 30</Button>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </TabsContent>
-
-      <!-- 科技 -->
-      <TabsContent value="research" class="space-y-4">
-        <Card>
-          <CardHeader>
-            <CardTitle>{{ t('gmView.modifyResearch') }}</CardTitle>
-            <CardDescription>{{ t('gmView.researchDesc') }}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div v-for="tech in technologyTypes" :key="tech" class="space-y-2">
-                <Label>{{ TECHNOLOGIES[tech].name }}</Label>
-                <div class="flex gap-2">
-                  <Input v-model.number="gameStore.player.technologies[tech]" type="number" min="0" max="50" class="flex-1" />
-                  <Button @click="setTechnologyLevel(tech, 10)" variant="outline" size="sm">Lv 10</Button>
-                  <Button @click="setTechnologyLevel(tech, 20)" variant="outline" size="sm">Lv 20</Button>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </TabsContent>
-
-      <!-- 舰船 -->
-      <TabsContent value="ships" class="space-y-4">
-        <Card>
-          <CardHeader>
-            <CardTitle>{{ t('gmView.modifyShips') }}</CardTitle>
-            <CardDescription>{{ t('gmView.shipsDesc') }}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div v-for="ship in shipTypes" :key="ship" class="space-y-2">
-                <Label>{{ SHIPS[ship].name }}</Label>
-                <div class="flex gap-2">
-                  <Input v-model.number="selectedPlanet.fleet[ship]" type="number" min="0" class="flex-1" />
-                  <Button @click="setShipCount(ship, 100)" variant="outline" size="sm">+100</Button>
-                  <Button @click="setShipCount(ship, 1000)" variant="outline" size="sm">+1K</Button>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </TabsContent>
-
-      <!-- 防御 -->
-      <TabsContent value="defense" class="space-y-4">
-        <Card>
-          <CardHeader>
-            <CardTitle>{{ t('gmView.modifyDefense') }}</CardTitle>
-            <CardDescription>{{ t('gmView.defenseDesc') }}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div v-for="defense in defenseTypes" :key="defense" class="space-y-2">
-                <Label>{{ DEFENSES[defense].name }}</Label>
-                <div class="flex gap-2">
-                  <Input v-model.number="selectedPlanet.defense[defense]" type="number" min="0" class="flex-1" />
-                  <Button @click="setDefenseCount(defense, 100)" variant="outline" size="sm">+100</Button>
-                  <Button @click="setDefenseCount(defense, 1000)" variant="outline" size="sm">+1K</Button>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </TabsContent>
-
-      <!-- 军官 -->
-      <TabsContent value="officers" class="space-y-4">
-        <Card>
-          <CardHeader>
-            <CardTitle>{{ t('gmView.modifyOfficers') }}</CardTitle>
-            <CardDescription>{{ t('gmView.officersDesc') }}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div v-for="officer in officerTypes" :key="officer" class="space-y-2">
-                <Label>{{ OFFICERS[officer].name }}</Label>
-                <div class="flex gap-2">
-                  <Input v-model.number="officerDays[officer]" type="number" min="0" :placeholder="t('gmView.days')" class="flex-1" />
-                  <Button @click="setOfficerDays(officer, 7)" variant="outline" size="sm">7{{ t('gmView.days') }}</Button>
-                  <Button @click="setOfficerDays(officer, 30)" variant="outline" size="sm">30{{ t('gmView.days') }}</Button>
-                  <Button @click="setOfficerDays(officer, 365)" variant="outline" size="sm">365{{ t('gmView.days') }}</Button>
+                  <Input
+                    :model-value="section.getValue(item)"
+                    @update:model-value="section.setValue(item, Number($event) || 0)"
+                    type="number"
+                    :min="0"
+                    :max="section.max"
+                    :placeholder="section.placeholder"
+                    class="flex-1"
+                  />
+                  <Button
+                    v-for="btn in section.buttons"
+                    :key="btn.label"
+                    @click="section.onButtonClick(item, btn.value)"
+                    variant="outline"
+                    size="sm"
+                  >
+                    {{ btn.label }}
+                  </Button>
                 </div>
               </div>
             </div>
@@ -204,7 +130,9 @@
                 <SelectValue :placeholder="t('gmView.chooseNPC') || 'Choose NPC'" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem v-for="npc in npcStore.npcs" :key="npc.id" :value="npc.id">{{ npc.name }} ({{ npc.difficulty }})</SelectItem>
+                <SelectItem v-for="npc in npcStore.npcs" :key="npc.id" :value="npc.id">
+                  {{ npc.name }} ({{ t(`diplomacy.diagnostic.difficultyLevels.${npc.difficulty}`) }})
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -292,6 +220,9 @@
           <AlertDialogTitle>{{ alertDialogTitle }}</AlertDialogTitle>
           <AlertDialogDescription v-if="alertDialogMessage" class="whitespace-pre-line">
             {{ alertDialogMessage }}
+          </AlertDialogDescription>
+          <AlertDialogDescription v-else class="sr-only">
+            {{ alertDialogTitle }}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -388,11 +319,6 @@
   })
 
   const resourceTypes = ['metal', 'crystal', 'deuterium', 'darkMatter'] as const
-  const buildingTypes = Object.values(BuildingType)
-  const technologyTypes = Object.values(TechnologyType)
-  const shipTypes = Object.values(ShipType)
-  const defenseTypes = Object.values(DefenseType)
-  const officerTypes = Object.values(OfficerType)
 
   // Tab配置
   const tabs = [
@@ -410,52 +336,161 @@
     }
   }
 
-  const setBuildingLevel = (building: BuildingType, level: number) => {
-    if (selectedPlanet.value) {
-      selectedPlanet.value.buildings[building] = level
-      updatePlayerPoints()
-    }
+  // GM编辑区块配置 - 统一管理建筑/科技/舰船/防御/军官
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  type GMSection = {
+    tabValue: string
+    titleKey: string
+    descKey: string
+    items: string[]
+    max?: number
+    placeholder?: string
+    buttons: { label: string; value: number }[]
+    getItemName: (item: any) => string
+    getValue: (item: any) => number
+    setValue: (item: any, val: number) => void
+    onButtonClick: (item: any, val: number) => void
   }
 
-  const setTechnologyLevel = (tech: TechnologyType, level: number) => {
-    gameStore.player.technologies[tech] = level
-    updatePlayerPoints()
-  }
-
-  const setShipCount = (ship: ShipType, count: number) => {
-    if (selectedPlanet.value) {
-      selectedPlanet.value.fleet[ship] = (selectedPlanet.value.fleet[ship] || 0) + count
-      updatePlayerPoints()
-    }
-  }
-
-  const setDefenseCount = (defense: DefenseType, count: number) => {
-    if (selectedPlanet.value) {
-      selectedPlanet.value.defense[defense] = (selectedPlanet.value.defense[defense] || 0) + count
-      updatePlayerPoints()
-    }
-  }
-
-  const setOfficerDays = (officer: OfficerType, days: number) => {
-    officerDays.value[officer] = days
-    const now = Date.now()
-    const expiresAt = now + days * 24 * 60 * 60 * 1000
-
-    if (!gameStore.player.officers[officer]) {
-      gameStore.player.officers[officer] = {
-        type: officer,
-        active: true,
-        hiredAt: now,
-        expiresAt: expiresAt
+  const gmSections = computed<GMSection[]>(() => [
+    {
+      tabValue: 'buildings',
+      titleKey: 'gmView.modifyBuildings',
+      descKey: 'gmView.buildingsDesc',
+      items: Object.values(BuildingType),
+      max: 100,
+      placeholder: undefined,
+      buttons: [
+        { label: 'Lv 10', value: 10 },
+        { label: 'Lv 30', value: 30 }
+      ],
+      getItemName: (item: BuildingType) => BUILDINGS.value[item].name,
+      getValue: (item: BuildingType) => selectedPlanet.value?.buildings[item] || 0,
+      setValue: (item: BuildingType, val: number) => {
+        if (selectedPlanet.value) {
+          selectedPlanet.value.buildings[item] = val
+          updatePlayerPoints()
+        }
+      },
+      onButtonClick: (item: BuildingType, val: number) => {
+        if (selectedPlanet.value) {
+          selectedPlanet.value.buildings[item] = val
+          updatePlayerPoints()
+        }
       }
-    } else {
-      gameStore.player.officers[officer].expiresAt = expiresAt
-      gameStore.player.officers[officer].active = true
-      if (!gameStore.player.officers[officer].hiredAt) {
-        gameStore.player.officers[officer].hiredAt = now
+    },
+    {
+      tabValue: 'research',
+      titleKey: 'gmView.modifyResearch',
+      descKey: 'gmView.researchDesc',
+      items: Object.values(TechnologyType),
+      max: 50,
+      placeholder: undefined,
+      buttons: [
+        { label: 'Lv 10', value: 10 },
+        { label: 'Lv 20', value: 20 }
+      ],
+      getItemName: (item: TechnologyType) => TECHNOLOGIES.value[item].name,
+      getValue: (item: TechnologyType) => gameStore.player.technologies[item] || 0,
+      setValue: (item: TechnologyType, val: number) => {
+        gameStore.player.technologies[item] = val
+        updatePlayerPoints()
+      },
+      onButtonClick: (item: TechnologyType, val: number) => {
+        gameStore.player.technologies[item] = val
+        updatePlayerPoints()
+      }
+    },
+    {
+      tabValue: 'ships',
+      titleKey: 'gmView.modifyShips',
+      descKey: 'gmView.shipsDesc',
+      items: Object.values(ShipType),
+      max: undefined,
+      placeholder: undefined,
+      buttons: [
+        { label: '+100', value: 100 },
+        { label: '+1K', value: 1000 }
+      ],
+      getItemName: (item: ShipType) => SHIPS.value[item].name,
+      getValue: (item: ShipType) => selectedPlanet.value?.fleet[item] || 0,
+      setValue: (item: ShipType, val: number) => {
+        if (selectedPlanet.value) {
+          selectedPlanet.value.fleet[item] = val
+          updatePlayerPoints()
+        }
+      },
+      onButtonClick: (item: ShipType, val: number) => {
+        if (selectedPlanet.value) {
+          selectedPlanet.value.fleet[item] = (selectedPlanet.value.fleet[item] || 0) + val
+          updatePlayerPoints()
+        }
+      }
+    },
+    {
+      tabValue: 'defense',
+      titleKey: 'gmView.modifyDefense',
+      descKey: 'gmView.defenseDesc',
+      items: Object.values(DefenseType),
+      max: undefined,
+      placeholder: undefined,
+      buttons: [
+        { label: '+100', value: 100 },
+        { label: '+1K', value: 1000 }
+      ],
+      getItemName: (item: DefenseType) => DEFENSES.value[item].name,
+      getValue: (item: DefenseType) => selectedPlanet.value?.defense[item] || 0,
+      setValue: (item: DefenseType, val: number) => {
+        if (selectedPlanet.value) {
+          selectedPlanet.value.defense[item] = val
+          updatePlayerPoints()
+        }
+      },
+      onButtonClick: (item: DefenseType, val: number) => {
+        if (selectedPlanet.value) {
+          selectedPlanet.value.defense[item] = (selectedPlanet.value.defense[item] || 0) + val
+          updatePlayerPoints()
+        }
+      }
+    },
+    {
+      tabValue: 'officers',
+      titleKey: 'gmView.modifyOfficers',
+      descKey: 'gmView.officersDesc',
+      items: Object.values(OfficerType),
+      max: undefined,
+      placeholder: t('gmView.days'),
+      buttons: [
+        { label: `7${t('gmView.days')}`, value: 7 },
+        { label: `30${t('gmView.days')}`, value: 30 },
+        { label: `365${t('gmView.days')}`, value: 365 }
+      ],
+      getItemName: (item: OfficerType) => OFFICERS.value[item].name,
+      getValue: (item: OfficerType) => officerDays.value[item] || 0,
+      setValue: (item: OfficerType, val: number) => {
+        officerDays.value[item] = val
+      },
+      onButtonClick: (item: OfficerType, days: number) => {
+        officerDays.value[item] = days
+        const now = Date.now()
+        const expiresAt = now + days * 24 * 60 * 60 * 1000
+        if (!gameStore.player.officers[item]) {
+          gameStore.player.officers[item] = {
+            type: item,
+            active: true,
+            hiredAt: now,
+            expiresAt: expiresAt
+          }
+        } else {
+          gameStore.player.officers[item].expiresAt = expiresAt
+          gameStore.player.officers[item].active = true
+          if (!gameStore.player.officers[item].hiredAt) {
+            gameStore.player.officers[item].hiredAt = now
+          }
+        }
       }
     }
-  }
+  ])
 
   // 显示重置游戏确认对话框
   const showResetConfirmDialog = () => {

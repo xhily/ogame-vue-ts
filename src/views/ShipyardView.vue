@@ -31,13 +31,20 @@
     <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
       <Card v-for="shipType in Object.values(ShipType)" :key="shipType" class="relative">
         <CardUnlockOverlay :requirements="SHIPS[shipType].requirements" />
-        <CardHeader class="pb-3">
-          <CardTitle
-            class="text-sm sm:text-base lg:text-lg cursor-pointer hover:text-primary transition-colors underline decoration-dotted underline-offset-4 mb-2"
-            @click="detailDialog.openShip(shipType)"
-          >
-            {{ SHIPS[shipType].name }}
-          </CardTitle>
+        <CardHeader>
+          <div class="mb-2">
+            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2">
+              <CardTitle
+                class="text-sm sm:text-base lg:text-lg cursor-pointer hover:text-primary transition-colors underline decoration-dotted underline-offset-4 order-2 sm:order-1"
+                @click="detailDialog.openShip(shipType)"
+              >
+                {{ SHIPS[shipType].name }}
+              </CardTitle>
+              <Badge variant="secondary" class="text-xs whitespace-nowrap self-start order-1 sm:order-2">
+                {{ formatNumber(planet.fleet[shipType] || 0) }}
+              </Badge>
+            </div>
+          </div>
           <CardDescription class="text-xs sm:text-sm">{{ SHIPS[shipType].description }}</CardDescription>
         </CardHeader>
         <CardContent>
@@ -146,6 +153,7 @@
   import { computed, ref } from 'vue'
   import { ShipType, BuildingType } from '@/types/game'
   import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+  import { Badge } from '@/components/ui/badge'
   import { Button } from '@/components/ui/button'
   import { Input } from '@/components/ui/input'
   import { Label } from '@/components/ui/label'
@@ -165,6 +173,8 @@
   import * as shipValidation from '@/logic/shipValidation'
   import * as publicLogic from '@/logic/publicLogic'
   import * as fleetStorageLogic from '@/logic/fleetStorageLogic'
+  import * as shipLogic from '@/logic/shipLogic'
+  import * as gameLogic from '@/logic/gameLogic'
 
   const gameStore = useGameStore()
   const detailDialog = useDetailDialogStore()
@@ -220,6 +230,11 @@
     if (!gameStore.currentPlanet) return { success: false }
     const validation = shipValidation.validateShipBuild(gameStore.currentPlanet, shipType, quantity, gameStore.player.technologies)
     if (!validation.valid) return { success: false, reason: validation.reason }
+
+    // 追踪资源消耗（在扣除前计算成本）
+    const totalCost = shipLogic.calculateShipCost(shipType, quantity)
+    gameLogic.trackResourceConsumption(gameStore.player, totalCost)
+
     const queueItem = shipValidation.executeShipBuild(gameStore.currentPlanet, shipType, quantity, gameStore.player.officers)
     gameStore.currentPlanet.buildQueue.push(queueItem)
     return { success: true }

@@ -267,6 +267,16 @@ export interface DiplomaticReport {
   read?: boolean // 已读状态
 }
 
+// 舰队预设
+export interface FleetPreset {
+  id: string
+  name: string // 自定义预设名称
+  fleet: Partial<Fleet> // 预设舰队数量
+  targetPosition?: { galaxy: number; system: number; position: number } // 预设目标坐标
+  missionType?: MissionType // 预设任务类型
+  cargo?: Partial<Resources> // 预设运输资源
+}
+
 // 舰队任务
 export interface FleetMission {
   id: string
@@ -275,6 +285,7 @@ export interface FleetMission {
   isHostile?: boolean // 是否是敌对任务（用于警告显示）
   originPlanetId: string
   targetPosition: { galaxy: number; system: number; position: number }
+  targetIsMoon?: boolean // 目标是否为月球（用于区分同坐标的行星和月球）
   targetPlanetId?: string
   debrisFieldId?: string // 残骸场ID（用于回收任务）
   missionType: MissionType
@@ -413,6 +424,8 @@ export interface MissionReport {
   message: string // 任务结果描述
   // 任务特定的详细信息
   details?: {
+    // 通用：失败原因
+    failReason?: string
     // 运输任务：运输的资源
     transportedResources?: Resources
     // 殖民任务：新星球信息
@@ -423,6 +436,9 @@ export interface MissionReport {
     remainingDebris?: Pick<Resources, 'metal' | 'crystal'>
     // 毁灭任务：摧毁的星球
     destroyedPlanetName?: string
+    // 毁灭任务：概率和死星损失
+    destructionChance?: number
+    deathstarsLost?: boolean
     // 部署任务：部署的舰队
     deployedFleet?: Partial<Fleet>
     // 导弹攻击任务：导弹信息
@@ -430,6 +446,14 @@ export interface MissionReport {
     missileHits?: number
     missileIntercepted?: number
     defenseLosses?: Partial<Record<DefenseType, number>>
+    // 探险任务：发现的资源
+    foundResources?: Partial<Resources>
+    // 探险任务：发现的舰船
+    foundFleet?: Partial<Fleet>
+    // 探险任务：损失的舰船
+    fleetLost?: Partial<Fleet>
+    // 侦查任务：报告ID
+    spyReportId?: string
   }
   read?: boolean
 }
@@ -495,6 +519,8 @@ export interface Planet {
   maxFleetStorage: number // 舰队仓储上限
   isMoon: boolean // 是否为月球
   parentPlanetId?: string // 如果是月球,指向母星的ID
+  diameter?: number // 月球直径(km)，用于销毁概率计算
+  jumpGateLastUsed?: number // 跳跃门上次使用时间戳(ms)，用于冷却计算
 }
 
 // 月球特殊配置
@@ -569,11 +595,22 @@ export interface Player {
   isGMEnabled?: boolean // GM模式开关（默认false，通过秘籍激活）
   lastVersionCheckTime?: number // 最后一次自动检查版本的时间戳（被动检测）
   lastManualUpdateCheck?: number // 最后一次手动检查更新的时间戳（主动检测）
-  // 外交系统字段
-  diplomaticRelations?: Record<string, DiplomaticRelation> // 玩家对NPC的关系（key: npcId）
+  // 外交系统字段（外交关系存储在 NPC.relations 中）
   diplomaticReports?: DiplomaticReport[] // 外交变化报告
   // 新手引导字段
   tutorialProgress?: TutorialProgress // 新手引导进度
+  // 隐私协议同意状态
+  privacyAgreed?: boolean // 是否已同意隐私协议
+  // 弱引导系统
+  dismissedHints?: string[] // 已关闭的提示ID列表
+  hintsEnabled?: boolean // 是否启用弱引导提示（默认true）
+  // 显示设置
+  backgroundEnabled?: boolean // 是否启用背景动画（默认false）
+  // 舰队预设
+  fleetPresets?: FleetPreset[] // 舰队预设列表（最多3个）
+  // 成就系统
+  achievementStats?: AchievementStats // 成就统计数据
+  achievements?: Record<string, AchievementProgress> // 成就进度
 }
 
 export interface NotificationSettings {
@@ -609,9 +646,13 @@ export interface Universe {
 export interface NPC {
   id: string
   name: string
+  note?: string // 玩家添加的备注
   planets: Planet[]
   technologies: Record<TechnologyType, number>
-  difficulty: 'easy' | 'medium' | 'hard'
+  difficulty: 'easy' | 'medium' | 'hard' // 保留兼容，不再使用
+  // 距离难度系统
+  difficultyLevel?: number // 基于距离的难度等级（1-无限）
+  distanceToHomeworld?: number // 到玩家母星的距离
   // 行为跟踪字段
   lastSpyTime?: number // 上次侦查玩家的时间
   lastAttackTime?: number // 上次攻击玩家的时间
@@ -662,4 +703,122 @@ export interface TutorialProgress {
   completedStepIds: string[] // 已完成的步骤ID
   currentStep: string | null // 当前步骤ID
   skippedAt?: number // 跳过的时间戳
+}
+
+// ==================== 成就系统类型 ====================
+
+// 成就类别枚举
+export const AchievementCategory = {
+  Resource: 'resource',
+  Building: 'building',
+  Combat: 'combat',
+  Mission: 'mission',
+  Diplomacy: 'diplomacy'
+} as const
+export type AchievementCategory = (typeof AchievementCategory)[keyof typeof AchievementCategory]
+
+// 成就等级枚举
+export const AchievementTier = {
+  Bronze: 'bronze',
+  Silver: 'silver',
+  Gold: 'gold',
+  Platinum: 'platinum',
+  Diamond: 'diamond'
+} as const
+export type AchievementTier = (typeof AchievementTier)[keyof typeof AchievementTier]
+
+// 成就统计数据接口
+export interface AchievementStats {
+  // 资源统计
+  totalMetalProduced: number
+  totalCrystalProduced: number
+  totalDeuteriumProduced: number
+  totalDarkMatterProduced: number
+  totalMetalConsumed: number
+  totalCrystalConsumed: number
+  totalDeuteriumConsumed: number
+  totalDarkMatterConsumed: number
+
+  // 建造统计
+  buildingsUpgraded: number
+  maxBuildingLevel: Record<BuildingType, number>
+  researchCompleted: number
+  maxTechnologyLevel: Record<TechnologyType, number>
+  shipsProduced: Record<ShipType, number>
+  totalShipsProduced: number
+  defensesBuilt: Record<DefenseType, number>
+  totalDefensesBuilt: number
+
+  // 战斗统计
+  attacksLaunched: number
+  attacksWon: number
+  attacksLost: number
+  fleetLostInAttack: Record<ShipType, number>
+  totalFleetLostInAttack: number
+  debrisCreatedFromAttacks: number
+  defensesSuccessful: number
+  defensesFailed: number
+  fleetLostInDefense: Record<ShipType, number>
+  totalFleetLostInDefense: number
+  defenseLostInDefense: Record<DefenseType, number>
+  totalDefenseLostInDefense: number
+  enemyFleetDestroyedInDefense: Record<ShipType, number>
+  totalEnemyFleetDestroyedInDefense: number
+  debrisCreatedFromDefenses: number
+
+  // 任务统计
+  totalFlightMissions: number
+  transportMissions: number
+  transportedResources: number
+  colonizations: number
+  spyMissions: number
+  deployments: number
+  expeditionsTotal: number
+  expeditionsSuccessful: number
+  recyclingMissions: number
+  recycledResources: number
+  planetDestructions: number
+  fuelConsumed: number
+
+  // 外交统计
+  friendlyNPCCount: number
+  hostileNPCCount: number
+  giftsSent: number
+  giftResourcesTotal: number
+  attackedByNPC: number
+  spiedByNPC: number
+  debrisRecycledByNPC: number
+  debrisResourcesLostToNPC: number
+}
+
+// 成就等级配置
+export interface AchievementTierConfig {
+  tier: AchievementTier
+  target: number
+  reward: AchievementReward
+}
+
+// 成就奖励
+export interface AchievementReward {
+  darkMatter?: number
+  points?: number
+}
+
+// 成就配置接口
+export interface AchievementConfig {
+  id: string
+  category: AchievementCategory
+  icon: string
+  tiers: AchievementTierConfig[]
+  statKey: keyof AchievementStats | string
+  checkType: 'gte' | 'eq' | 'sum' | 'max'
+}
+
+// 玩家成就进度
+export interface AchievementProgress {
+  id: string
+  currentTier: AchievementTier | null
+  currentValue: number
+  unlockedAt?: number
+  tierUnlocks: Record<AchievementTier, number | null>
 }

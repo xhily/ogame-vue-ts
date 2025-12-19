@@ -40,15 +40,9 @@
         </div>
 
         <!-- 胜利者 -->
-        <div class="text-center p-4 rounded-lg" :class="getWinnerStyle(report.winner)">
+        <div class="text-center p-4 rounded-lg" :class="getPlayerResultStyle()">
           <p class="text-lg font-bold">
-            {{
-              report.winner === 'attacker'
-                ? t('messagesView.victory')
-                : report.winner === 'defender'
-                ? t('messagesView.defeat')
-                : t('messagesView.draw')
-            }}
+            {{ report.winner === 'draw' ? t('messagesView.draw') : isPlayerVictory ? t('messagesView.victory') : t('messagesView.defeat') }}
           </p>
           <p v-if="report.rounds" class="text-sm mt-1">{{ t('simulatorView.afterRounds').replace('{rounds}', String(report.rounds)) }}</p>
         </div>
@@ -92,86 +86,88 @@
         </div>
 
         <!-- 剩余单位 -->
-        <div v-if="report.attackerRemaining || report.defenderRemaining" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div v-if="hasAnyRemaining" class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <!-- 攻击方剩余 -->
-          <div v-if="report.attackerRemaining && Object.keys(report.attackerRemaining).length > 0" class="space-y-2">
+          <div class="space-y-2">
             <p class="text-sm font-medium text-blue-600 dark:text-blue-400">{{ t('messagesView.attackerRemaining') }}</p>
             <div class="p-3 bg-muted rounded-lg space-y-1 text-xs">
-              <div v-for="(count, shipType) in report.attackerRemaining" :key="shipType">
-                <span class="text-muted-foreground">{{ SHIPS[shipType].name }}:</span>
-                <span class="ml-2 font-medium">{{ count }}</span>
-              </div>
+              <template v-if="report.attackerRemaining && Object.keys(report.attackerRemaining).length > 0">
+                <div v-for="(count, shipType) in report.attackerRemaining" :key="shipType">
+                  <span class="text-muted-foreground">{{ SHIPS[shipType].name }}:</span>
+                  <span class="ml-2 font-medium">{{ count }}</span>
+                </div>
+              </template>
+              <p v-else class="text-muted-foreground">{{ t('messagesView.allDestroyed') }}</p>
             </div>
           </div>
 
           <!-- 防守方剩余 -->
-          <div
-            v-if="
-              report.defenderRemaining &&
-              (Object.keys(report.defenderRemaining.fleet || {}).length > 0 ||
-                Object.keys(report.defenderRemaining.defense || {}).length > 0)
-            "
-            class="space-y-2"
-          >
+          <div class="space-y-2">
             <p class="text-sm font-medium text-blue-600 dark:text-blue-400">{{ t('messagesView.defenderRemaining') }}</p>
             <div class="p-3 bg-muted rounded-lg space-y-1 text-xs">
-              <div v-for="(count, shipType) in report.defenderRemaining.fleet" :key="shipType">
-                <span class="text-muted-foreground">{{ SHIPS[shipType].name }}:</span>
-                <span class="ml-2 font-medium">{{ count }}</span>
-              </div>
-              <div v-for="(count, defenseType) in report.defenderRemaining.defense" :key="defenseType">
-                <span class="text-muted-foreground">{{ DEFENSES[defenseType].name }}:</span>
-                <span class="ml-2 font-medium">{{ count }}</span>
-              </div>
+              <template
+                v-if="
+                  report.defenderRemaining &&
+                  (Object.keys(report.defenderRemaining.fleet || {}).length > 0 ||
+                    Object.keys(report.defenderRemaining.defense || {}).length > 0)
+                "
+              >
+                <div v-for="(count, shipType) in report.defenderRemaining.fleet" :key="shipType">
+                  <span class="text-muted-foreground">{{ SHIPS[shipType].name }}:</span>
+                  <span class="ml-2 font-medium">{{ count }}</span>
+                </div>
+                <div v-for="(count, defenseType) in report.defenderRemaining.defense" :key="defenseType">
+                  <span class="text-muted-foreground">{{ DEFENSES[defenseType].name }}:</span>
+                  <span class="ml-2 font-medium">{{ count }}</span>
+                </div>
+              </template>
+              <p v-else class="text-muted-foreground">{{ t('messagesView.allDestroyed') }}</p>
             </div>
           </div>
         </div>
 
-        <!-- 战利品和残骸 -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <!-- 掠夺资源 -->
-          <div
-            v-if="report.plunder && (report.plunder.metal > 0 || report.plunder.crystal > 0 || report.plunder.deuterium > 0)"
-            class="p-3 bg-green-50 dark:bg-green-950 rounded-lg"
-          >
-            <p class="text-sm font-medium mb-2 text-green-600 dark:text-green-400">{{ t('messagesView.plunder') }}</p>
-            <div class="flex flex-wrap gap-3 text-xs">
-              <span v-if="report.plunder.metal > 0" class="flex items-center gap-1">
-                <ResourceIcon type="metal" size="sm" />
-                {{ formatNumber(report.plunder.metal) }}
-              </span>
-              <span v-if="report.plunder.crystal > 0" class="flex items-center gap-1">
-                <ResourceIcon type="crystal" size="sm" />
-                {{ formatNumber(report.plunder.crystal) }}
-              </span>
-              <span v-if="report.plunder.deuterium > 0" class="flex items-center gap-1">
-                <ResourceIcon type="deuterium" size="sm" />
-                {{ formatNumber(report.plunder.deuterium) }}
-              </span>
-            </div>
+        <!-- 掠夺资源 -->
+        <div
+          v-if="report.plunder && (report.plunder.metal > 0 || report.plunder.crystal > 0 || report.plunder.deuterium > 0)"
+          class="p-3 bg-green-50 dark:bg-green-950 rounded-lg"
+        >
+          <p class="text-sm font-medium mb-2 text-green-600 dark:text-green-400">{{ t('messagesView.plunder') }}</p>
+          <div class="flex flex-wrap gap-3 text-xs justify-center">
+            <span v-if="report.plunder.metal > 0" class="flex items-center gap-1">
+              <ResourceIcon type="metal" size="sm" />
+              {{ formatNumber(report.plunder.metal) }}
+            </span>
+            <span v-if="report.plunder.crystal > 0" class="flex items-center gap-1">
+              <ResourceIcon type="crystal" size="sm" />
+              {{ formatNumber(report.plunder.crystal) }}
+            </span>
+            <span v-if="report.plunder.deuterium > 0" class="flex items-center gap-1">
+              <ResourceIcon type="deuterium" size="sm" />
+              {{ formatNumber(report.plunder.deuterium) }}
+            </span>
           </div>
+        </div>
 
-          <!-- 残骸场 -->
-          <div
-            v-if="report.debrisField && (report.debrisField.metal > 0 || report.debrisField.crystal > 0)"
-            class="p-3 bg-muted rounded-lg"
-          >
-            <p class="text-sm font-medium mb-2">{{ t('messagesView.debrisField') }}</p>
-            <div class="flex flex-wrap gap-3 text-xs">
-              <span v-if="report.debrisField.metal > 0" class="flex items-center gap-1">
-                <ResourceIcon type="metal" size="sm" />
-                {{ formatNumber(report.debrisField.metal) }}
-              </span>
-              <span v-if="report.debrisField.crystal > 0" class="flex items-center gap-1">
-                <ResourceIcon type="crystal" size="sm" />
-                {{ formatNumber(report.debrisField.crystal) }}
-              </span>
-            </div>
-            <!-- 月球生成概率 -->
-            <p v-if="report.moonChance && report.moonChance > 0" class="text-xs text-muted-foreground mt-2">
-              {{ t('messagesView.moonChance') }}: {{ (report.moonChance * 100).toFixed(1) }}%
-            </p>
+        <!-- 残骸场 -->
+        <div
+          v-if="report.debrisField && (report.debrisField.metal > 0 || report.debrisField.crystal > 0)"
+          class="text-center p-4 bg-muted rounded-lg"
+        >
+          <p class="text-sm font-medium mb-2">{{ t('messagesView.debrisField') }}</p>
+          <div class="flex flex-wrap gap-3 text-xs justify-center">
+            <span v-if="report.debrisField.metal > 0" class="flex items-center gap-1">
+              <ResourceIcon type="metal" size="sm" />
+              {{ formatNumber(report.debrisField.metal) }}
+            </span>
+            <span v-if="report.debrisField.crystal > 0" class="flex items-center gap-1">
+              <ResourceIcon type="crystal" size="sm" />
+              {{ formatNumber(report.debrisField.crystal) }}
+            </span>
           </div>
+          <!-- 月球生成概率 -->
+          <p v-if="report.moonChance && report.moonChance > 0" class="text-xs text-muted-foreground mt-2">
+            {{ t('messagesView.moonChance') }}: {{ (report.moonChance * 100).toFixed(1) }}%
+          </p>
         </div>
 
         <!-- 回合详情 -->
@@ -301,7 +297,11 @@
   // 获取攻击方星球信息
   const attackerPlanet = computed(() => {
     if (!props.report) return null
-    return gameStore.player.planets.find(p => p.id === props.report!.attackerPlanetId)
+    // 先从玩家星球中查找
+    const playerPlanet = gameStore.player.planets.find(p => p.id === props.report!.attackerPlanetId)
+    if (playerPlanet) return playerPlanet
+    // 再从宇宙星球地图中查找（包括 NPC 星球）
+    return Object.values(universeStore.planets).find(p => p.id === props.report!.attackerPlanetId)
   })
 
   // 获取防守方星球信息
@@ -310,8 +310,33 @@
     // 先从玩家星球中查找
     const playerPlanet = gameStore.player.planets.find(p => p.id === props.report!.defenderPlanetId)
     if (playerPlanet) return playerPlanet
-    // 再从宇宙星球地图中查找
+    // 再从宇宙星球地图中查找（包括 NPC 星球）
     return Object.values(universeStore.planets).find(p => p.id === props.report!.defenderPlanetId)
+  })
+
+  // 判断玩家是攻击方还是防守方
+  const isPlayerAttacker = computed(() => {
+    if (!props.report) return false
+    return gameStore.player.planets.some(p => p.id === props.report!.attackerPlanetId)
+  })
+
+  // 判断玩家是否胜利
+  const isPlayerVictory = computed(() => {
+    if (!props.report) return false
+    if (props.report.winner === 'draw') return false
+    // 玩家是攻击方且攻击方胜利，或者玩家是防守方且防守方胜利
+    return (isPlayerAttacker.value && props.report.winner === 'attacker') || (!isPlayerAttacker.value && props.report.winner === 'defender')
+  })
+
+  // 判断是否有任何剩余单位需要显示
+  const hasAnyRemaining = computed(() => {
+    if (!props.report) return false
+    const hasAttackerRemaining = props.report.attackerRemaining && Object.keys(props.report.attackerRemaining).length > 0
+    const hasDefenderRemaining =
+      props.report.defenderRemaining &&
+      (Object.keys(props.report.defenderRemaining.fleet || {}).length > 0 ||
+        Object.keys(props.report.defenderRemaining.defense || {}).length > 0)
+    return hasAttackerRemaining || hasDefenderRemaining
   })
 
   watch(
@@ -328,10 +353,11 @@
     emit('update:open', newValue)
   })
 
-  // 获取胜利者样式
-  const getWinnerStyle = (winner: string) => {
-    if (winner === 'attacker') return 'bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-300'
-    if (winner === 'defender') return 'bg-red-50 dark:bg-red-950 text-red-700 dark:text-red-300'
-    return 'bg-gray-50 dark:bg-gray-950 text-gray-700 dark:text-gray-300'
+  // 获取玩家战斗结果样式
+  const getPlayerResultStyle = () => {
+    if (!props.report) return 'bg-gray-50 dark:bg-gray-950 text-gray-700 dark:text-gray-300'
+    if (props.report.winner === 'draw') return 'bg-gray-50 dark:bg-gray-950 text-gray-700 dark:text-gray-300'
+    if (isPlayerVictory.value) return 'bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-300'
+    return 'bg-red-50 dark:bg-red-950 text-red-700 dark:text-red-300'
   }
 </script>

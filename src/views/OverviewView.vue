@@ -12,7 +12,6 @@
       <!-- 月球信息 -->
       <div v-if="!planet.isMoon && moon" class="mt-2">
         <Button @click="switchToMoon" variant="outline" size="sm">
-          <span class="mr-2">🌙</span>
           {{ t('planet.switchToMoon') }}
         </Button>
       </div>

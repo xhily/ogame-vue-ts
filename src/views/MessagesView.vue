@@ -1,6 +1,36 @@
 <template>
   <div class="container mx-auto p-4 sm:p-6 space-y-6">
-    <h1 class="text-2xl sm:text-3xl font-bold">{{ t('messagesView.title') }}</h1>
+    <div class="flex items-center justify-between">
+      <h1 class="text-2xl sm:text-3xl font-bold">{{ t('messagesView.title') }}</h1>
+
+      <!-- 清空消息按钮 -->
+      <Popover v-model:open="showClearPopover">
+        <PopoverTrigger as-child>
+          <Button variant="outline" size="sm" class="gap-2">
+            <Trash2 class="h-4 w-4" />
+            {{ t('messagesView.clearMessages') }}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent class="w-80">
+          <div class="space-y-4">
+            <div class="space-y-2">
+              <h4 class="font-medium leading-none">{{ t('messagesView.clearMessageTypes') }}</h4>
+            </div>
+            <div class="space-y-3">
+              <div v-for="option in clearOptionFields" :key="option.key" class="flex items-center space-x-2">
+                <Checkbox :id="`clear-${option.key}`" v-model="clearOptions[option.key]" />
+                <label :for="`clear-${option.key}`" class="text-sm cursor-pointer">
+                  {{ t(`messagesView.${option.labelKey}`) }} ({{ option.count }})
+                </label>
+              </div>
+            </div>
+            <Button @click="clearSelectedMessages" class="w-full" :disabled="!hasSelectedAny">
+              {{ t('messagesView.clearNow') }}
+            </Button>
+          </div>
+        </PopoverContent>
+      </Popover>
+    </div>
 
     <!-- 标签切换 -->
     <Tabs v-model="activeTab" class="w-full">
@@ -8,17 +38,20 @@
         <TabsTrigger v-for="tab in tabs" :key="tab.value" :value="tab.value" class="flex items-center justify-center gap-1 px-2">
           <component :is="tab.icon" class="h-3 w-3 sm:h-4 sm:w-4" />
           <span class="text-xs sm:text-sm truncate">{{ tab.label }}</span>
-          <Badge v-if="tab.unreadCount > 0" variant="destructive" class="hidden sm:flex ml-1">
+          <Badge v-if="tab.unreadCount > 0" variant="destructive" class="ml-1 text-xs">
             {{ tab.unreadCount }}
           </Badge>
         </TabsTrigger>
       </TabsList>
 
       <!-- 战斗报告列表 -->
-      <TabsContent value="battles" class="mt-4 space-y-2">
-        <Card v-if="gameStore.player.battleReports.length === 0">
-          <CardContent class="py-8 text-center text-muted-foreground">{{ t('messagesView.noBattleReports') }}</CardContent>
-        </Card>
+      <TabsContent value="battles" class="mt-4 space-y-2 pb-20">
+        <Empty v-if="gameStore.player.battleReports.length === 0" class="border rounded-lg">
+          <EmptyContent>
+            <Sword class="h-10 w-10 text-muted-foreground" />
+            <EmptyDescription>{{ t('messagesView.noBattleReports') }}</EmptyDescription>
+          </EmptyContent>
+        </Empty>
 
         <Card
           v-for="report in sortedBattleReports"
@@ -48,10 +81,13 @@
       </TabsContent>
 
       <!-- 间谍报告列表（合并：侦查报告 + 被侦查通知） -->
-      <TabsContent value="spy" class="mt-4 space-y-2">
-        <Card v-if="gameStore.player.spyReports.length === 0 && sortedSpiedNotifications.length === 0">
-          <CardContent class="py-8 text-center text-muted-foreground">{{ t('messagesView.noSpyReports') }}</CardContent>
-        </Card>
+      <TabsContent value="spy" class="mt-4 space-y-2 pb-20">
+        <Empty v-if="gameStore.player.spyReports.length === 0 && sortedSpiedNotifications.length === 0" class="border rounded-lg">
+          <EmptyContent>
+            <Eye class="h-10 w-10 text-muted-foreground" />
+            <EmptyDescription>{{ t('messagesView.noSpyReports') }}</EmptyDescription>
+          </EmptyContent>
+        </Empty>
 
         <!-- 侦查报告 -->
         <Card
@@ -107,16 +143,20 @@
       </TabsContent>
 
       <!-- NPC相关消息（活动、礼物、被拒绝） -->
-      <TabsContent value="npc" class="mt-4 space-y-2">
-        <Card
+      <TabsContent value="npc" class="mt-4 space-y-2 pb-20">
+        <Empty
           v-if="
             sortedNPCActivityNotifications.length === 0 &&
             sortedGiftNotifications.length === 0 &&
             sortedGiftRejectedNotifications.length === 0
           "
+          class="border rounded-lg"
         >
-          <CardContent class="py-8 text-center text-muted-foreground">{{ t('messagesView.noNPCActivity') }}</CardContent>
-        </Card>
+          <EmptyContent>
+            <Users class="h-10 w-10 text-muted-foreground" />
+            <EmptyDescription>{{ t('messagesView.noNPCActivity') }}</EmptyDescription>
+          </EmptyContent>
+        </Empty>
 
         <!-- NPC活动通知 -->
         <Card
@@ -177,11 +217,11 @@
               <div class="text-sm">
                 <div class="font-semibold mb-1">{{ t('messagesView.giftResources') }}:</div>
                 <div class="grid grid-cols-3 gap-2">
-                  <div v-if="gift.resources.metal > 0">{{ t('resources.metal') }}: {{ gift.resources.metal.toLocaleString() }}</div>
-                  <div v-if="gift.resources.crystal > 0">{{ t('resources.crystal') }}: {{ gift.resources.crystal.toLocaleString() }}</div>
-                  <div v-if="gift.resources.deuterium > 0">
-                    {{ t('resources.deuterium') }}: {{ gift.resources.deuterium.toLocaleString() }}
-                  </div>
+                  <template v-for="res in basicResourceFields" :key="res.key">
+                    <div v-if="gift.resources[res.key] > 0">
+                      {{ t(`resources.${res.key}`) }}: {{ gift.resources[res.key].toLocaleString() }}
+                    </div>
+                  </template>
                 </div>
               </div>
               <div class="text-xs text-muted-foreground">
@@ -229,15 +269,11 @@
               <div class="text-sm">
                 <div class="font-semibold mb-1">{{ t('messagesView.rejectedResources') }}:</div>
                 <div class="grid grid-cols-3 gap-2">
-                  <div v-if="rejection.rejectedResources.metal > 0">
-                    {{ t('resources.metal') }}: {{ rejection.rejectedResources.metal.toLocaleString() }}
-                  </div>
-                  <div v-if="rejection.rejectedResources.crystal > 0">
-                    {{ t('resources.crystal') }}: {{ rejection.rejectedResources.crystal.toLocaleString() }}
-                  </div>
-                  <div v-if="rejection.rejectedResources.deuterium > 0">
-                    {{ t('resources.deuterium') }}: {{ rejection.rejectedResources.deuterium.toLocaleString() }}
-                  </div>
+                  <template v-for="res in basicResourceFields" :key="res.key">
+                    <div v-if="rejection.rejectedResources[res.key] > 0">
+                      {{ t(`resources.${res.key}`) }}: {{ rejection.rejectedResources[res.key].toLocaleString() }}
+                    </div>
+                  </template>
                 </div>
               </div>
               <div class="text-xs text-muted-foreground">
@@ -253,10 +289,13 @@
       </TabsContent>
 
       <!-- 任务报告列表 -->
-      <TabsContent value="missions" class="mt-4 space-y-2">
-        <Card v-if="sortedMissionReports.length === 0">
-          <CardContent class="py-8 text-center text-muted-foreground">{{ t('messagesView.noMissionReports') }}</CardContent>
-        </Card>
+      <TabsContent value="missions" class="mt-4 space-y-2 pb-20">
+        <Empty v-if="sortedMissionReports.length === 0" class="border rounded-lg">
+          <EmptyContent>
+            <Package class="h-10 w-10 text-muted-foreground" />
+            <EmptyDescription>{{ t('messagesView.noMissionReports') }}</EmptyDescription>
+          </EmptyContent>
+        </Empty>
 
         <Card
           v-for="report in sortedMissionReports"
@@ -291,6 +330,9 @@
       </TabsContent>
     </Tabs>
 
+    <!-- 固定底部分页 -->
+    <FixedPagination v-model:page="currentPage[activeTab]" :total-pages="getPaginationConfig(activeTab).totalPages" />
+
     <!-- 战斗报告对话框 -->
     <BattleReportDialog v-model:open="showBattleDialog" :report="selectedBattleReport" />
 
@@ -305,6 +347,9 @@
             <Eye class="h-5 w-5 text-purple-500" />
             {{ t('messagesView.spiedNotificationDetails') }}
           </DialogTitle>
+          <DialogDescription>
+            {{ t('messagesView.spyDetected') }}
+          </DialogDescription>
         </DialogHeader>
 
         <div v-if="selectedSpiedNotification" class="space-y-4">
@@ -370,6 +415,9 @@
             <component :is="getMissionIcon(selectedMissionReport?.missionType)" class="h-5 w-5" />
             {{ t('messagesView.missionReportDetails') }}
           </DialogTitle>
+          <DialogDescription>
+            {{ t('messagesView.missionDetails') }}
+          </DialogDescription>
         </DialogHeader>
 
         <div v-if="selectedMissionReport" class="space-y-4">
@@ -417,10 +465,8 @@
               <div v-if="selectedMissionReport.details?.transportedResources" class="mt-3 space-y-1">
                 <p class="text-xs font-semibold text-muted-foreground">{{ t('messagesView.transportedResources') }}:</p>
                 <div class="grid grid-cols-3 gap-2 text-sm">
-                  <div>{{ t('resources.metal') }}: {{ selectedMissionReport.details.transportedResources.metal.toLocaleString() }}</div>
-                  <div>{{ t('resources.crystal') }}: {{ selectedMissionReport.details.transportedResources.crystal.toLocaleString() }}</div>
-                  <div>
-                    {{ t('resources.deuterium') }}: {{ selectedMissionReport.details.transportedResources.deuterium.toLocaleString() }}
+                  <div v-for="res in basicResourceFields" :key="res.key">
+                    {{ t(`resources.${res.key}`) }}: {{ selectedMissionReport.details.transportedResources[res.key].toLocaleString() }}
                   </div>
                 </div>
               </div>
@@ -429,14 +475,16 @@
               <div v-if="selectedMissionReport.details?.recycledResources" class="mt-3 space-y-1">
                 <p class="text-xs font-semibold text-muted-foreground">{{ t('messagesView.recycledResources') }}:</p>
                 <div class="grid grid-cols-2 gap-2 text-sm">
-                  <div>{{ t('resources.metal') }}: {{ selectedMissionReport.details.recycledResources.metal.toLocaleString() }}</div>
-                  <div>{{ t('resources.crystal') }}: {{ selectedMissionReport.details.recycledResources.crystal.toLocaleString() }}</div>
+                  <div v-for="res in debrisResourceFields" :key="res.key">
+                    {{ t(`resources.${res.key}`) }}: {{ selectedMissionReport.details.recycledResources[res.key].toLocaleString() }}
+                  </div>
                 </div>
                 <div v-if="selectedMissionReport.details.remainingDebris" class="mt-2">
                   <p class="text-xs font-semibold text-muted-foreground">{{ t('messagesView.remainingDebris') }}:</p>
                   <div class="grid grid-cols-2 gap-2 text-sm text-yellow-600 dark:text-yellow-400">
-                    <div>{{ t('resources.metal') }}: {{ selectedMissionReport.details.remainingDebris.metal.toLocaleString() }}</div>
-                    <div>{{ t('resources.crystal') }}: {{ selectedMissionReport.details.remainingDebris.crystal.toLocaleString() }}</div>
+                    <div v-for="res in debrisResourceFields" :key="res.key">
+                      {{ t(`resources.${res.key}`) }}: {{ selectedMissionReport.details.remainingDebris[res.key].toLocaleString() }}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -447,6 +495,71 @@
                 <div class="flex items-center gap-2 mt-1">
                   <Globe class="h-4 w-4 text-green-500" />
                   <span class="font-medium">{{ selectedMissionReport.details.newPlanetName }}</span>
+                </div>
+              </div>
+
+              <!-- 导弹攻击详情 -->
+              <div v-if="selectedMissionReport.details?.missileCount !== undefined" class="mt-3 space-y-2">
+                <p class="text-xs font-semibold text-muted-foreground">{{ t('galaxyView.missileAttack') }}:</p>
+                <div class="grid grid-cols-3 gap-2 text-sm">
+                  <div>
+                    <span class="text-muted-foreground">{{ t('galaxyView.missileCount') }}:</span>
+                    <span class="ml-1 font-medium">{{ selectedMissionReport.details.missileCount }}</span>
+                  </div>
+                  <div>
+                    <span class="text-muted-foreground">{{ t('missionReports.hits') }}:</span>
+                    <span class="ml-1 font-medium text-green-600">{{ selectedMissionReport.details.missileHits }}</span>
+                  </div>
+                  <div>
+                    <span class="text-muted-foreground">{{ t('galaxyView.intercepted') }}:</span>
+                    <span class="ml-1 font-medium text-yellow-600">{{ selectedMissionReport.details.missileIntercepted }}</span>
+                  </div>
+                </div>
+                <div v-if="Object.keys(selectedMissionReport.details.defenseLosses || {}).length > 0" class="mt-2">
+                  <p class="text-xs font-semibold text-muted-foreground">{{ t('galaxyView.defenseLosses') }}:</p>
+                  <div class="grid grid-cols-2 gap-1 text-xs mt-1 p-2 bg-red-50 dark:bg-red-950/30 rounded">
+                    <div v-for="(count, defenseType) in selectedMissionReport.details.defenseLosses" :key="defenseType">
+                      <span class="text-muted-foreground">{{ t('defenses.' + defenseType) }}:</span>
+                      <span class="ml-1 font-medium text-red-600 dark:text-red-400">-{{ count }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 探险任务详情 - 发现资源 -->
+              <div v-if="selectedMissionReport.details?.foundResources" class="mt-3 space-y-1">
+                <p class="text-xs font-semibold text-muted-foreground">{{ t('messagesView.resources') }}:</p>
+                <div class="grid grid-cols-2 gap-2 text-sm p-2 bg-green-50 dark:bg-green-950/30 rounded">
+                  <div v-for="res in allResourceFields" :key="res.key">
+                    <template v-if="(selectedMissionReport.details?.foundResources?.[res.key] ?? 0) > 0">
+                      <span class="text-muted-foreground">{{ t(`resources.${res.key}`) }}:</span>
+                      <span class="ml-1 font-medium text-green-600 dark:text-green-400">
+                        +{{ (selectedMissionReport.details?.foundResources?.[res.key] ?? 0).toLocaleString() }}
+                      </span>
+                    </template>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 探险任务详情 - 发现舰船 -->
+              <div v-if="selectedMissionReport.details?.foundFleet" class="mt-3 space-y-1">
+                <p class="text-xs font-semibold text-muted-foreground">{{ t('messagesView.fleet') }}:</p>
+                <div class="grid grid-cols-2 gap-2 text-sm p-2 bg-blue-50 dark:bg-blue-950/30 rounded">
+                  <div v-for="(count, shipType) in selectedMissionReport.details.foundFleet" :key="shipType">
+                    <span class="text-muted-foreground">{{ t('ships.' + shipType) }}:</span>
+                    <span class="ml-1 font-medium text-blue-600 dark:text-blue-400">+{{ count }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 探险任务详情 - 损失舰船 -->
+              <div v-if="selectedMissionReport.details?.fleetLost" class="mt-3 space-y-1">
+                <p class="text-xs font-semibold text-muted-foreground">{{ t('messagesView.attackerLosses') }}:</p>
+                <div class="grid grid-cols-2 gap-2 text-sm p-2 bg-red-50 dark:bg-red-950/30 rounded">
+                  <div v-for="(count, shipType) in selectedMissionReport.details.fleetLost" :key="shipType">
+                    <span class="text-muted-foreground">{{ t('ships.' + shipType) }}:</span>
+                    <span class="ml-1 font-medium text-red-600 dark:text-red-400">-{{ count }}</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -467,6 +580,9 @@
             <Recycle class="h-5 w-5 text-yellow-500" />
             {{ t('messagesView.npcActivityDetails') }}
           </DialogTitle>
+          <DialogDescription>
+            {{ t('messagesView.activityDescription') }}
+          </DialogDescription>
         </DialogHeader>
 
         <div v-if="selectedNPCActivityNotification" class="space-y-4">
@@ -551,11 +667,15 @@
   import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
   import { Button } from '@/components/ui/button'
   import { Badge } from '@/components/ui/badge'
-  import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
+  import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
+  import { FixedPagination } from '@/components/ui/pagination'
+  import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+  import { Checkbox } from '@/components/ui/checkbox'
   import BattleReportDialog from '@/components/BattleReportDialog.vue'
   import SpyReportDialog from '@/components/SpyReportDialog.vue'
   import { formatDate } from '@/utils/format'
-  import { X, Sword, Eye, AlertTriangle, Package, Recycle, Gift, Ban, Check, Users, Skull, Globe, Compass } from 'lucide-vue-next'
+  import { X, Sword, Eye, AlertTriangle, Package, Recycle, Gift, Ban, Check, Users, Skull, Globe, Compass, Trash2 } from 'lucide-vue-next'
+  import { Empty, EmptyContent, EmptyDescription } from '@/components/ui/empty'
   import type {
     BattleResult,
     SpyReport,
@@ -568,12 +688,118 @@
   import { MissionType } from '@/types/game'
   import { useNPCStore } from '@/stores/npcStore'
   import * as diplomaticLogic from '@/logic/diplomaticLogic'
+  import { toast } from 'vue-sonner'
 
   const router = useRouter()
   const gameStore = useGameStore()
   const npcStore = useNPCStore()
   const { t } = useI18n()
   const activeTab = ref<'battles' | 'spy' | 'missions' | 'npc'>('battles')
+
+  // 清空消息功能
+  const showClearPopover = ref(false)
+  type ClearOptionKey =
+    | 'battles'
+    | 'spyReports'
+    | 'spiedNotifications'
+    | 'missionReports'
+    | 'npcActivity'
+    | 'giftNotifications'
+    | 'giftRejected'
+  const clearOptions = ref<Record<ClearOptionKey, boolean>>({
+    battles: false,
+    spyReports: false,
+    spiedNotifications: false,
+    missionReports: false,
+    npcActivity: false,
+    giftNotifications: false,
+    giftRejected: false
+  })
+
+  // 清空消息选项配置
+  const clearOptionFields = computed(() => [
+    { key: 'battles' as ClearOptionKey, labelKey: 'clearBattleReports', count: gameStore.player.battleReports.length },
+    { key: 'spyReports' as ClearOptionKey, labelKey: 'clearSpyReports', count: gameStore.player.spyReports.length },
+    {
+      key: 'spiedNotifications' as ClearOptionKey,
+      labelKey: 'clearSpiedNotifications',
+      count: gameStore.player.spiedNotifications?.length || 0
+    },
+    { key: 'missionReports' as ClearOptionKey, labelKey: 'clearMissionReports', count: gameStore.player.missionReports?.length || 0 },
+    { key: 'npcActivity' as ClearOptionKey, labelKey: 'clearNPCActivity', count: gameStore.player.npcActivityNotifications?.length || 0 },
+    {
+      key: 'giftNotifications' as ClearOptionKey,
+      labelKey: 'clearGiftNotifications',
+      count: gameStore.player.giftNotifications?.length || 0
+    },
+    { key: 'giftRejected' as ClearOptionKey, labelKey: 'clearGiftRejected', count: gameStore.player.giftRejectedNotifications?.length || 0 }
+  ])
+
+  // 基础资源字段配置（用于显示资源列表）
+  type BasicResourceKey = 'metal' | 'crystal' | 'deuterium'
+  const basicResourceFields: { key: BasicResourceKey }[] = [{ key: 'metal' }, { key: 'crystal' }, { key: 'deuterium' }]
+
+  // 残骸资源字段配置（只有金属和晶体）
+  type DebrisResourceKey = 'metal' | 'crystal'
+  const debrisResourceFields: { key: DebrisResourceKey }[] = [{ key: 'metal' }, { key: 'crystal' }]
+
+  // 全部资源字段配置（包含暗物质，用于探险任务）
+  type AllResourceKey = 'metal' | 'crystal' | 'deuterium' | 'darkMatter'
+  const allResourceFields: { key: AllResourceKey }[] = [{ key: 'metal' }, { key: 'crystal' }, { key: 'deuterium' }, { key: 'darkMatter' }]
+
+  const hasSelectedAny = computed(() => {
+    return Object.values(clearOptions.value).some(v => v)
+  })
+
+  const clearSelectedMessages = () => {
+    if (clearOptions.value.battles) {
+      gameStore.player.battleReports = []
+    }
+    if (clearOptions.value.spyReports) {
+      gameStore.player.spyReports = []
+    }
+    if (clearOptions.value.spiedNotifications) {
+      gameStore.player.spiedNotifications = []
+    }
+    if (clearOptions.value.missionReports) {
+      gameStore.player.missionReports = []
+    }
+    if (clearOptions.value.npcActivity) {
+      gameStore.player.npcActivityNotifications = []
+    }
+    if (clearOptions.value.giftNotifications) {
+      gameStore.player.giftNotifications = []
+    }
+    if (clearOptions.value.giftRejected) {
+      gameStore.player.giftRejectedNotifications = []
+    }
+
+    // 重置选项
+    clearOptions.value = {
+      battles: false,
+      spyReports: false,
+      spiedNotifications: false,
+      missionReports: false,
+      npcActivity: false,
+      giftNotifications: false,
+      giftRejected: false
+    }
+
+    // 关闭popover
+    showClearPopover.value = false
+
+    // 显示成功提示
+    toast.success(t('messagesView.clearSuccess'))
+  }
+
+  // 分页状态
+  const ITEMS_PER_PAGE = 10
+  const currentPage = ref({
+    battles: 1,
+    spy: 1,
+    missions: 1,
+    npc: 1
+  })
 
   // 对话框状态
   const showBattleDialog = ref(false)
@@ -587,38 +813,105 @@
   const selectedMissionReport = ref<MissionReport | null>(null)
   const selectedNPCActivityNotification = ref<NPCActivityNotification | null>(null)
 
-  // 排序后的战斗报告（最新的在前）
-  const sortedBattleReports = computed(() => {
+  // 排序后的战斗报告（最新的在前）- 全部数据
+  const allBattleReports = computed(() => {
     return [...gameStore.player.battleReports].sort((a, b) => b.timestamp - a.timestamp)
   })
 
-  // 排序后的间谍报告（最新的在前）
-  const sortedSpyReports = computed(() => {
+  // 排序后的间谍报告（最新的在前）- 全部数据
+  const allSpyReports = computed(() => {
     return [...gameStore.player.spyReports].sort((a, b) => b.timestamp - a.timestamp)
   })
 
-  // 排序后的被侦查通知（最新的在前）
-  const sortedSpiedNotifications = computed(() => {
+  // 排序后的被侦查通知（最新的在前）- 全部数据
+  const allSpiedNotifications = computed(() => {
     if (!gameStore.player.spiedNotifications) {
       return []
     }
     return [...gameStore.player.spiedNotifications].sort((a, b) => b.timestamp - a.timestamp)
   })
 
-  // 排序后的任务报告（最新的在前）
-  const sortedMissionReports = computed(() => {
+  // 排序后的任务报告（最新的在前）- 全部数据
+  const allMissionReports = computed(() => {
     if (!gameStore.player.missionReports) {
       return []
     }
     return [...gameStore.player.missionReports].sort((a, b) => b.timestamp - a.timestamp)
   })
 
-  // 排序后的NPC活动通知（最新的在前）
-  const sortedNPCActivityNotifications = computed(() => {
+  // 排序后的NPC活动通知（最新的在前）- 全部数据
+  const allNPCActivityNotifications = computed(() => {
     if (!gameStore.player.npcActivityNotifications) {
       return []
     }
     return [...gameStore.player.npcActivityNotifications].sort((a, b) => b.timestamp - a.timestamp)
+  })
+
+  // 战斗报告分页
+  const battleReportsTotalPages = computed(() => Math.ceil(allBattleReports.value.length / ITEMS_PER_PAGE))
+  const sortedBattleReports = computed(() => {
+    const start = (currentPage.value.battles - 1) * ITEMS_PER_PAGE
+    const end = start + ITEMS_PER_PAGE
+    return allBattleReports.value.slice(start, end)
+  })
+
+  // 侦查标签页合并数据（侦查报告 + 被侦查通知）
+  const allSpyTabItems = computed(() => {
+    const spyReports = allSpyReports.value.map(item => ({ ...item, type: 'spy' as const }))
+    const spiedNotifications = allSpiedNotifications.value.map(item => ({ ...item, type: 'spied' as const }))
+    return [...spyReports, ...spiedNotifications].sort((a, b) => b.timestamp - a.timestamp)
+  })
+
+  const spyTabTotalPages = computed(() => Math.ceil(allSpyTabItems.value.length / ITEMS_PER_PAGE))
+  const paginatedSpyTabItems = computed(() => {
+    const start = (currentPage.value.spy - 1) * ITEMS_PER_PAGE
+    const end = start + ITEMS_PER_PAGE
+    return allSpyTabItems.value.slice(start, end)
+  })
+
+  // 从分页后的混合数据中分离出侦查报告和被侦查通知
+  const sortedSpyReports = computed(() => {
+    return paginatedSpyTabItems.value.filter(item => item.type === 'spy')
+  })
+
+  const sortedSpiedNotifications = computed(() => {
+    return paginatedSpyTabItems.value.filter(item => item.type === 'spied')
+  })
+
+  // 任务报告分页
+  const missionReportsTotalPages = computed(() => Math.ceil(allMissionReports.value.length / ITEMS_PER_PAGE))
+  const sortedMissionReports = computed(() => {
+    const start = (currentPage.value.missions - 1) * ITEMS_PER_PAGE
+    const end = start + ITEMS_PER_PAGE
+    return allMissionReports.value.slice(start, end)
+  })
+
+  // NPC标签页合并数据（活动通知 + 礼物通知 + 礼物被拒绝通知）
+  const allNPCTabItems = computed(() => {
+    const activities = allNPCActivityNotifications.value.map(item => ({ ...item, type: 'activity' as const }))
+    const gifts = allGiftNotifications.value.map(item => ({ ...item, type: 'gift' as const }))
+    const rejections = allGiftRejectedNotifications.value.map(item => ({ ...item, type: 'rejection' as const }))
+    return [...activities, ...gifts, ...rejections].sort((a, b) => b.timestamp - a.timestamp)
+  })
+
+  const npcTabTotalPages = computed(() => Math.ceil(allNPCTabItems.value.length / ITEMS_PER_PAGE))
+  const paginatedNPCTabItems = computed(() => {
+    const start = (currentPage.value.npc - 1) * ITEMS_PER_PAGE
+    const end = start + ITEMS_PER_PAGE
+    return allNPCTabItems.value.slice(start, end)
+  })
+
+  // 从分页后的混合数据中分离出各种NPC消息
+  const sortedNPCActivityNotifications = computed(() => {
+    return paginatedNPCTabItems.value.filter(item => item.type === 'activity')
+  })
+
+  const sortedGiftNotifications = computed(() => {
+    return paginatedNPCTabItems.value.filter(item => item.type === 'gift')
+  })
+
+  const sortedGiftRejectedNotifications = computed(() => {
+    return paginatedNPCTabItems.value.filter(item => item.type === 'rejection')
   })
 
   // 未读战斗报告数量
@@ -709,21 +1002,40 @@
     }
   ])
 
-  // 排序后的礼物通知（最新的在前）
-  const sortedGiftNotifications = computed(() => {
+  // 礼物通知和被拒绝通知的全部数据（用于NPC标签页合并）
+  const allGiftNotifications = computed(() => {
     if (!gameStore.player.giftNotifications) {
       return []
     }
     return [...gameStore.player.giftNotifications].sort((a, b) => b.timestamp - a.timestamp)
   })
 
-  // 排序后的礼物被拒绝通知（最新的在前）
-  const sortedGiftRejectedNotifications = computed(() => {
+  const allGiftRejectedNotifications = computed(() => {
     if (!gameStore.player.giftRejectedNotifications) {
       return []
     }
     return [...gameStore.player.giftRejectedNotifications].sort((a, b) => b.timestamp - a.timestamp)
   })
+
+  // 分页配置
+  type PageKey = 'battles' | 'spy' | 'missions' | 'npc'
+  const paginationConfigs = computed(() => ({
+    battles: {
+      totalPages: battleReportsTotalPages.value
+    },
+    spy: {
+      totalPages: spyTabTotalPages.value
+    },
+    missions: {
+      totalPages: missionReportsTotalPages.value
+    },
+    npc: {
+      totalPages: npcTabTotalPages.value
+    }
+  }))
+
+  // 获取指定标签页的分页配置
+  const getPaginationConfig = (key: PageKey) => paginationConfigs.value[key]
 
   // 判断战斗结果Badge颜色
   const getBattleResultVariant = (report: BattleResult): 'default' | 'destructive' | 'secondary' => {
@@ -765,17 +1077,19 @@
   const openSpyReport = (report: SpyReport) => {
     selectedSpyReport.value = report
     showSpyDialog.value = true
-    // 标记为已读
-    if (!report.read) {
-      report.read = true
+    // 找到原始间谍报告对象并标记为已读（因为sortedSpyReports是副本）
+    const originalReport = gameStore.player.spyReports.find(r => r.id === report.id)
+    if (originalReport && !originalReport.read) {
+      originalReport.read = true
     }
   }
 
   // 打开被侦查通知
   const openSpiedNotification = (notification: SpiedNotification) => {
-    // 标记为已读
-    if (!notification.read) {
-      notification.read = true
+    // 找到原始通知对象并标记为已读（因为sortedSpiedNotifications是副本）
+    const originalNotification = gameStore.player.spiedNotifications?.find(n => n.id === notification.id)
+    if (originalNotification && !originalNotification.read) {
+      originalNotification.read = true
     }
     // 设置选中的通知并打开详情对话框
     selectedSpiedNotification.value = notification
@@ -811,9 +1125,10 @@
 
   // 打开NPC活动通知
   const openNPCActivityNotification = (notification: NPCActivityNotification) => {
-    // 标记为已读
-    if (!notification.read) {
-      notification.read = true
+    // 找到原始通知对象并标记为已读（因为sortedNPCActivityNotifications是副本）
+    const originalNotification = gameStore.player.npcActivityNotifications?.find(n => n.id === notification.id)
+    if (originalNotification && !originalNotification.read) {
+      originalNotification.read = true
     }
     // 设置选中的通知并打开详情对话框
     selectedNPCActivityNotification.value = notification
@@ -869,8 +1184,10 @@
 
   // 标记礼物通知为已读
   const markGiftAsRead = (gift: GiftNotification) => {
-    if (!gift.read) {
-      gift.read = true
+    // 找到原始礼物通知对象并标记为已读（因为gifts是副本）
+    const originalGift = gameStore.player.giftNotifications?.find(g => g.id === gift.id)
+    if (originalGift && !originalGift.read) {
+      originalGift.read = true
     }
   }
 
@@ -903,8 +1220,10 @@
 
   // 标记礼物被拒绝通知为已读
   const markGiftRejectedAsRead = (rejection: GiftRejectedNotification) => {
-    if (!rejection.read) {
-      rejection.read = true
+    // 找到原始拒绝通知对象并标记为已读（因为rejections是副本）
+    const originalRejection = gameStore.player.giftRejectedNotifications?.find(r => r.id === rejection.id)
+    if (originalRejection && !originalRejection.read) {
+      originalRejection.read = true
     }
   }
 

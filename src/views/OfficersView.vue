@@ -176,6 +176,7 @@
   import { formatNumber, formatTime, formatDate, getResourceCostColor } from '@/utils/format'
   import * as officerLogic from '@/logic/officerLogic'
   import * as resourceLogic from '@/logic/resourceLogic'
+  import * as gameLogic from '@/logic/gameLogic'
   import { useI18n } from '@/composables/useI18n'
   import { useGameConfig } from '@/composables/useGameConfig'
 
@@ -250,6 +251,8 @@
     if (!resourceLogic.checkResourcesAvailable(gameStore.currentPlanet.resources, cost)) {
       return false
     }
+    // 追踪资源消耗（在扣除前）
+    gameLogic.trackResourceConsumption(gameStore.player, cost)
     resourceLogic.deductResources(gameStore.currentPlanet.resources, cost)
     gameStore.player.officers[officerType] = officerLogic.createActiveOfficer(officerType, duration)
     return true
@@ -276,6 +279,8 @@
     if (!resourceLogic.checkResourcesAvailable(gameStore.currentPlanet.resources, cost)) {
       return false
     }
+    // 追踪资源消耗（在扣除前）
+    gameLogic.trackResourceConsumption(gameStore.player, cost)
     resourceLogic.deductResources(gameStore.currentPlanet.resources, cost)
     const now = Date.now()
     gameStore.player.officers[officerType] = officerLogic.renewOfficerExpiration(gameStore.player.officers[officerType], duration, now)

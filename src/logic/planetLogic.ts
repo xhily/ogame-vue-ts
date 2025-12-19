@@ -143,12 +143,18 @@ export const calculateMoonChance = (debrisField: Resources): number => {
 
 /**
  * 创建月球
+ * @param parentPlanet 母星球
+ * @param position 坐标
+ * @param playerId 玩家ID
+ * @param moonSuffix 月球名称后缀
+ * @param diameter 月球直径(km)，用于计算销毁概率
  */
 export const createMoon = (
   parentPlanet: Planet,
   position: { galaxy: number; system: number; position: number },
   playerId: string,
-  moonSuffix: string = "'s Moon"
+  moonSuffix: string = "'s Moon",
+  diameter?: number
 ): Planet => {
   const moonId = `moon_${Date.now()}`
   const moon: Planet = {
@@ -196,10 +202,11 @@ export const createMoon = (
     },
     buildQueue: [],
     lastUpdate: Date.now(),
-    maxSpace: MOON_CONFIG.baseSize,
+    maxSpace: MOON_CONFIG.baseFields, // OGame规则：月球初始只有1格空间
     maxFleetStorage: FLEET_STORAGE_CONFIG.baseStorage,
     isMoon: true,
-    parentPlanetId: parentPlanet.id
+    parentPlanetId: parentPlanet.id,
+    diameter: diameter || MOON_CONFIG.minDiameter // 月球直径(km)
   }
 
   // 初始化建筑等级
@@ -212,11 +219,12 @@ export const createMoon = (
 
 /**
  * 计算月球空间上限
+ * OGame规则：月球初始1格，月球基地每级+3格（但月球基地本身占用1格，净增2格）
  */
 export const calculateMoonMaxSpace = (moon: Planet): number => {
   if (!moon.isMoon) return 0
   const lunarBaseLevel = moon.buildings[BuildingType.LunarBase] || 0
-  return MOON_CONFIG.baseSize + lunarBaseLevel * MOON_CONFIG.lunarBaseSpaceBonus
+  return MOON_CONFIG.baseFields + lunarBaseLevel * MOON_CONFIG.lunarBaseFieldsBonus
 }
 
 /**

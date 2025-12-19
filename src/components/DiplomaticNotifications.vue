@@ -8,7 +8,7 @@
           variant="destructive"
           class="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-xs"
         >
-          {{ unreadCount > 9 ? '9+' : unreadCount }}
+          {{ unreadCount }}
         </Badge>
       </Button>
     </PopoverTrigger>
@@ -20,38 +20,51 @@
         </Button>
       </div>
       <ScrollArea class="h-96">
-        <div v-if="reports.length === 0" class="p-8 text-center text-muted-foreground">
-          {{ t('diplomacy.noReports') }}
-        </div>
+        <Empty v-if="reports.length === 0" class="border-0">
+          <EmptyContent>
+            <ScrollText class="h-10 w-10 text-muted-foreground" />
+            <EmptyDescription>{{ t('diplomacy.noReports') }}</EmptyDescription>
+          </EmptyContent>
+        </Empty>
         <div v-else class="divide-y">
           <div
             v-for="report in reports"
             :key="report.id"
-            class="p-4 hover:bg-muted/50 cursor-pointer transition-colors"
+            class="p-3 hover:bg-muted/50 cursor-pointer transition-colors"
             :class="{ 'bg-primary/5': !report.read }"
             @click="handleReportClick(report)"
           >
-            <div class="flex items-start gap-3">
-              <div class="flex-shrink-0 mt-1">
-                <component :is="getEventIcon(report.eventType)" class="h-4 w-4" :class="getEventIconColor(report.eventType)" />
+            <div class="flex items-center gap-3">
+              <!-- 左侧：事件图标 -->
+              <div class="flex-shrink-0">
+                <component :is="getEventIcon(report.eventType)" class="h-5 w-5" :class="getEventIconColor(report.eventType)" />
               </div>
+              <!-- 中间：主要信息 -->
               <div class="flex-1 min-w-0">
-                <div class="flex items-center gap-2 mb-1">
-                  <span class="font-medium text-sm">{{ report.npcName }}</span>
-                  <Badge :variant="getStatusBadgeVariant(report.newStatus)" class="text-xs">
+                <div class="flex items-center gap-2">
+                  <span class="font-medium text-sm truncate">{{ report.npcName }}</span>
+                  <Badge :variant="getStatusBadgeVariant(report.newStatus)" class="text-xs flex-shrink-0">
                     {{ getStatusText(report.newStatus) }}
                   </Badge>
-                  <span v-if="!report.read" class="ml-auto">
-                    <Badge variant="destructive" class="h-2 w-2 p-0 rounded-full" />
-                  </span>
                 </div>
-                <p class="text-sm text-muted-foreground line-clamp-2">
-                  {{ report.messageKey && report.messageParams ? t(report.messageKey, report.messageParams) : report.message }}
-                </p>
-                <p class="text-xs text-muted-foreground mt-1">
-                  {{ formatRelativeTime((Date.now() - report.timestamp) / 1000, t) }}{{ t('diplomacy.ago') }}
+                <p class="text-xs text-muted-foreground mt-0.5">
+                  {{ getEventTypeText(report.eventType) }}
                 </p>
               </div>
+              <!-- 右侧：好感度变化和时间 -->
+              <div class="flex-shrink-0 text-right">
+                <span
+                  class="text-sm font-bold block"
+                  :class="report.reputationChange >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'"
+                >
+                  {{ report.reputationChange >= 0 ? '+' : '' }}{{ report.reputationChange }}
+                </span>
+                <span class="text-[10px] text-muted-foreground">
+                  {{ formatRelativeTime((Date.now() - report.timestamp) / 1000, t) }}{{ t('diplomacy.ago') }}
+                </span>
+              </div>
+              <!-- 未读标记 -->
+              <span v-if="!report.read" class="h-2 w-2 rounded-full bg-destructive flex-shrink-0" />
             </div>
           </div>
         </div>
@@ -77,6 +90,9 @@
           />
           {{ t('diplomacy.reportDetails') }}
         </DialogTitle>
+        <DialogDescription class="sr-only">
+          {{ t('diplomacy.reportDetails') }}
+        </DialogDescription>
       </DialogHeader>
 
       <div v-if="selectedReport" class="space-y-4">
@@ -183,9 +199,10 @@
   import { Button } from '@/components/ui/button'
   import { Badge } from '@/components/ui/badge'
   import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-  import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
+  import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
   import { ScrollArea } from '@/components/ui/scroll-area'
   import { ScrollText, Gift, Sword, Eye, Trash2, Skull } from 'lucide-vue-next'
+  import { Empty, EmptyContent, EmptyDescription } from '@/components/ui/empty'
   import { RelationStatus, DiplomaticEventType } from '@/types/game'
   import type { DiplomaticReport } from '@/types/game'
   import { formatRelativeTime } from '@/utils/format'
@@ -241,6 +258,25 @@
     }
   }
 
+  const getEventTypeText = (eventType: DiplomaticReport['eventType']) => {
+    switch (eventType) {
+      case DiplomaticEventType.GiftResources:
+        return t('diplomacy.eventType.gift')
+      case DiplomaticEventType.Attack:
+        return t('diplomacy.eventType.attack')
+      case DiplomaticEventType.AllyAttacked:
+        return t('diplomacy.eventType.allyAttacked')
+      case DiplomaticEventType.Spy:
+        return t('diplomacy.eventType.spy')
+      case DiplomaticEventType.StealDebris:
+        return t('diplomacy.eventType.stealDebris')
+      case DiplomaticEventType.DestroyPlanet:
+        return t('diplomacy.eventType.destroyPlanet')
+      default:
+        return t('diplomacy.eventType.unknown')
+    }
+  }
+
   const getStatusBadgeVariant = (status: RelationStatus) => {
     switch (status) {
       case RelationStatus.Hostile:
@@ -275,11 +311,12 @@
   const handleReportClick = (report: DiplomaticReport) => {
     // 标记为已读
     report.read = true
-    // 设置选中的报告并打开详情对话框
+    // 设置选中的报告
     selectedReport.value = report
-    detailDialogOpen.value = true
     // 关闭通知面板
-    isOpen.value = false
+    isOpen.value = true
+    // 打开对话框
+    detailDialogOpen.value = true
   }
 
   const markAllAsRead = () => {
@@ -294,7 +331,8 @@
   }
 
   const goToDiplomacyFromDialog = () => {
+    const npcId = selectedReport.value?.npcId
     detailDialogOpen.value = false
-    router.push('/diplomacy')
+    router.push(npcId ? `/diplomacy?npcId=${npcId}` : '/diplomacy')
   }
 </script>

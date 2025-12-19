@@ -120,31 +120,31 @@ export const getResourceCapacity = (planet: Planet, officers: Record<OfficerType
  * 计算最大建造队列数量
  * @param planet 星球对象
  * @param additionalBuildQueue 军官提供的额外队列数量
- * @returns 最大建造队列数量（基础1个 + 纳米工厂等级 + 军官加成，最多10个）
+ * @returns 最大建造队列数量（基础3个 + 纳米工厂等级 + 军官加成，最多10个）
  */
 export const getMaxBuildQueue = (planet: Planet, additionalBuildQueue: number = 0): number => {
   const naniteFactoryLevel = planet.buildings[BuildingType.NaniteFactory] || 0
-  return Math.min(1 + naniteFactoryLevel + additionalBuildQueue, 10)
+  return Math.min(3 + naniteFactoryLevel + additionalBuildQueue, 10)
 }
 
 /**
  * 计算最大研究队列数量
  * @param technologies 已研究的科技等级
- * @returns 最大研究队列数量（基础1个 + 计算机技术等级，最多10个）
+ * @returns 最大研究队列数量（基础3个 + 计算机技术等级，最多10个）
  */
 export const getMaxResearchQueue = (technologies: Partial<Record<TechnologyType, number>>): number => {
   const computerTechLevel = technologies[TechnologyType.ComputerTechnology] || 0
-  return Math.min(1 + computerTechLevel, 10)
+  return Math.min(3 + computerTechLevel, 10)
 }
 
 /**
  * 计算最大舰队任务数量
  * @param additionalFleetSlots 军官提供的额外槽位数量
  * @param computerTechnologyLevel 计算机技术等级
- * @returns 最大舰队任务数量（基础1个 + 计算机技术等级 + 军官加成，最多20个）
+ * @returns 最大舰队任务数量（基础3个 + 计算机技术等级 + 军官加成，最多20个）
  */
 export const getMaxFleetMissions = (additionalFleetSlots: number = 0, computerTechnologyLevel: number = 0): number => {
-  return Math.min(1 + computerTechnologyLevel + additionalFleetSlots, 20)
+  return Math.min(3 + computerTechnologyLevel + additionalFleetSlots, 20)
 }
 
 /**

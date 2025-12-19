@@ -109,57 +109,6 @@ pnpm build
 pnpm preview
 ```
 
-## Project Structure
-
-```
-ogame-vue-ts/
-├── public/               # Static assets
-│   └── logo.svg         # Application logo
-├── src/
-│   ├── assets/          # Dynamic assets
-│   ├── components/      # Vue components
-│   │   └── ui/         # shadcn-vue UI components
-│   ├── composables/    # Vue composables
-│   ├── config/         # Game configuration
-│   ├── lib/            # Utility libraries
-│   ├── locales/        # i18n translation files
-│   ├── logic/          # Game logic modules
-│   │   ├── buildingLogic.ts
-│   │   ├── buildingValidation.ts
-│   │   ├── fleetLogic.ts
-│   │   ├── moonLogic.ts
-│   │   ├── moonValidation.ts
-│   │   ├── researchLogic.ts
-│   │   ├── researchValidation.ts
-│   │   ├── shipLogic.ts
-│   │   └── shipValidation.ts
-│   ├── router/         # Vue Router configuration
-│   ├── stores/         # Pinia state stores
-│   ├── types/          # TypeScript type definitions
-│   ├── utils/          # Utility functions
-│   ├── views/          # Page components
-│   │   ├── OverviewView.vue
-│   │   ├── BuildingsView.vue
-│   │   ├── ResearchView.vue
-│   │   ├── ShipyardView.vue
-│   │   ├── DefenseView.vue
-│   │   ├── FleetView.vue
-│   │   ├── GalaxyView.vue
-│   │   ├── OfficersView.vue
-│   │   ├── BattleSimulatorView.vue
-│   │   ├── MessagesView.vue
-│   │   └── SettingsView.vue
-│   ├── App.vue         # Root component
-│   ├── main.ts         # Application entry point
-│   └── style.css       # Global styles
-├── .github/
-│   └── ISSUE_TEMPLATE/ # GitHub issue templates
-├── LICENSE             # CC BY-NC 4.0 License
-├── package.json        # Project dependencies
-├── tsconfig.json       # TypeScript configuration
-└── vite.config.ts      # Vite configuration
-```
-
 ## Available Languages
 
 - 🇺🇸 English
@@ -212,13 +161,6 @@ The application supports full theme customization through Tailwind CSS variables
 ## Contributing
 
 Contributions are welcome! Please feel free to submit issues or pull requests.
-
-### Issue Templates
-We provide the following issue templates in both Chinese and English:
-- Bug Report
-- Feature Request
-- Documentation Improvement
-- eedback & Suggestion
 
 ## License
 

@@ -86,7 +86,6 @@
   import SheetHeader from '@/components/ui/sheet/SheetHeader.vue'
   import SheetTitle from '@/components/ui/sheet/SheetTitle.vue'
   import { SIDEBAR_WIDTH_MOBILE, useSidebar } from './utils'
-  import { useTutorial } from '@/composables/useTutorial'
   import { useRouter } from 'vue-router'
 
   defineOptions({
@@ -101,47 +100,17 @@
 
   const router = useRouter()
   const { isMobile, state, openMobile, setOpenMobile } = useSidebar()
-  const { tutorialState, currentStep, nextStep } = useTutorial()
 
-  // 包装setOpenMobile以拦截教程期间的关闭操作
+  // 处理移动端侧边栏打开/关闭
   const handleOpenMobileChange = (open: boolean) => {
-    // 如果是移动端且在教程的菜单相关步骤,阻止关闭侧边栏
-    if (tutorialState.value.isActive && currentStep.value) {
-      // 只在第3步期间阻止关闭侧边栏，让玩家必须手动打开
-      if (currentStep.value.id === 'menu_intro_mobile') {
-        // 只允许打开,不允许关闭
-        if (open) {
-          setOpenMobile(true)
-        }
-        // 如果试图关闭,忽略该操作,保持打开状态
-        return
-      }
-    }
-    // 其他情况正常更新
     setOpenMobile(open)
   }
-
-  // 监听openMobile变化，在移动端教程第3步时，侧边栏打开后自动推进到第4步
-  watch(
-    () => openMobile.value,
-    (isOpen) => {
-      if (isMobile.value && tutorialState.value.isActive && currentStep.value) {
-        // 如果在第3步且侧边栏刚打开,自动推进到第4步
-        if (currentStep.value.id === 'menu_intro_mobile' && isOpen) {
-          setTimeout(() => {
-            nextStep()
-          }, 300) // 延迟300ms让侧边栏动画完成
-        }
-      }
-    }
-  )
 
   // 监听路由变化，在移动端关闭侧边栏
   watch(
     () => router.currentRoute.value.path,
     () => {
       if (isMobile.value && openMobile.value) {
-        // 路由变化时关闭移动端侧边栏
         setOpenMobile(false)
       }
     }
