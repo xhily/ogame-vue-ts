@@ -11,20 +11,6 @@
   [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue.svg)](https://www.typescriptlang.org/)
   [![Vite](https://img.shields.io/badge/Vite-7.2-646CFF.svg)](https://vitejs.dev/)
   [![Go](https://img.shields.io/badge/Go-1.23-79D4FD.svg)](https://golang.org/)
-  
-
-  [![Android x86_64](https://img.shields.io/badge/Android-x86__64-3DDC84?logo=android&logoColor=white)](https://github.com/setube/ogame-vue-ts/releases/latest/download/OGame-x86_64.APK)
-  [![Android arm64](https://img.shields.io/badge/Android-arm64--v8a-3DDC84?logo=android&logoColor=white)](https://github.com/setube/ogame-vue-ts/releases/latest/download/OGame-arm64-v8a.APK)
-  [![Android armv7](https://img.shields.io/badge/Android-armeabi--v7a-3DDC84?logo=android&logoColor=white)](https://github.com/setube/ogame-vue-ts/releases/latest/download/OGame-armeabi-v7a.APK)
-
-  [![Windows Server](https://img.shields.io/badge/Server-Windows-0078D6?logo=windows&logoColor=white)](https://github.com/setube/ogame-vue-ts/releases/latest/download/ogame-server-win.exe)
-  [![Linux](https://img.shields.io/badge/Server-Linux%20amd64-FCC624?logo=linux&logoColor=black)](https://github.com/setube/ogame-vue-ts/releases/latest/download/ogame-server-linux)
-  [![Linux arm64](https://img.shields.io/badge/Server-Linux%20amd64-FCC624?logo=linux&logoColor=black)](https://github.com/setube/ogame-vue-ts/releases/latest/download/ogame-server-linux-arm64)
-  [![macOS](https://img.shields.io/badge/Server-macOS%20ARM-000000?logo=apple&logoColor=white)](https://github.com/setube/ogame-vue-ts/releases/latest/download/OGame-mac.dmg)
-
-  [![Windows Desktop](https://img.shields.io/badge/Desktop-Windows-0078D6?logo=windows&logoColor=white)](https://github.com/setube/ogame-vue-ts/releases/latest/download/OGame-Setup.exe)
-  [![Ubuntu Desktop](https://img.shields.io/badge/Desktop-Ubuntu-E95420?logo=ubuntu&logoColor=white)](https://github.com/setube/ogame-vue-ts/releases/latest/download/OGame-linux.AppImage)
-  [![macOS Desktop](https://img.shields.io/badge/Desktop-macOS-000000?logo=apple&logoColor=white)](https://github.com/setube/ogame-vue-ts/releases/latest/download/OGame-mac.dmg)
 
   [简体中文](README.md) | [English](README-EN.md) | [繁體中文](README-zh-TW.md) | [Deutsch](README-DE.md) | [Русский](README-RU.md) | 한국어
 
