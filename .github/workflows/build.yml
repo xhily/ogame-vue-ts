@@ -15,13 +15,13 @@ jobs:
         include:
           - goos: windows
             goarch: amd64
-            executable: ogame-server-win.exe
+            executable: OGame-Vue-Ts-server-win.exe
           - goos: linux
             goarch: amd64
-            executable: ogame-server-linux
+            executable: OGame-Vue-Ts-server-linux
           - goos: linux
             goarch: arm64
-            executable: ogame-server-linux-arm64
+            executable: OGame-Vue-Ts-server-linux-arm64
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v3
@@ -181,9 +181,9 @@ jobs:
           
           # 移动 Server 文件并确保名字唯一
           # 注意：根据你之前的附件，Artifact 名字是 server-windows-amd64
-          cp ./raw-assets/server-windows-amd64/ogame-server-win.exe ./final-release/ogame-server-win.exe || cp ./raw-assets/server-windows-amd64/server-windows-amd64.exe ./final-release/ogame-server-win.exe || true
-          cp ./raw-assets/server-linux-amd64/ogame-server-linux ./final-release/ogame-server-linux || true
-          cp ./raw-assets/server-linux-arm64/ogame-server-linux-arm64 ./final-release/ogame-server-linux-arm64 || true
+          cp ./raw-assets/server-windows-amd64/OGame-Vue-Ts-server-win.exe ./final-release/OGame-Vue-Ts-server-win.exe || cp ./raw-assets/server-windows-amd64/server-windows-amd64.exe ./final-release/OGame-Vue-Ts-server-win.exe || true
+          cp ./raw-assets/server-linux-amd64/OGame-Vue-Ts-server-linux ./final-release/OGame-Vue-Ts-server-linux || true
+          cp ./raw-assets/server-linux-arm64/OGame-Vue-Ts-server-linux-arm64 ./final-release/OGame-Vue-Ts-server-linux-arm64 || true
           
           # 移动 Electron 安装包 (排除 unpacked 目录)
           find ./raw-assets/electron-* -type f \( -name "*.exe" -o -name "*.dmg" -o -name "*.AppImage" -o -name "*.zip" \) -exec cp {} ./final-release/ \;
