@@ -120,17 +120,17 @@
     @apply border-border outline-ring/50;
   }
 
+  html {
+    /* 平滑过渡 */
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
   body {
     @apply bg-background text-foreground;
     font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-  }
-
-  /* 平滑过渡 */
-  html {
-    transition: background-color 0.3s ease, color 0.3s ease;
   }
 
   /* 滚动条样式 */
