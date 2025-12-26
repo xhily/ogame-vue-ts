@@ -4,11 +4,11 @@ import tailwindcss from '@tailwindcss/vite'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { VitePWA } from 'vite-plugin-pwa'
-import autoprefixer from 'autoprefixer'
 import pkg from './package.json'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
+// @ts-expect-error - Vite CSS transformer type
 export default defineConfig(async () => {
   const plugins = [
     vue(),
@@ -110,12 +110,19 @@ export default defineConfig(async () => {
     plugins,
     resolve: { alias: { '@': path.resolve(__dirname, './src') } },
     css: {
-      postcss: {
-        plugins: [
-          autoprefixer({
-            overrideBrowserslist: ['Android >= 4.1', 'iOS >= 7.1', 'Chrome >= 31', 'Firefox >= 31', 'ie >= 8']
-          })
-        ]
+      // 使用 lightningcss 处理 CSS，自动转换 oklch 等新语法为兼容格式
+      transformer: 'lightningcss',
+      lightningcss: {
+        // 目标浏览器：Android 5+, iOS 10+, Chrome 60+
+        targets: {
+          android: 5 << 16, // Android 5.0
+          chrome: 60 << 16, // Chrome 60
+          ios_saf: 10 << 16 // iOS Safari 10
+        },
+        // 禁用现代 CSS 特性，确保兼容旧版浏览器
+        drafts: {
+          customMedia: false
+        }
       }
     },
     // 优化依赖预构建
