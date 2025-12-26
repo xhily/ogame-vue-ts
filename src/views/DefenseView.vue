@@ -127,8 +127,18 @@
               </div>
             </div>
 
-            <Button @click="handleBuild(defenseType)" :disabled="!canBuild(defenseType)" class="w-full">
+            <Button @click="handleBuild(defenseType, $event)" :disabled="!canBuild(defenseType)" class="w-full">
               {{ t('defenseView.build') }}
+            </Button>
+
+            <!-- 添加到等待队列按钮 -->
+            <Button
+              v-if="canAddToWaitingQueue(defenseType)"
+              @click="handleAddToWaiting(defenseType, $event)"
+              variant="outline"
+              class="w-full"
+            >
+              {{ t('queue.addToWaiting') }}
             </Button>
           </div>
         </CardContent>
@@ -164,7 +174,7 @@
   import { Input } from '@/components/ui/input'
   import { Label } from '@/components/ui/label'
   import { Badge } from '@/components/ui/badge'
-  import ResourceIcon from '@/components/ResourceIcon.vue'
+  import ResourceIcon from '@/components/common/ResourceIcon.vue'
   import {
     AlertDialog,
     AlertDialogAction,
@@ -174,13 +184,16 @@
     AlertDialogHeader,
     AlertDialogTitle
   } from '@/components/ui/alert-dialog'
-  import UnlockRequirement from '@/components/UnlockRequirement.vue'
-  import CardUnlockOverlay from '@/components/CardUnlockOverlay.vue'
+  import UnlockRequirement from '@/components/common/UnlockRequirement.vue'
+  import CardUnlockOverlay from '@/components/common/CardUnlockOverlay.vue'
   import { formatNumber, getResourceCostColor } from '@/utils/format'
   import * as publicLogic from '@/logic/publicLogic'
   import * as shipValidation from '@/logic/shipValidation'
   import * as shipLogic from '@/logic/shipLogic'
   import * as gameLogic from '@/logic/gameLogic'
+  import * as waitingQueueLogic from '@/logic/waitingQueueLogic'
+  import * as officerLogic from '@/logic/officerLogic'
+  import { triggerQueueAnimation } from '@/composables/useQueueAnimation'
 
   const gameStore = useGameStore()
   const detailDialog = useDetailDialogStore()
@@ -203,6 +216,10 @@
   const alertDialogOpen = ref(false)
   const alertDialogTitle = ref('')
   const alertDialogMessage = ref('')
+
+  // 防抖状态：防止快速点击
+  const isProcessing = ref(false)
+  const DEBOUNCE_DELAY = 300 // 防抖延迟（毫秒）
 
   // 资源类型配置（用于成本显示）
   const costResourceTypes = [
@@ -248,7 +265,14 @@
   }
 
   // 建造防御设施
-  const handleBuild = (defenseType: DefenseType) => {
+  const handleBuild = (defenseType: DefenseType, event: MouseEvent) => {
+    // 防抖：防止快速点击
+    if (isProcessing.value) return
+    isProcessing.value = true
+    setTimeout(() => {
+      isProcessing.value = false
+    }, DEBOUNCE_DELAY)
+
     const quantity = quantities.value[defenseType]
     if (quantity <= 0) {
       alertDialogTitle.value = t('defenseView.inputError')
@@ -263,6 +287,8 @@
       alertDialogMessage.value = result.reason ? t(result.reason) : t('defenseView.buildFailedMessage')
       alertDialogOpen.value = true
     } else {
+      // 触发抛物线动画
+      triggerQueueAnimation(event, 'defense')
       quantities.value[defenseType] = 0
     }
   }
@@ -307,5 +333,60 @@
       deuterium: config.cost.deuterium * quantity,
       darkMatter: config.cost.darkMatter * quantity
     }
+  }
+
+  // 检查是否可以添加到等待队列
+  const canAddToWaitingQueue = (defenseType: DefenseType): boolean => {
+    if (!planet.value) return false
+
+    const quantity = quantities.value[defenseType]
+    if (quantity <= 0) return false
+
+    // 护盾罩只能建造一个
+    if (isShieldDome(defenseType)) {
+      if (planet.value.defense[defenseType] > 0) return false
+      if (quantity > 1) return false
+    }
+
+    // 检查前置条件是否满足
+    const config = DEFENSES.value[defenseType]
+    if (!publicLogic.checkRequirements(planet.value, gameStore.player.technologies, config.requirements)) {
+      return false
+    }
+
+    // 检查等待队列是否已满
+    const bonuses = officerLogic.calculateActiveBonuses(gameStore.player.officers, Date.now())
+    const maxWaitingQueue = waitingQueueLogic.getMaxBuildWaitingQueue(planet.value, bonuses.additionalBuildQueue)
+    const waitingQueue = planet.value.waitingBuildQueue || []
+    if (waitingQueue.length >= maxWaitingQueue) {
+      return false
+    }
+
+    // 只有当建造按钮被禁用时（资源不足）才显示等待队列按钮
+    return !canBuild(defenseType)
+  }
+
+  // 添加到等待队列
+  const handleAddToWaiting = (defenseType: DefenseType, event: MouseEvent) => {
+    if (!planet.value) return
+
+    const quantity = quantities.value[defenseType]
+    if (quantity <= 0) return
+
+    const item = waitingQueueLogic.createDefenseWaitingItem(defenseType, quantity, planet.value.id)
+
+    const result = waitingQueueLogic.canAddToBuildWaitingQueue(planet.value, item, gameStore.player.officers)
+    if (!result.canAdd) {
+      alertDialogTitle.value = t('queue.waitingQueueFull')
+      alertDialogMessage.value = result.reason ? t(result.reason) : ''
+      alertDialogOpen.value = true
+      return
+    }
+
+    // 触发抛物线动画
+    triggerQueueAnimation(event, 'defense')
+
+    waitingQueueLogic.addToBuildWaitingQueue(planet.value, item)
+    quantities.value[defenseType] = 0
   }
 </script>

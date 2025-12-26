@@ -1,7 +1,7 @@
 import type { FleetMission, Planet, Resources, Fleet, BattleResult, SpyReport, Player, Officer, DebrisField, NPC } from '@/types/game'
 import type { Locale } from '@/locales'
-import { ShipType, DefenseType, MissionType, BuildingType, OfficerType, TechnologyType } from '@/types/game'
-import { FLEET_STORAGE_CONFIG } from '@/config/gameConfig'
+import { ShipType, DefenseType, MissionType, BuildingType, OfficerType, TechnologyType, ExpeditionZone } from '@/types/game'
+import { FLEET_STORAGE_CONFIG, EXPEDITION_ZONES } from '@/config/gameConfig'
 import * as battleLogic from './battleLogic'
 import * as moonLogic from './moonLogic'
 import * as moonValidation from './moonValidation'
@@ -9,6 +9,7 @@ import * as diplomaticLogic from './diplomaticLogic'
 import * as resourceLogic from './resourceLogic'
 import * as fleetStorageLogic from './fleetStorageLogic'
 import * as officerLogic from './officerLogic'
+import * as planetLogic from './planetLogic'
 
 /**
  * 计算两个星球之间的距离
@@ -62,7 +63,8 @@ export const createFleetMission = (
     id: `mission_${now}`,
     playerId,
     originPlanetId,
-    targetPosition,
+    // 深拷贝targetPosition，避免多个任务共享同一个引用
+    targetPosition: { ...targetPosition },
     missionType,
     fleet,
     cargo,
@@ -444,6 +446,7 @@ export const processColonizeArrival = (
       [DefenseType.PlanetaryShield]: 0
     },
     buildQueue: [],
+    waitingBuildQueue: [], // 等待队列
     lastUpdate: Date.now(),
     maxSpace: 200,
     maxFleetStorage: FLEET_STORAGE_CONFIG.baseStorage,
@@ -453,6 +456,9 @@ export const processColonizeArrival = (
   Object.values(BuildingType).forEach(building => {
     newPlanet.buildings[building] = 0
   })
+
+  // 初始化温度
+  newPlanet.temperature = planetLogic.generatePlanetTemperature(mission.targetPosition.position)
 
   // 殖民船被消耗
   mission.fleet[ShipType.ColonyShip] = (mission.fleet[ShipType.ColonyShip] || 1) - 1
@@ -732,9 +738,13 @@ export interface ExpeditionResult {
 
 /**
  * 处理远征任务到达
- * 远征任务会随机触发各种事件
+ * 远征任务会随机触发各种事件，基于探险区域配置
  */
 export const processExpeditionArrival = (mission: FleetMission): ExpeditionResult => {
+  // 获取探险区域配置，默认为近空区域
+  const zone = mission.expeditionZone || ExpeditionZone.NearSpace
+  const zoneConfig = EXPEDITION_ZONES[zone]
+
   // 计算舰队总货舱容量
   let totalCargoCapacity = 0
   for (const [shipType, count] of Object.entries(mission.fleet)) {
@@ -744,13 +754,22 @@ export const processExpeditionArrival = (mission: FleetMission): ExpeditionResul
     }
   }
 
-  // 随机事件概率
+  // 根据区域配置的概率计算随机事件
   const random = Math.random() * 100
+  const probs = zoneConfig.probabilities
   let result: ExpeditionResult
 
-  if (random < 30) {
-    // 30% 概率发现资源
-    const resourceMultiplier = 0.1 + Math.random() * 0.3 // 10%-40% 的货舱容量
+  // 累积概率阈值
+  const resourceThreshold = probs.resources
+  const darkMatterThreshold = resourceThreshold + probs.darkMatter
+  const fleetThreshold = darkMatterThreshold + probs.fleet
+  const piratesThreshold = fleetThreshold + probs.pirates
+  const aliensThreshold = piratesThreshold + probs.aliens
+
+  if (random < resourceThreshold) {
+    // 发现资源 - 大幅提升奖励
+    const baseMultiplier = 0.3 + Math.random() * 0.5 // 30%-80% 的货舱容量
+    const resourceMultiplier = baseMultiplier * zoneConfig.resourceMultiplier
     const resourceAmount = Math.floor(totalCargoCapacity * resourceMultiplier)
     const metalAmount = Math.floor(resourceAmount * 0.5)
     const crystalAmount = Math.floor(resourceAmount * 0.35)
@@ -765,9 +784,10 @@ export const processExpeditionArrival = (mission: FleetMission): ExpeditionResul
       resources: { metal: metalAmount, crystal: crystalAmount, deuterium: deuteriumAmount, darkMatter: 0, energy: 0 },
       message: 'expedition.foundResources'
     }
-  } else if (random < 40) {
-    // 10% 概率发现暗物质
-    const darkMatterAmount = Math.floor(50 + Math.random() * 150) // 50-200 暗物质
+  } else if (random < darkMatterThreshold) {
+    // 发现暗物质 - 大幅提升奖励
+    const baseDarkMatter = 200 + Math.random() * 500 // 200-700 暗物质
+    const darkMatterAmount = Math.floor(baseDarkMatter * zoneConfig.darkMatterMultiplier)
     mission.cargo.darkMatter += darkMatterAmount
 
     result = {
@@ -775,13 +795,21 @@ export const processExpeditionArrival = (mission: FleetMission): ExpeditionResul
       resources: { metal: 0, crystal: 0, deuterium: 0, darkMatter: darkMatterAmount, energy: 0 },
       message: 'expedition.foundDarkMatter'
     }
-  } else if (random < 55) {
-    // 15% 概率发现废弃舰船
+  } else if (random < fleetThreshold) {
+    // 发现废弃舰船
     const foundFleet: Partial<Fleet> = {}
-    const possibleShips: ShipType[] = [ShipType.LightFighter, ShipType.HeavyFighter, ShipType.SmallCargo, ShipType.LargeCargo]
+    // 高级区域可以发现更多种类的舰船
+    const possibleShips: ShipType[] =
+      zone === ExpeditionZone.DangerousNebula
+        ? [ShipType.LightFighter, ShipType.HeavyFighter, ShipType.SmallCargo, ShipType.LargeCargo, ShipType.Cruiser, ShipType.Battleship]
+        : zone === ExpeditionZone.UnchartedSpace
+        ? [ShipType.LightFighter, ShipType.HeavyFighter, ShipType.SmallCargo, ShipType.LargeCargo, ShipType.Cruiser]
+        : [ShipType.LightFighter, ShipType.HeavyFighter, ShipType.SmallCargo, ShipType.LargeCargo]
+
     const shipTypeIndex = Math.floor(Math.random() * possibleShips.length)
     const shipType = possibleShips[shipTypeIndex] ?? ShipType.LightFighter
-    const count = Math.floor(1 + Math.random() * 5) // 1-5 艘
+    const baseCount = 3 + Math.random() * 12 // 3-15 艘
+    const count = Math.floor(baseCount * zoneConfig.fleetFindMultiplier)
     foundFleet[shipType] = count
 
     // 将发现的舰船添加到任务舰队中
@@ -792,15 +820,16 @@ export const processExpeditionArrival = (mission: FleetMission): ExpeditionResul
       fleet: foundFleet,
       message: 'expedition.foundFleet'
     }
-  } else if (random < 70) {
-    // 15% 概率遭遇海盗（损失部分舰队）
+  } else if (random < piratesThreshold) {
+    // 遭遇海盗（损失部分舰队）
     const fleetLost: Partial<Fleet> = {}
     let hasLoss = false
+    const lossChance = Math.min(0.3 * zoneConfig.dangerMultiplier, 0.9) // 危险区域损失概率更高，上限90%
 
     for (const [shipType, count] of Object.entries(mission.fleet)) {
-      if (count > 0 && Math.random() < 0.3) {
-        // 30% 概率损失该类型舰船
-        const lossCount = Math.max(1, Math.floor(count * 0.1)) // 损失10%，最少1艘
+      if (count > 0 && Math.random() < lossChance) {
+        const baseLossRate = Math.min(0.1 * zoneConfig.dangerMultiplier, 0.5) // 危险区域损失比例更高，上限50%
+        const lossCount = Math.max(1, Math.floor(count * baseLossRate))
         const actualLoss = Math.min(lossCount, count)
         fleetLost[shipType as ShipType] = actualLoss
         mission.fleet[shipType as ShipType] = count - actualLoss
@@ -813,15 +842,16 @@ export const processExpeditionArrival = (mission: FleetMission): ExpeditionResul
       fleetLost: hasLoss ? fleetLost : undefined,
       message: hasLoss ? 'expedition.piratesAttack' : 'expedition.piratesEscaped'
     }
-  } else if (random < 80) {
-    // 10% 概率遭遇外星人（损失更多舰队）
+  } else if (random < aliensThreshold) {
+    // 遭遇外星人（损失更多舰队）
     const fleetLost: Partial<Fleet> = {}
     let hasLoss = false
+    const lossChance = Math.min(0.5 * zoneConfig.dangerMultiplier, 0.95) // 危险区域损失概率更高，上限95%
 
     for (const [shipType, count] of Object.entries(mission.fleet)) {
-      if (count > 0 && Math.random() < 0.5) {
-        // 50% 概率损失该类型舰船
-        const lossCount = Math.max(1, Math.floor(count * 0.2)) // 损失20%，最少1艘
+      if (count > 0 && Math.random() < lossChance) {
+        const baseLossRate = Math.min(0.2 * zoneConfig.dangerMultiplier, 0.6) // 危险区域损失比例更高，上限60%
+        const lossCount = Math.max(1, Math.floor(count * baseLossRate))
         const actualLoss = Math.min(lossCount, count)
         fleetLost[shipType as ShipType] = actualLoss
         mission.fleet[shipType as ShipType] = count - actualLoss
@@ -835,7 +865,7 @@ export const processExpeditionArrival = (mission: FleetMission): ExpeditionResul
       message: hasLoss ? 'expedition.aliensAttack' : 'expedition.aliensEscaped'
     }
   } else {
-    // 20% 概率什么都没发现
+    // 什么都没发现
     result = {
       eventType: 'nothing',
       message: 'expedition.nothing'
@@ -940,11 +970,7 @@ export interface DestroyResult {
   failReason?: DestroyFailReason // 失败原因
 }
 
-export const processDestroyArrival = (
-  mission: FleetMission,
-  targetPlanet: Planet | undefined,
-  attacker: Player
-): DestroyResult => {
+export const processDestroyArrival = (mission: FleetMission, targetPlanet: Planet | undefined, attacker: Player): DestroyResult => {
   if (!targetPlanet) {
     mission.status = 'returning'
     return {
@@ -1037,11 +1063,11 @@ export const processFleetReturn = (
 ): void => {
   // 舰船返回 - 使用安全添加函数
   fleetStorageLogic.addFleetSafely(originPlanet, mission.fleet, technologies)
-  // 注意：如果舰队仓储溢出，超出部分会丢失（这是合理的惩罚）
+  // 如果舰队仓储溢出，超出部分会丢失（这是合理的惩罚）
 
   // 资源返回（掠夺物或运输货物）- 使用安全添加函数
   resourceLogic.addResourcesSafely(originPlanet, mission.cargo, storageCapacityBonus)
-  // 注意：如果资源仓储溢出，超出部分会丢失（这是合理的惩罚）
+  // 如果资源仓储溢出，超出部分会丢失（这是合理的惩罚）
 }
 
 /**

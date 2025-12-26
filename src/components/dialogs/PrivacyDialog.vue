@@ -81,7 +81,7 @@
   import { useI18n } from '@/composables/useI18n'
   import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
   import { Button } from '@/components/ui/button'
-  import pkg from '../../package.json'
+  import pkg from '../../../package.json'
 
   // 双向绑定 open 状态
   const open = defineModel<boolean>('open', { default: false })

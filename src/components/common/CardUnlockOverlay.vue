@@ -1,5 +1,9 @@
 <template>
-  <div v-if="!isUnlocked" class="absolute inset-0 z-10 bg-background/70 backdrop-blur-[2px] rounded-lg flex items-center justify-center">
+  <!-- 遮罩从标题下方开始，不遮挡名称 -->
+  <div
+    v-if="!isUnlocked"
+    class="absolute inset-x-0 top-20 sm:top-13 bottom-0 z-10 bg-background/70 backdrop-blur-[2px] rounded-b-lg flex items-center justify-center"
+  >
     <div class="text-center p-4 space-y-2">
       <div class="flex justify-center">
         <div class="rounded-full bg-muted p-2">
@@ -20,8 +24,8 @@
           <AlertDialogDescription>
             <div class="space-y-2">
               <div v-for="(req, index) in requirementsDialogItems" :key="index" class="flex items-center gap-2 text-sm">
-                <Check v-if="req.met" :size="16" class="text-green-500 flex-shrink-0" />
-                <X v-else :size="16" class="text-red-500 flex-shrink-0" />
+                <Check v-if="req.met" :size="16" class="text-green-500 shrink-0" />
+                <X v-else :size="16" class="text-red-500 shrink-0" />
                 <span>{{ req.name }}: Lv {{ req.requiredLevel }} ({{ t('common.current') }}: Lv {{ req.currentLevel }})</span>
               </div>
             </div>

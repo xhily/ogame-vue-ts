@@ -14,6 +14,16 @@ export interface Resources {
   energy: number // 电量（实时计算，不存储）
 }
 
+// 星球矿脉储量
+export interface OreDeposits {
+  metal: number // 金属矿脉剩余储量
+  crystal: number // 晶体矿脉剩余储量
+  deuterium: number // 重氢储量
+  // 存储星球位置，用于动态计算初始储量上限
+  // 这样修改配置后，所有星球的上限都会自动更新
+  position: { galaxy: number; system: number; position: number }
+}
+
 // 建筑类型
 export const BuildingType = {
   MetalMine: 'metalMine',
@@ -38,7 +48,9 @@ export const BuildingType = {
   SensorPhalanx: 'sensorPhalanx', // 传感器阵列
   JumpGate: 'jumpGate', // 跳跃门
   // 特殊建筑
-  PlanetDestroyerFactory: 'planetDestroyerFactory' // 行星毁灭者工厂
+  PlanetDestroyerFactory: 'planetDestroyerFactory', // 行星毁灭者工厂
+  GeoResearchStation: 'geoResearchStation', // 地质研究站（影响矿脉恢复速度）
+  DeepDrillingFacility: 'deepDrillingFacility' // 深层钻探设施（提升矿脉上限）
 } as const
 
 export type BuildingType = (typeof BuildingType)[keyof typeof BuildingType]
@@ -85,7 +97,8 @@ export const TechnologyType = {
   GravitonTechnology: 'gravitonTechnology', // 引力技术
   DarkMatterTechnology: 'darkMatterTechnology', // 暗物质技术
   TerraformingTechnology: 'terraformingTechnology', // 地形改造技术
-  PlanetDestructionTech: 'planetDestructionTech' // 行星毁灭技术
+  PlanetDestructionTech: 'planetDestructionTech', // 行星毁灭技术
+  MiningTechnology: 'miningTechnology' // 采矿技术（提升矿脉上限）
 } as const
 
 export type TechnologyType = (typeof TechnologyType)[keyof typeof TechnologyType]
@@ -176,6 +189,9 @@ export interface ShipConfig {
   fuelConsumption: number
   storageUsage: number // 占用舰队仓储
   requirements?: Partial<Record<BuildingType | TechnologyType, number>>
+  // 快速射击：对特定目标有额外攻击次数
+  // 例如 { lightFighter: 6 } 表示对轻型战斗机有6倍快速射击
+  rapidFire?: Partial<Record<ShipType | DefenseType, number>>
 }
 
 // 舰船实例
@@ -208,10 +224,40 @@ export const MissionType = {
   HarvestDarkMatter: 'harvestDarkMatter', // 暗物质采集
   Recycle: 'recycle', // 回收残骸
   Destroy: 'destroy', // 行星毁灭
-  MissileAttack: 'missileAttack' // 导弹攻击
+  MissileAttack: 'missileAttack', // 导弹攻击
+  Station: 'station' // 驻守协防
 } as const
 
 export type MissionType = (typeof MissionType)[keyof typeof MissionType]
+
+// 探险区域类型
+export const ExpeditionZone = {
+  NearSpace: 'nearSpace', // 近空区域 - 低风险低收益
+  DeepSpace: 'deepSpace', // 深空区域 - 中等风险收益
+  UnchartedSpace: 'unchartedSpace', // 未知空间 - 高风险高收益
+  DangerousNebula: 'dangerousNebula' // 危险星云 - 极高风险极高收益
+} as const
+
+export type ExpeditionZone = (typeof ExpeditionZone)[keyof typeof ExpeditionZone]
+
+// 探险区域配置
+export interface ExpeditionZoneConfig {
+  id: ExpeditionZone
+  requiredTechLevel: number // 所需天体物理学等级
+  flightTimeMultiplier: number // 飞行时间倍率
+  resourceMultiplier: number // 资源奖励倍率
+  darkMatterMultiplier: number // 暗物质奖励倍率
+  fleetFindMultiplier: number // 舰船发现倍率
+  dangerMultiplier: number // 危险程度倍率
+  probabilities: {
+    resources: number // 发现资源概率
+    darkMatter: number // 发现暗物质概率
+    fleet: number // 发现舰船概率
+    pirates: number // 遭遇海盗概率
+    aliens: number // 遭遇外星人概率
+    nothing: number // 什么都没发现概率
+  }
+}
 
 // 外交关系状态
 export const RelationStatus = {
@@ -229,7 +275,8 @@ export const DiplomaticEventType = {
   Spy: 'spy', // 侦查
   StealDebris: 'stealDebris', // 抢夺残骸
   AllyAttacked: 'allyAttacked', // 盟友被攻击
-  DestroyPlanet: 'destroyPlanet' // 摧毁星球
+  DestroyPlanet: 'destroyPlanet', // 摧毁星球
+  CampaignChoice: 'campaignChoice' // 战役对话选择
 } as const
 
 export type DiplomaticEventType = (typeof DiplomaticEventType)[keyof typeof DiplomaticEventType]
@@ -257,14 +304,22 @@ export interface DiplomaticReport {
   npcId: string // NPC ID
   npcName: string // NPC名称
   eventType: DiplomaticEventType // 事件类型
-  reputationChange: number // 好感度变化值
-  newReputation: number // 新的好感度值
-  oldStatus: RelationStatus // 旧的关系状态
-  newStatus: RelationStatus // 新的关系状态
-  message: string // 消息内容（已弃用，保留用于兼容性）
+  reputationChange?: number // 好感度变化值（可选，ally_defend 事件没有）
+  newReputation?: number // 新的好感度值（可选）
+  oldStatus?: RelationStatus // 旧的关系状态（可选）
+  newStatus?: RelationStatus // 新的关系状态（可选）
+  message?: string // 消息内容（已弃用，保留用于兼容性）
   messageKey?: string // 翻译键（如 'diplomacy.reports.youDestroyedNpcPlanet'）
   messageParams?: Record<string, string | number> // 翻译参数（如 { npcName: 'NPC-1', planetName: '星球 1:1:8', reputation: -80 }）
   read?: boolean // 已读状态
+  details?: {
+    // 协防任务详情
+    targetPlanetName?: string
+    targetPosition?: Position
+    fleetSize?: number
+    arrivalTime?: number
+    stationDuration?: number
+  }
 }
 
 // 舰队预设
@@ -298,6 +353,8 @@ export interface FleetMission {
   // 外交系统字段
   isGift?: boolean // 是否为赠送资源任务
   giftTargetNpcId?: string // 赠送目标NPC ID
+  // 探险系统字段
+  expeditionZone?: ExpeditionZone // 探险区域类型
 }
 
 // 导弹攻击任务（不使用舰队系统）
@@ -452,6 +509,8 @@ export interface MissionReport {
     foundFleet?: Partial<Fleet>
     // 探险任务：损失的舰船
     fleetLost?: Partial<Fleet>
+    // 探险任务：探险区域
+    expeditionZone?: ExpeditionZone
     // 侦查任务：报告ID
     spyReportId?: string
   }
@@ -483,6 +542,108 @@ export interface GiftRejectedNotification {
   read?: boolean
 }
 
+// NPC贸易提议
+export interface TradeOffer {
+  id: string
+  npcId: string
+  npcName: string
+  timestamp: number
+  offeredResources: {
+    type: 'metal' | 'crystal' | 'deuterium'
+    amount: number
+  }
+  requestedResources: {
+    type: 'metal' | 'crystal' | 'deuterium'
+    amount: number
+  }
+  expiresAt: number
+  status: 'pending' | 'accepted' | 'declined' | 'expired'
+  read?: boolean
+}
+
+// NPC情报类型
+export type IntelType = 'enemyFleet' | 'enemyResources' | 'enemyMovement'
+
+// NPC情报报告
+export interface IntelReport {
+  id: string
+  fromNpcId: string
+  fromNpcName: string
+  timestamp: number
+  targetNpcId: string
+  targetNpcName: string
+  intelType: IntelType
+  data: {
+    fleet?: Partial<Fleet>
+    resources?: Partial<Resources>
+    movement?: {
+      targetPosition: { galaxy: number; system: number; position: number }
+      arrivalTime: number
+      missionType: string
+    }
+  }
+  read: boolean
+}
+
+// NPC联合攻击邀请
+export interface JointAttackInvite {
+  id: string
+  fromNpcId: string
+  fromNpcName: string
+  timestamp: number
+  targetNpcId: string
+  targetNpcName: string
+  targetPlanetId: string
+  targetPosition: { galaxy: number; system: number; position: number }
+  npcFleetCommitment: Partial<Fleet>
+  expectedLootRatio: number // 玩家预期分成比例 (0-1)
+  expiresAt: number
+  status: 'pending' | 'accepted' | 'declined' | 'expired'
+  read?: boolean
+}
+
+// NPC资源援助通知
+export interface AidNotification {
+  id: string
+  timestamp: number
+  npcId: string
+  npcName: string
+  aidResources: Resources
+  read?: boolean
+}
+
+// NPC报复等级
+export interface RevengeLevel {
+  attackCount: number
+  fleetMultiplier: number
+  attackInterval: number
+  name: string
+}
+
+// NPC协防通知
+export interface AllyDefenseNotification {
+  id: string
+  timestamp: number
+  npcId: string
+  npcName: string
+  targetPlanetId: string
+  targetPlanetName: string
+  fleetSent: Partial<Fleet>
+  read?: boolean
+}
+
+// NPC态度变化通知
+export interface AttitudeChangeNotification {
+  id: string
+  timestamp: number
+  npcId: string
+  npcName: string
+  previousStatus: 'hostile' | 'neutral' | 'friendly'
+  newStatus: 'hostile' | 'neutral' | 'friendly'
+  reason: string // 变化原因
+  read?: boolean
+}
+
 // 残骸场
 export interface DebrisField {
   id: string
@@ -503,6 +664,18 @@ export interface BuildQueueItem {
   endTime: number
 }
 
+// 等待队列项（尚未开始执行，不需要 startTime/endTime）
+export interface WaitingQueueItem {
+  id: string
+  type: 'building' | 'technology' | 'ship' | 'defense' | 'demolish'
+  itemType: BuildingType | TechnologyType | ShipType | DefenseType
+  targetLevel?: number // 用于建筑和科技
+  quantity?: number // 用于舰船和防御
+  priority: number // 排序优先级（数字越小优先级越高）
+  addedTime: number // 添加到等待队列的时间戳
+  planetId?: string // 建造队列需要标识目标星球
+}
+
 // 星球
 export interface Planet {
   id: string
@@ -514,6 +687,7 @@ export interface Planet {
   fleet: Fleet
   defense: Record<DefenseType, number>
   buildQueue: BuildQueueItem[]
+  waitingBuildQueue: WaitingQueueItem[] // 等待队列（建筑、舰船、防御）
   lastUpdate: number
   maxSpace: number // 最大空间
   maxFleetStorage: number // 舰队仓储上限
@@ -521,6 +695,8 @@ export interface Planet {
   parentPlanetId?: string // 如果是月球,指向母星的ID
   diameter?: number // 月球直径(km)，用于销毁概率计算
   jumpGateLastUsed?: number // 跳跃门上次使用时间戳(ms)，用于冷却计算
+  oreDeposits?: OreDeposits // 矿脉储量（可选，用于向后兼容）
+  temperature?: { min: number; max: number } // 星球温度范围（摄氏度），影响太阳能卫星和重氢产量
 }
 
 // 月球特殊配置
@@ -571,6 +747,20 @@ export interface Officer {
   active: boolean
   hiredAt?: number // 招募时间
   expiresAt?: number // 到期时间
+  // 动态加成（与 OfficerConfig.benefits 结构相同）
+  bonuses?: {
+    buildingSpeedBonus?: number
+    researchSpeedBonus?: number
+    resourceProductionBonus?: number
+    darkMatterProductionBonus?: number
+    energyProductionBonus?: number
+    fleetSpeedBonus?: number
+    fuelConsumptionReduction?: number
+    defenseBonus?: number
+    additionalBuildQueue?: number
+    additionalFleetSlots?: number
+    storageCapacityBonus?: number
+  }
 }
 
 // 玩家
@@ -581,6 +771,7 @@ export interface Player {
   technologies: Record<TechnologyType, number>
   officers: Record<OfficerType, Officer>
   researchQueue: BuildQueueItem[]
+  waitingResearchQueue: WaitingQueueItem[] // 研究等待队列
   fleetMissions: FleetMission[]
   missileAttacks: MissileAttack[] // 导弹攻击任务
   battleReports: BattleResult[]
@@ -591,6 +782,13 @@ export interface Player {
   incomingFleetAlerts: IncomingFleetAlert[] // 即将到来的敌对舰队警告
   giftNotifications: GiftNotification[] // 礼物通知（等待接受/拒绝）
   giftRejectedNotifications: GiftRejectedNotification[] // 礼物被拒绝通知
+  // NPC增强行为通知
+  tradeOffers?: TradeOffer[] // 中立NPC贸易提议
+  intelReports?: IntelReport[] // 友好NPC情报报告
+  jointAttackInvites?: JointAttackInvite[] // 友好NPC联合攻击邀请
+  aidNotifications?: AidNotification[] // 友好NPC资源援助通知
+  allyDefenseNotifications?: AllyDefenseNotification[] // 友好NPC协防通知
+  attitudeChangeNotifications?: AttitudeChangeNotification[] // NPC态度变化通知
   points: number // 总积分（每1000资源=1分）
   isGMEnabled?: boolean // GM模式开关（默认false，通过秘籍激活）
   lastVersionCheckTime?: number // 最后一次自动检查版本的时间戳（被动检测）
@@ -611,6 +809,9 @@ export interface Player {
   // 成就系统
   achievementStats?: AchievementStats // 成就统计数据
   achievements?: Record<string, AchievementProgress> // 成就进度
+  // 战役系统
+  campaignProgress?: PlayerCampaignProgress // 战役进度
+  questNotifications?: QuestNotification[] // 任务通知
 }
 
 export interface NotificationSettings {
@@ -642,6 +843,17 @@ export interface Universe {
   npcs: NPC[]
 }
 
+// NPC AI 类型
+export const NPCAIType = {
+  Aggressive: 'aggressive', // 侵略型 - 积极侦查和攻击玩家
+  Defensive: 'defensive', // 防守型 - 只在被攻击时反击，优先发展防御
+  Trader: 'trader', // 商人型 - 主动交易，几乎不攻击，高好感度时赠送资源
+  Expansionist: 'expansionist', // 扩张型 - 优先发展和殖民，较少攻击
+  Balanced: 'balanced' // 平衡型 - 根据情况动态调整策略
+} as const
+
+export type NPCAIType = (typeof NPCAIType)[keyof typeof NPCAIType]
+
 // NPC玩家
 export interface NPC {
   id: string
@@ -650,6 +862,7 @@ export interface NPC {
   planets: Planet[]
   technologies: Record<TechnologyType, number>
   difficulty: 'easy' | 'medium' | 'hard' // 保留兼容，不再使用
+  aiType?: NPCAIType // AI 行为类型
   // 距离难度系统
   difficultyLevel?: number // 基于距离的难度等级（1-无限）
   distanceToHomeworld?: number // 到玩家母星的距离
@@ -821,4 +1034,203 @@ export interface AchievementProgress {
   currentValue: number
   unlockedAt?: number
   tierUnlocks: Record<AchievementTier, number | null>
+}
+
+// ==================== 排行榜系统类型 ====================
+
+// 排行榜类别枚举
+export const RankingCategory = {
+  Total: 'total', // 总积分
+  Building: 'building', // 建筑积分
+  Research: 'research', // 研究积分
+  Fleet: 'fleet', // 舰队积分
+  Defense: 'defense' // 防御积分
+} as const
+export type RankingCategory = (typeof RankingCategory)[keyof typeof RankingCategory]
+
+// 排行榜条目接口
+export interface RankingEntry {
+  id: string // 玩家或NPC ID
+  name: string // 名称
+  isPlayer: boolean // 是否为玩家（否则为NPC）
+  scores: {
+    total: number // 总积分
+    building: number // 建筑积分
+    research: number // 研究积分
+    fleet: number // 舰队积分
+    defense: number // 防御积分
+  }
+  planetCount: number // 星球数量
+}
+
+// ==================== 战役系统 ====================
+
+// 任务状态
+export const QuestStatus = {
+  Locked: 'locked', // 未解锁
+  Available: 'available', // 可接取
+  Active: 'active', // 进行中
+  Completed: 'completed', // 已完成
+  Failed: 'failed' // 失败
+} as const
+export type QuestStatus = (typeof QuestStatus)[keyof typeof QuestStatus]
+
+// 任务目标类型
+export const ObjectiveType = {
+  // 基础目标
+  BuildBuilding: 'buildBuilding', // 建造建筑到某等级
+  ResearchTech: 'researchTech', // 研究科技
+  ProduceShips: 'produceShips', // 生产舰船
+  AccumulateResources: 'accumulateResources', // 积累资源
+
+  // 战斗目标
+  DefeatNPC: 'defeatNPC', // 击败特定NPC
+  WinBattles: 'winBattles', // 赢得N场战斗
+  RecycleDebris: 'recycleDebris', // 回收残骸
+  DestroyPlanet: 'destroyPlanet', // 摧毁星球
+
+  // 外交目标
+  ReachRelation: 'reachRelation', // 达到某关系等级
+  SendGift: 'sendGift', // 送礼
+  FormAlliance: 'formAlliance', // 结盟
+
+  // 探索目标
+  Colonize: 'colonize', // 殖民新星球
+  Expedition: 'expedition', // 完成探险任务
+  DiscoverLocation: 'discoverLocation', // 发现特定位置
+  SpyTarget: 'spyTarget' // 侦查特定目标
+} as const
+export type ObjectiveType = (typeof ObjectiveType)[keyof typeof ObjectiveType]
+
+// 任务目标
+export interface QuestObjective {
+  id: string
+  type: ObjectiveType
+  descriptionKey: string // 翻译键
+  target: string | number // 目标值或ID (建筑类型/科技类型/舰船类型/NPC ID等)
+  targetSecondary?: string | number // 次要目标 (如等级要求)
+  required: number // 需要数量
+}
+
+// 任务奖励
+export interface QuestReward {
+  resources?: Partial<Resources>
+  darkMatter?: number
+  points?: number
+  ships?: Partial<Fleet>
+  unlockBuilding?: BuildingType
+  unlockTech?: TechnologyType
+  specialItem?: string // 特殊物品ID
+}
+
+// 剧情对话
+export interface StoryDialogue {
+  id: string
+  speaker: 'narrator' | 'player' | 'npc' | 'mysterious'
+  speakerNameKey?: string // 翻译键
+  portrait?: string // 头像标识
+  textKey: string // 翻译键
+  choices?: DialogueChoice[]
+}
+
+// 对话选项
+export interface DialogueChoice {
+  textKey: string // 翻译键
+  nextDialogueId?: string
+  effect?: 'reputation_up' | 'reputation_down' | 'unlock_branch'
+  npcId?: string // 影响的NPC ID（用于声望变化）
+  value?: number // 效果数值（如声望变化量，默认为10）
+  branchId?: string // 解锁的分支ID（用于unlock_branch效果）
+}
+
+// 战役任务配置
+export interface CampaignQuestConfig {
+  id: string
+  chapter: number // 章节号
+  order: number // 章节内顺序
+  titleKey: string // 翻译键
+  descriptionKey: string // 翻译键
+
+  // 剧情
+  prologueDialogues?: StoryDialogue[] // 任务开始对话
+  epilogueDialogues?: StoryDialogue[] // 任务完成对话
+
+  // 目标
+  objectives: QuestObjective[]
+
+  // 奖励
+  rewards: QuestReward
+
+  // 解锁条件
+  requiredQuestIds?: string[] // 需要先完成的任务
+
+  // 任务位置（用于地图显示）
+  mapPosition: { x: number; y: number }
+
+  // 特殊标记
+  isBoss?: boolean // Boss战
+  isBranch?: boolean // 分支任务
+  branchGroup?: string // 分支组ID（同组只能完成一个）
+}
+
+// 战役章节配置
+export interface CampaignChapterConfig {
+  id: string
+  number: number
+  titleKey: string // 翻译键
+  descriptionKey: string // 翻译键
+  backgroundStoryKey: string // 翻译键
+  quests: CampaignQuestConfig[]
+}
+
+// 战役配置
+export interface CampaignConfig {
+  id: string
+  nameKey: string // 翻译键
+  descriptionKey: string // 翻译键
+  chapters: CampaignChapterConfig[]
+}
+
+// 玩家任务进度
+export interface QuestProgress {
+  questId: string
+  status: QuestStatus
+  objectives: Record<string, { current: number; completed: boolean }>
+  startedAt?: number
+  completedAt?: number
+  rewardsClaimed?: boolean
+  dialoguesRead?: string[] // 已读对话ID
+}
+
+// 玩家战役进度
+export interface PlayerCampaignProgress {
+  campaignId: string
+  currentChapter: number
+  currentQuestId?: string
+  questProgress: Record<string, QuestProgress>
+  completedQuests: string[]
+  unlockedQuests: string[]
+  branchChoices?: Record<string, string> // 分支选择记录
+  unlockedBranches?: string[] // 已解锁的分支任务ID列表
+}
+
+// 任务通知
+export interface QuestNotification {
+  id: string
+  timestamp: number
+  questId: string
+  questTitleKey: string // 翻译键
+  eventType: 'unlocked' | 'objective_completed' | 'quest_completed' | 'chapter_completed' | 'reward_claimed'
+  messageKey: string // 翻译键
+  messageParams?: Record<string, string | number> // 翻译参数
+  rewards?: QuestReward
+  read?: boolean
+}
+
+// WebDAV 配置
+export interface WebDAVConfig {
+  serverUrl: string // WebDAV 服务器地址
+  username: string // 用户名
+  password: string // 密码或应用专用密码
+  basePath: string // 存档存放路径
 }

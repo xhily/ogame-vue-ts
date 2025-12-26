@@ -1,8 +1,6 @@
 <template>
   <!-- 首页：无侧边栏/头部 -->
-  <template v-if="isHomePage">
-    <RouterView />
-  </template>
+  <RouterView v-if="isHomePage" />
 
   <!-- 其他页面：完整布局（含侧边栏） -->
   <SidebarProvider v-else :open="sidebarOpen" @update:open="handleSidebarOpenChange">
@@ -28,23 +26,23 @@
                   class="w-full justify-between h-auto px-3 py-2.5 border-2 hover:bg-accent hover:border-primary transition-colors"
                 >
                   <div class="flex items-start gap-2.5 flex-1 min-w-0">
-                    <Globe class="h-5 w-5 flex-shrink-0 mt-0.5 text-primary" />
+                    <Globe class="h-5 w-5 shrink-0 mt-0.5 text-primary" />
                     <div class="flex-1 min-w-0 text-left">
                       <div class="text-[10px] text-muted-foreground uppercase tracking-wider mb-0.5">
                         {{ t('planet.currentPlanet') }}
                       </div>
                       <div class="flex items-center gap-1.5 mb-0.5">
-                        <span class="truncate font-semibold text-sm">{{ planet.name }}</span>
+                        <span class="truncate font-semibold text-sm">
+                          {{ planet.name }}
+                          [{{ planet.position.galaxy }}:{{ planet.position.system }}:{{ planet.position.position }}]
+                        </span>
                         <Badge v-if="planet.isMoon" variant="secondary" class="text-[10px] px-1 py-0 h-4">
                           {{ t('planet.moon') }}
                         </Badge>
                       </div>
-                      <div class="text-[11px] text-muted-foreground">
-                        [{{ planet.position.galaxy }}:{{ planet.position.system }}:{{ planet.position.position }}]
-                      </div>
                     </div>
                   </div>
-                  <ChevronsUpDown class="h-4 w-4 flex-shrink-0 text-muted-foreground ml-2" />
+                  <ChevronsUpDown class="h-4 w-4 shrink-0 text-muted-foreground ml-2" />
                 </Button>
               </PopoverTrigger>
               <PopoverContent class="w-72 p-0" side="bottom" align="start">
@@ -61,14 +59,17 @@
                         size="sm"
                       >
                         <div class="flex items-start gap-2 w-full min-w-0">
-                          <Globe class="h-4 w-4 flex-shrink-0 mt-0.5" :class="p.id === planet.id ? 'text-primary' : ''" />
+                          <Globe class="h-4 w-4 shrink-0 mt-0.5" :class="p.id === planet.id ? 'text-primary' : ''" />
                           <div class="flex-1 min-w-0 text-left">
                             <div class="flex items-center gap-1.5 mb-0.5">
-                              <span class="truncate font-medium text-sm">{{ p.name }}</span>
+                              <span class="truncate font-medium text-sm">
+                                {{ p.name }}
+                                [{{ p.position.galaxy }}:{{ p.position.system }}:{{ p.position.position }}]
+                              </span>
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                class="h-2 w-2 p-0 flex-shrink-0"
+                                class="h-2 w-2 p-0 shrink-0"
                                 @click.stop="openRenameDialog(p.id, p.name)"
                                 :title="t('planet.renamePlanet')"
                               >
@@ -77,9 +78,6 @@
                               <Badge v-if="p.isMoon" variant="outline" class="text-[10px] px-1 py-0 h-4">
                                 {{ t('planet.moon') }}
                               </Badge>
-                            </div>
-                            <div class="text-[11px] text-muted-foreground">
-                              [{{ p.position.galaxy }}:{{ p.position.system }}:{{ p.position.position }}]
                             </div>
                           </div>
                         </div>
@@ -132,13 +130,6 @@
                 <!-- 正在执行的舰队任务数量 -->
                 <SidebarMenuBadge v-if="item.path === '/fleet' && activeFleetMissionsCount > 0" class="bg-primary text-primary-foreground">
                   {{ activeFleetMissionsCount }}
-                </SidebarMenuBadge>
-                <!-- 未读外交报告数量 -->
-                <SidebarMenuBadge
-                  v-if="item.path === '/diplomacy' && unreadDiplomaticReportsCount > 0"
-                  class="bg-destructive text-destructive-foreground"
-                >
-                  {{ unreadDiplomaticReportsCount }}
                 </SidebarMenuBadge>
               </SidebarMenuButton>
             </SidebarMenuItem>
@@ -233,23 +224,23 @@
                   class="resource-bar flex items-center gap-3 sm:gap-6 justify-start sm:justify-center"
                   :class="[resourceBarExpanded ? 'hidden' : 'overflow-x-auto']"
                 >
-                  <div
-                    v-for="resourceType in resourceTypes"
-                    :key="resourceType.key"
-                    class="flex items-center gap-1.5 sm:gap-2 flex-shrink-0"
-                  >
+                  <div v-for="resourceType in resourceTypes" :key="resourceType.key" class="flex items-center gap-1.5 sm:gap-2 shrink-0">
                     <ResourceIcon :type="resourceType.key" size="md" />
                     <div class="min-w-0">
-                      <!-- 电力显示净产量和效率 -->
+                      <!-- 电力显示：当前储量/最大容量，净产量/小时 -->
                       <template v-if="resourceType.key === 'energy'">
                         <p
                           class="text-xs sm:text-sm font-medium truncate"
+                          :class="getResourceColor(planet.resources.energy, capacity?.energy || Infinity)"
+                        >
+                          {{ formatNumber(planet.resources.energy) }} /
+                          {{ formatNumber(capacity?.energy || 0) }}
+                        </p>
+                        <p
+                          class="text-[10px] sm:text-xs truncate"
                           :class="netEnergy >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'"
                         >
-                          {{ netEnergy >= 0 ? '+' : '' }}{{ formatNumber(netEnergy) }}
-                        </p>
-                        <p class="text-[10px] sm:text-xs text-muted-foreground truncate">
-                          {{ formatNumber(production?.energy || 0) }} / {{ formatNumber(energyConsumption) }}
+                          {{ netEnergy >= 0 ? '+' : '' }}{{ formatNumber(Math.round(netEnergy / 60)) }}/{{ t('resources.perMinute') }}
                         </p>
                       </template>
                       <!-- 其他资源统一显示：当前值/容量 -->
@@ -271,7 +262,7 @@
               </div>
 
               <!-- 右侧：队列通知 + 展开按钮 -->
-              <div class="flex items-center gap-2 sm:gap-3 flex-shrink-0 justify-end">
+              <div class="flex items-center gap-2 sm:gap-3 shrink-0 justify-end">
                 <!-- 移动端展开按钮 -->
                 <Button @click="resourceBarExpanded = !resourceBarExpanded" variant="ghost" size="sm" class="lg:hidden h-8 w-8 p-0">
                   <ChevronDown v-if="!resourceBarExpanded" class="h-4 w-4" />
@@ -306,16 +297,21 @@
                   <span class="text-xs font-medium text-muted-foreground">{{ t(`resources.${resourceType.key}`) }}</span>
                 </div>
                 <div class="space-y-0.5 text-center">
-                  <!-- 电力显示净产量和效率 -->
+                  <!-- 电力显示：当前储量，容量，净产量/分钟 -->
                   <template v-if="resourceType.key === 'energy'">
-                    <p
-                      class="text-sm font-semibold"
-                      :class="netEnergy >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'"
-                    >
-                      {{ netEnergy >= 0 ? '+' : '' }}{{ formatNumber(netEnergy) }}
+                    <p class="text-sm font-semibold" :class="getResourceColor(planet.resources.energy, capacity?.energy || Infinity)">
+                      {{ formatNumber(planet.resources.energy) }}
                     </p>
                     <p class="text-[10px] text-muted-foreground">
-                      {{ t('resources.production') }}: {{ formatNumber(production?.energy || 0) }} / {{ formatNumber(energyConsumption) }}
+                      {{ t('resources.capacity') }}: {{ formatNumber(capacity?.energy || 0) }}
+                    </p>
+                    <p
+                      class="text-[10px]"
+                      :class="netEnergy >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'"
+                    >
+                      {{ t('resources.production') }}: {{ netEnergy >= 0 ? '+' : '' }}{{ formatNumber(Math.round(netEnergy / 60)) }}/{{
+                        t('resources.perMinute')
+                      }}
                     </p>
                   </template>
                   <!-- 其他资源统一显示：当前值/容量 -->
@@ -346,6 +342,9 @@
 
         <!-- 低电量警告 -->
         <LowEnergyWarning />
+
+        <!-- 矿脉储量警告 -->
+        <OreDepositWarning />
 
         <!-- 内容区域 -->
         <main class="flex-1">
@@ -450,6 +449,22 @@
       </AlertDialogFooter>
     </AlertDialogContent>
   </AlertDialog>
+
+  <!-- NPC 名称更新确认对话框 -->
+  <AlertDialog v-model:open="npcNameUpdateDialogOpen">
+    <AlertDialogContent>
+      <AlertDialogHeader>
+        <AlertDialogTitle>{{ t('settings.npcNameUpdateTitle') }}</AlertDialogTitle>
+        <AlertDialogDescription>
+          {{ t('settings.npcNameUpdateMessage', { count: oldFormatNPCCount }) }}
+        </AlertDialogDescription>
+      </AlertDialogHeader>
+      <AlertDialogFooter>
+        <AlertDialogCancel @click="handleSkipNPCNameUpdate">{{ t('settings.npcNameUpdateCancel') }}</AlertDialogCancel>
+        <AlertDialogAction @click="handleUpdateNPCNames">{{ t('settings.npcNameUpdateConfirm') }}</AlertDialogAction>
+      </AlertDialogFooter>
+    </AlertDialogContent>
+  </AlertDialog>
 </template>
 
 <script setup lang="ts">
@@ -467,11 +482,12 @@
   import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
   import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
   import { Input } from '@/components/ui/input'
-  import IncomingFleetAlerts from '@/components/IncomingFleetAlerts.vue'
-  import LowEnergyWarning from '@/components/LowEnergyWarning.vue'
-  import DiplomaticNotifications from '@/components/DiplomaticNotifications.vue'
-  import EnemyAlertNotifications from '@/components/EnemyAlertNotifications.vue'
-  import QueueNotifications from '@/components/QueueNotifications.vue'
+  import IncomingFleetAlerts from '@/components/notifications/IncomingFleetAlerts.vue'
+  import LowEnergyWarning from '@/components/notifications/LowEnergyWarning.vue'
+  import OreDepositWarning from '@/components/notifications/OreDepositWarning.vue'
+  import DiplomaticNotifications from '@/components/notifications/DiplomaticNotifications.vue'
+  import EnemyAlertNotifications from '@/components/notifications/EnemyAlertNotifications.vue'
+  import QueueNotifications from '@/components/notifications/QueueNotifications.vue'
   import {
     Sidebar,
     SidebarContent,
@@ -486,7 +502,7 @@
     SidebarProvider,
     SidebarTrigger
   } from '@/components/ui/sidebar'
-  import ResourceIcon from '@/components/ResourceIcon.vue'
+  import ResourceIcon from '@/components/common/ResourceIcon.vue'
   import {
     AlertDialog,
     AlertDialogAction,
@@ -497,10 +513,10 @@
     AlertDialogHeader,
     AlertDialogTitle
   } from '@/components/ui/alert-dialog'
-  import DetailDialog from '@/components/DetailDialog.vue'
-  import UpdateDialog from '@/components/UpdateDialog.vue'
-  import HintToast from '@/components/HintToast.vue'
-  import BackToTop from '@/components/BackToTop.vue'
+  import DetailDialog from '@/components/dialogs/DetailDialog.vue'
+  import UpdateDialog from '@/components/dialogs/UpdateDialog.vue'
+  import HintToast from '@/components/notifications/HintToast.vue'
+  import BackToTop from '@/components/common/BackToTop.vue'
   import Sonner from '@/components/ui/sonner/Sonner.vue'
   import { MissionType, BuildingType, TechnologyType, DiplomaticEventType } from '@/types/game'
   import type { FleetMission, NPC, MissileAttack } from '@/types/game'
@@ -530,7 +546,9 @@
     ChevronUp,
     Handshake,
     Pencil,
-    Trophy
+    Trophy,
+    Crown,
+    Scroll
   } from 'lucide-vue-next'
   import * as gameLogic from '@/logic/gameLogic'
   import * as planetLogic from '@/logic/planetLogic'
@@ -544,6 +562,9 @@
   import * as npcBehaviorLogic from '@/logic/npcBehaviorLogic'
   import * as diplomaticLogic from '@/logic/diplomaticLogic'
   import * as publicLogic from '@/logic/publicLogic'
+  import * as oreDepositLogic from '@/logic/oreDepositLogic'
+  import * as campaignLogic from '@/logic/campaignLogic'
+  import { generateNPCName, countOldFormatNPCs, updateNPCName } from '@/logic/npcNameGenerator'
   import pkg from '../package.json'
   import { toast } from 'vue-sonner'
   import { migrateGameData } from '@/utils/migration'
@@ -574,7 +595,7 @@
   const showUpdateDialog = ref(false)
   const updateInfo = ref<VersionInfo | null>(null)
   // 所有可用的语言选项
-  const locales: Locale[] = ['zh-CN', 'zh-TW', 'en', 'de', 'ru', 'ko', 'ja']
+  const locales: Locale[] = ['zh-CN', 'zh-TW', 'en', 'de', 'ru', 'es-LA', 'ko', 'ja']
   // 侧边栏状态（不持久化，根据屏幕尺寸初始化）
   // PC端（≥1024px）默认打开，移动端默认关闭
   const sidebarOpen = ref(window.innerWidth >= 1024)
@@ -596,6 +617,9 @@
   const newPlanetName = ref('')
   // Android 退出确认对话框状态
   const exitDialogOpen = ref(false)
+  // NPC 名称更新对话框状态
+  const npcNameUpdateDialogOpen = ref(false)
+  const oldFormatNPCCount = ref(0)
   // 功能解锁要求配置
   const featureRequirements: Record<string, { building: BuildingType; level: number }> = {
     '/research': { building: BuildingType.ResearchLab, level: 1 },
@@ -632,6 +656,8 @@
     { name: computed(() => t('nav.galaxy')), path: '/galaxy', icon: Globe },
     { name: computed(() => t('nav.diplomacy')), path: '/diplomacy', icon: Handshake },
     { name: computed(() => t('nav.achievements')), path: '/achievements', icon: Trophy },
+    { name: computed(() => t('nav.campaign')), path: '/campaign', icon: Scroll },
+    { name: computed(() => t('nav.ranking')), path: '/ranking', icon: Crown },
     { name: computed(() => t('nav.messages')), path: '/messages', icon: Mail },
     { name: computed(() => t('nav.settings')), path: '/settings', icon: Settings },
     // GM菜单在启用GM模式时显示
@@ -679,7 +705,21 @@
     const unreadNPCActivity = gameStore.player.npcActivityNotifications?.filter(n => !n.read).length || 0
     const unreadGifts = gameStore.player.giftNotifications?.filter(n => !n.read).length || 0
     const unreadGiftRejected = gameStore.player.giftRejectedNotifications?.filter(n => !n.read).length || 0
-    return unreadBattles + unreadSpies + unreadSpied + unreadMissions + unreadNPCActivity + unreadGifts + unreadGiftRejected
+    const unreadTradeOffers = gameStore.player.tradeOffers?.filter(o => !o.read).length || 0
+    const unreadIntelReports = gameStore.player.intelReports?.filter(r => !r.read).length || 0
+    const unreadJointAttacks = gameStore.player.jointAttackInvites?.filter(i => !i.read).length || 0
+    return (
+      unreadBattles +
+      unreadSpies +
+      unreadSpied +
+      unreadMissions +
+      unreadNPCActivity +
+      unreadGifts +
+      unreadGiftRejected +
+      unreadTradeOffers +
+      unreadIntelReports +
+      unreadJointAttacks
+    )
   })
 
   // 正在执行的舰队任务数量（包括飞行中的导弹）
@@ -687,11 +727,6 @@
     const fleetMissions = gameStore.player.fleetMissions.filter(m => m.status === 'outbound' || m.status === 'returning').length
     const flyingMissiles = gameStore.player.missileAttacks?.filter(m => m.status === 'flying').length || 0
     return fleetMissions + flyingMissiles
-  })
-
-  // 未读外交报告数量
-  const unreadDiplomaticReportsCount = computed(() => {
-    return (gameStore.player.diplomaticReports || []).filter(r => !r.read).length
   })
 
   // 月球相关
@@ -732,7 +767,7 @@
 
     if (!settings.types[typeKey]) return
 
-    // browser
+    // 浏览器通知
     if (settings.browser && 'Notification' in window && Notification.permission === 'granted') {
       const shouldSuppress = settings.suppressInFocus && document.hasFocus()
       if (!shouldSuppress) {
@@ -740,10 +775,39 @@
       }
     }
 
-    // toast
+    // 页面内 toast 通知
     if (settings.inApp) {
       toast.success(title, { description: body })
     }
+  }
+
+  // 处理解锁通知
+  const handleUnlockNotification = (unlockedItems: Array<{ type: 'building' | 'technology'; id: string; name: string }>) => {
+    const settings = gameStore.notificationSettings
+    if (!settings) return
+
+    // 检查主开关和解锁类型开关
+    if (!settings.browser && !settings.inApp) return
+    if (!settings.types.unlock) return
+
+    unlockedItems.forEach(item => {
+      const title = t('notifications.newUnlock')
+      const typeLabel = item.type === 'building' ? t('notifications.building') : t('notifications.technology')
+      const body = `${typeLabel}: ${item.name}`
+
+      // 浏览器通知
+      if (settings.browser && 'Notification' in window && Notification.permission === 'granted') {
+        const shouldSuppress = settings.suppressInFocus && document.hasFocus()
+        if (!shouldSuppress) {
+          new Notification(title, { body, icon: '/favicon.ico' })
+        }
+      }
+
+      // 页面内 toast 通知
+      if (settings.inApp) {
+        toast.info(title, { description: body })
+      }
+    })
   }
 
   const handleConfirmDialogConfirm = () => {
@@ -757,6 +821,20 @@
     const shouldInit = gameLogic.shouldInitializeGame(gameStore.player.planets)
     if (!shouldInit) {
       const now = Date.now()
+      // 迁移矿脉储量数据（为没有矿脉数据的星球初始化）
+      gameStore.player.planets.forEach(planet => {
+        oreDepositLogic.migrateOreDeposits(planet)
+      })
+      // 迁移NPC星球的矿脉储量
+      npcStore.npcs.forEach(npc => {
+        npc.planets.forEach(planet => {
+          oreDepositLogic.migrateOreDeposits(planet)
+        })
+      })
+      // 迁移宇宙地图中的星球（NPC星球的副本）
+      Object.values(universeStore.planets).forEach(planet => {
+        oreDepositLogic.migrateOreDeposits(planet)
+      })
 
       // 计算离线收益（直接同步计算，应用游戏速度）
       const bonuses = officerLogic.calculateActiveBonuses(gameStore.player.officers, now)
@@ -802,7 +880,7 @@
     // 检查军官过期
     gameLogic.checkOfficersExpiration(gameStore.player.officers, now)
     // 处理游戏更新（建造队列、研究队列等）
-    const result = gameLogic.processGameUpdate(gameStore.player, now, gameStore.gameSpeed, handleNotification)
+    const result = gameLogic.processGameUpdate(gameStore.player, now, gameStore.gameSpeed, handleNotification, handleUnlockNotification)
     gameStore.player.researchQueue = result.updatedResearchQueue
     // 处理舰队任务
     gameStore.player.fleetMissions.forEach(mission => {
@@ -845,22 +923,39 @@
     // 检查成就解锁
     checkAchievementUnlocks()
 
+    // 检查战役任务进度
+    if (gameStore.player.campaignProgress) {
+      campaignLogic.checkAllActiveQuestsProgress(gameStore.player, npcStore.npcs)
+    }
+
     // 检查并处理被消灭的NPC（所有星球都被摧毁的NPC）
     const eliminatedNpcIds = diplomaticLogic.checkAndHandleEliminatedNPCs(npcStore.npcs, gameStore.player, gameStore.locale)
     if (eliminatedNpcIds.length > 0) {
-      // 从universeStore中移除被消灭NPC的星球数据
+      // 从universeStore中移除被消灭NPC的星球数据，并收集需要清理的任务ID
+      const missionIdsToRemove: string[] = []
       eliminatedNpcIds.forEach(npcId => {
         const npc = npcStore.npcs.find(n => n.id === npcId)
-        if (npc && npc.planets) {
+        if (npc) {
           // 遍历NPC的所有星球，从universeStore中删除
-          npc.planets.forEach(planet => {
-            const planetKey = gameLogic.generatePositionKey(planet.position.galaxy, planet.position.system, planet.position.position)
-            if (universeStore.planets[planetKey]) {
-              delete universeStore.planets[planetKey]
-            }
-          })
+          if (npc.planets) {
+            npc.planets.forEach(planet => {
+              const planetKey = gameLogic.generatePositionKey(planet.position.galaxy, planet.position.system, planet.position.position)
+              if (universeStore.planets[planetKey]) {
+                delete universeStore.planets[planetKey]
+              }
+            })
+          }
+          // 收集该NPC所有任务的ID（用于清理玩家的警报）
+          if (npc.fleetMissions) {
+            npc.fleetMissions.forEach(m => missionIdsToRemove.push(m.id))
+          }
         }
       })
+
+      // 清理玩家的即将到来舰队警报（移除已消灭NPC的任务警报）
+      if (gameStore.player.incomingFleetAlerts && missionIdsToRemove.length > 0) {
+        gameStore.player.incomingFleetAlerts = gameStore.player.incomingFleetAlerts.filter(alert => !missionIdsToRemove.includes(alert.id))
+      }
 
       // 从NPC列表中移除被消灭的NPC
       npcStore.npcs = npcStore.npcs.filter(npc => !eliminatedNpcIds.includes(npc.id))
@@ -1251,10 +1346,58 @@
           // 不是玩家星球，从宇宙地图中移除
           delete universeStore.planets[targetKey]
         }
+
+        // 取消所有前往该位置的NPC任务（回收、攻击、侦查等）
+        const destroyedDebrisId = `debris_${mission.targetPosition.galaxy}_${mission.targetPosition.system}_${mission.targetPosition.position}`
+        npcStore.npcs.forEach(npc => {
+          if (npc.fleetMissions) {
+            // 找到需要取消的任务（前往已摧毁星球位置的outbound任务）
+            const missionsToCancel = npc.fleetMissions.filter(m => {
+              if (m.status !== 'outbound') return false
+              // 检查回收任务的残骸场ID
+              if (m.missionType === MissionType.Recycle && m.debrisFieldId === destroyedDebrisId) {
+                return true
+              }
+              // 检查其他任务的目标星球ID
+              if (m.targetPlanetId === destroyResult.planetId) {
+                return true
+              }
+              return false
+            })
+
+            // 将这些任务的舰队返回给NPC
+            missionsToCancel.forEach(m => {
+              const npcOriginPlanet = npc.planets.find(p => p.id === m.originPlanetId)
+              if (npcOriginPlanet) {
+                shipLogic.addFleet(npcOriginPlanet.fleet, m.fleet)
+              }
+            })
+
+            // 从任务列表中移除这些任务
+            npc.fleetMissions = npc.fleetMissions.filter(m => !missionsToCancel.includes(m))
+          }
+
+          // 清理关于被摧毁星球的侦查报告
+          if (npc.playerSpyReports && destroyResult.planetId && destroyResult.planetId in npc.playerSpyReports) {
+            delete npc.playerSpyReports[destroyResult.planetId]
+          }
+        })
+
+        // 同时删除该位置的残骸场（星球被摧毁后残骸场也消失）
+        delete universeStore.debrisFields[destroyedDebrisId]
       }
     } else if (mission.missionType === MissionType.Expedition) {
       // 处理远征任务
       const expeditionResult = fleetLogic.processExpeditionArrival(mission)
+
+      // 确保返回时间正确设置（兼容旧版本任务数据）
+      // 如果 returnTime 不存在或已过期，重新计算
+      const now = Date.now()
+      if (!mission.returnTime || mission.returnTime <= now) {
+        // 返回时间应该等于当前时间加上单程飞行时间
+        const flightDuration = mission.arrivalTime - mission.departureTime
+        mission.returnTime = now + flightDuration
+      }
 
       // 更新成就统计 - 远征
       const isSuccessful =
@@ -1268,32 +1411,35 @@
 
       // 根据事件类型生成不同的报告消息
       let reportMessage = ''
-      let reportDetails: Record<string, unknown> = {}
+      let reportDetails: Record<string, unknown> = {
+        // 保存探险区域信息
+        expeditionZone: mission.expeditionZone
+      }
 
       switch (expeditionResult.eventType) {
         case 'resources':
           reportMessage = t('missionReports.expeditionResources')
-          reportDetails = { foundResources: expeditionResult.resources }
+          reportDetails.foundResources = expeditionResult.resources
           break
         case 'darkMatter':
           reportMessage = t('missionReports.expeditionDarkMatter')
-          reportDetails = { foundResources: expeditionResult.resources }
+          reportDetails.foundResources = expeditionResult.resources
           break
         case 'fleet':
           reportMessage = t('missionReports.expeditionFleet')
-          reportDetails = { foundFleet: expeditionResult.fleet }
+          reportDetails.foundFleet = expeditionResult.fleet
           break
         case 'pirates':
           reportMessage = expeditionResult.fleetLost
             ? t('missionReports.expeditionPiratesAttack')
             : t('missionReports.expeditionPiratesEscaped')
-          reportDetails = expeditionResult.fleetLost ? { fleetLost: expeditionResult.fleetLost } : {}
+          if (expeditionResult.fleetLost) reportDetails.fleetLost = expeditionResult.fleetLost
           break
         case 'aliens':
           reportMessage = expeditionResult.fleetLost
             ? t('missionReports.expeditionAliensAttack')
             : t('missionReports.expeditionAliensEscaped')
-          reportDetails = expeditionResult.fleetLost ? { fleetLost: expeditionResult.fleetLost } : {}
+          if (expeditionResult.fleetLost) reportDetails.fleetLost = expeditionResult.fleetLost
           break
         default:
           reportMessage = t('missionReports.expeditionNothing')
@@ -1656,7 +1802,7 @@
 
           npcMap.set(planet.ownerId, {
             id: planet.ownerId,
-            name: `NPC-${planet.ownerId.substring(0, 8)}`,
+            name: generateNPCName(planet.ownerId, gameStore.locale),
             planets: [],
             technologies: {}, // 初始化空科技树
             difficulty: 'medium' as const, // 默认中等难度
@@ -1698,6 +1844,11 @@
     // 确保所有NPC都有间谍探测器（修复旧版本保存的数据）
     if (npcStore.npcs.length > 0) {
       npcGrowthLogic.ensureNPCSpyProbes(npcStore.npcs)
+    }
+
+    // 确保所有NPC都有AI类型（修复旧版本保存的数据）
+    if (npcStore.npcs.length > 0) {
+      npcGrowthLogic.ensureAllNPCsAIType(npcStore.npcs)
     }
 
     // 确保所有NPC都与玩家建立了关系（修复旧版本保存的数据）
@@ -1821,6 +1972,87 @@
           })
         }
       })
+
+      // 处理增强NPC行为（中立和友好NPC的特殊行为）
+      const relation = npc.relations?.[gameStore.player.id]
+      if (relation?.status === 'neutral') {
+        const neutralResult = npcBehaviorLogic.updateNeutralNPCBehavior(npc, npcStore.npcs, gameStore.player, now)
+
+        // 处理贸易提议
+        if (neutralResult.tradeOffer) {
+          if (!gameStore.player.tradeOffers) {
+            gameStore.player.tradeOffers = []
+          }
+          gameStore.player.tradeOffers.push(neutralResult.tradeOffer)
+          toast.info(t('npcBehavior.tradeOfferReceived'), {
+            description: t('npcBehavior.tradeOfferDesc', { npcName: neutralResult.tradeOffer.npcName })
+          })
+        }
+
+        // 处理态度摇摆
+        if (neutralResult.swingDirection) {
+          if (!gameStore.player.attitudeChangeNotifications) {
+            gameStore.player.attitudeChangeNotifications = []
+          }
+          gameStore.player.attitudeChangeNotifications.push({
+            id: `attitude_${Date.now()}_${npc.id}`,
+            timestamp: now,
+            npcId: npc.id,
+            npcName: npc.name,
+            previousStatus: 'neutral',
+            newStatus: neutralResult.swingDirection,
+            reason: 'attitude_swing',
+            read: false
+          })
+          const statusKey = neutralResult.swingDirection === 'friendly' ? 'npcBehavior.becameFriendly' : 'npcBehavior.becameHostile'
+          toast.info(t('npcBehavior.attitudeChanged'), {
+            description: t(statusKey, { npcName: npc.name })
+          })
+        }
+      } else if (relation?.status === 'friendly') {
+        const friendlyResult = npcBehaviorLogic.updateFriendlyNPCBehavior(npc, npcStore.npcs, gameStore.player, now)
+
+        // 处理情报报告
+        if (friendlyResult.intelReport) {
+          if (!gameStore.player.intelReports) {
+            gameStore.player.intelReports = []
+          }
+          gameStore.player.intelReports.push(friendlyResult.intelReport)
+          toast.info(t('npcBehavior.intelReceived'), {
+            description: t('npcBehavior.intelReceivedDesc', { npcName: friendlyResult.intelReport.fromNpcName })
+          })
+        }
+
+        // 处理联合攻击邀请
+        if (friendlyResult.jointAttackInvite) {
+          if (!gameStore.player.jointAttackInvites) {
+            gameStore.player.jointAttackInvites = []
+          }
+          gameStore.player.jointAttackInvites.push(friendlyResult.jointAttackInvite)
+          toast.info(t('npcBehavior.jointAttackInvite'), {
+            description: t('npcBehavior.jointAttackInviteDesc', { npcName: friendlyResult.jointAttackInvite.fromNpcName })
+          })
+        }
+
+        // 处理资源援助
+        if (friendlyResult.aidProvided) {
+          if (!gameStore.player.aidNotifications) {
+            gameStore.player.aidNotifications = []
+          }
+          gameStore.player.aidNotifications.push({
+            id: `aid_${Date.now()}_${npc.id}`,
+            timestamp: now,
+            npcId: npc.id,
+            npcName: npc.name,
+            aidResources: friendlyResult.aidProvided,
+            read: false
+          })
+          const totalAid = friendlyResult.aidProvided.metal + friendlyResult.aidProvided.crystal + friendlyResult.aidProvided.deuterium
+          toast.success(t('npcBehavior.aidReceived'), {
+            description: t('npcBehavior.aidReceivedDesc', { npcName: npc.name, amount: totalAid.toLocaleString() })
+          })
+        }
+      }
     })
 
     npcBehaviorCounter.value = 0
@@ -2099,6 +2331,15 @@
         })
       }
 
+      // 检测旧格式 NPC 名称
+      if (npcStore.npcs.length > 0) {
+        const oldCount = countOldFormatNPCs(npcStore.npcs, gameStore.locale)
+        if (oldCount > 0) {
+          oldFormatNPCCount.value = oldCount
+          npcNameUpdateDialogOpen.value = true
+        }
+      }
+
       // Android 返回键退出确认
       if (Capacitor.isNativePlatform()) {
         CapacitorApp.addListener('backButton', ({ canGoBack }) => {
@@ -2154,6 +2395,25 @@
   // Android 退出应用
   const exitApp = () => {
     CapacitorApp.exitApp()
+  }
+
+  // NPC 名称更新处理
+  const handleUpdateNPCNames = () => {
+    let updatedCount = 0
+    npcStore.npcs.forEach(npc => {
+      const newName = updateNPCName(npc.id, gameStore.locale)
+      if (newName !== npc.name) {
+        npc.name = newName
+        updatedCount++
+      }
+    })
+    npcNameUpdateDialogOpen.value = false
+    toast.success(t('settings.npcNameUpdateSuccess', { count: updatedCount }))
+  }
+
+  const handleSkipNPCNameUpdate = () => {
+    npcNameUpdateDialogOpen.value = false
+    toast.info(t('settings.npcNameUpdateSkipped'))
   }
 </script>
 

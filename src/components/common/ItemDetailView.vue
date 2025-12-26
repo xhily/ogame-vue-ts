@@ -1,7 +1,7 @@
 <template>
   <div class="space-y-4">
     <!-- 建筑/科技：等级范围表格 -->
-    <div v-if="type === 'building' || type === 'technology'" class="border rounded-lg overflow-hidden">
+    <div v-if="type === 'building' || type === 'technology'" class="border rounded-lg">
       <Table>
         <TableHeader>
           <TableRow>
@@ -165,6 +165,56 @@
         </TableBody>
       </Table>
     </div>
+
+    <!-- 矿脉储量信息（仅采矿建筑显示） -->
+    <Card
+      v-if="isMiningBuilding && oreDepositInfo && miningResourceType"
+      class="border-2"
+      :class="oreDepositInfo.isDepleted ? 'border-destructive' : oreDepositInfo.isWarning ? 'border-yellow-500' : 'border-primary/30'"
+    >
+      <CardHeader class="pb-3">
+        <CardTitle class="text-sm flex items-center gap-2">
+          <ResourceIcon :type="miningResourceType" size="md" />
+          {{ t('buildings.oreDeposit') }}
+          <AlertTriangle
+            v-if="oreDepositInfo.isWarning || oreDepositInfo.isDepleted"
+            class="h-4 w-4"
+            :class="oreDepositInfo.isDepleted ? 'text-destructive' : 'text-yellow-500'"
+          />
+        </CardTitle>
+      </CardHeader>
+      <CardContent class="space-y-3">
+        <div class="space-y-2">
+          <div class="flex items-center justify-between text-sm">
+            <span class="text-muted-foreground">{{ t('buildings.remainingDeposit') }}:</span>
+            <span class="font-medium">
+              <NumberWithTooltip :value="oreDepositInfo.remaining" />
+              /
+              <NumberWithTooltip :value="oreDepositInfo.initial" />
+            </span>
+          </div>
+          <Progress
+            :model-value="oreDepositInfo.percentage"
+            class="h-2"
+            :class="oreDepositInfo.isDepleted ? 'bg-destructive/20' : oreDepositInfo.isWarning ? 'bg-yellow-500/20' : ''"
+          />
+          <div class="flex items-center justify-between text-xs text-muted-foreground">
+            <span>{{ oreDepositInfo.percentage.toFixed(1) }}%</span>
+            <span v-if="!oreDepositInfo.isDepleted">{{ t('buildings.depletionTime') }}: {{ oreDepositInfo.depletionTimeFormatted }}</span>
+            <span v-else class="text-destructive font-medium">{{ t('buildings.depositDepleted') }}</span>
+          </div>
+        </div>
+        <div
+          v-if="oreDepositInfo.isWarning && !oreDepositInfo.isDepleted"
+          class="text-xs text-yellow-600 dark:text-yellow-400 bg-yellow-500/10 p-2 rounded"
+        >
+          {{ t('buildings.depositWarning') }}
+        </div>
+        <div v-if="oreDepositInfo.isDepleted" class="text-xs text-destructive bg-destructive/10 p-2 rounded">
+          {{ t('buildings.depositDepletedMessage') }}
+        </div>
+      </CardContent>
+    </Card>
 
     <!-- 建筑/科技：累积统计 -->
     <div v-if="type === 'building' || type === 'technology'" class="grid grid-cols-2 gap-4">
@@ -387,21 +437,26 @@
   import { ref, computed } from 'vue'
   import { useI18n } from '@/composables/useI18n'
   import { useGameStore } from '@/stores/gameStore'
-  import type { BuildingType, TechnologyType, ShipType, DefenseType } from '@/types/game'
+  import { BuildingType, TechnologyType, type ShipType, type DefenseType } from '@/types/game'
   import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
   import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
   import { Badge } from '@/components/ui/badge'
   import { Input } from '@/components/ui/input'
   import { Label } from '@/components/ui/label'
-  import NumberWithTooltip from '@/components/NumberWithTooltip.vue'
+  import NumberWithTooltip from '@/components/common/NumberWithTooltip.vue'
   import { Sword, Shield, ShieldCheck, Zap, Package, Fuel } from 'lucide-vue-next'
   import * as buildingLogic from '@/logic/buildingLogic'
   import * as researchLogic from '@/logic/researchLogic'
   import * as pointsLogic from '@/logic/pointsLogic'
   import * as officerLogic from '@/logic/officerLogic'
   import * as shipLogic from '@/logic/shipLogic'
-  import { SHIPS, DEFENSES } from '@/config/gameConfig'
+  import * as oreDepositLogic from '@/logic/oreDepositLogic'
+  import * as resourceLogic from '@/logic/resourceLogic'
+  import { SHIPS, DEFENSES, ORE_DEPOSIT_CONFIG } from '@/config/gameConfig'
   import { formatTime } from '@/utils/format'
+  import { Progress } from '@/components/ui/progress'
+  import ResourceIcon from '@/components/common/ResourceIcon.vue'
+  import { AlertTriangle } from 'lucide-vue-next'
 
   const { t } = useI18n()
   const gameStore = useGameStore()
@@ -442,6 +497,11 @@
     return currentPlanet.value.buildings['researchLab'] || 0
   })
 
+  // 获取能量科技等级（用于研究时间计算）
+  const energyTechLevel = computed(() => {
+    return gameStore.player.technologies['energyTechnology'] || 0
+  })
+
   // 翻译键（转换为复数形式）
   const typeKey = computed(() => {
     const typeMap = {
@@ -474,7 +534,90 @@
   const showConsumptionColumn = computed(() => {
     if (props.type !== 'building') return false
     const buildingType = props.itemType as BuildingType
+    // 所有消耗电力的建筑
+    return [
+      'metalMine',
+      'crystalMine',
+      'deuteriumSynthesizer',
+      'roboticsFactory',
+      'naniteFactory',
+      'shipyard',
+      'researchLab',
+      'missileSilo',
+      'terraformer',
+      'darkMatterCollector',
+      'sensorPhalanx',
+      'jumpGate'
+    ].includes(buildingType)
+  })
+
+  // 是否显示矿脉储量信息（仅对采矿建筑）
+  const isMiningBuilding = computed(() => {
+    if (props.type !== 'building') return false
+    const buildingType = props.itemType as BuildingType
     return ['metalMine', 'crystalMine', 'deuteriumSynthesizer'].includes(buildingType)
+  })
+
+  // 获取当前建筑对应的资源类型
+  const miningResourceType = computed((): 'metal' | 'crystal' | 'deuterium' | null => {
+    if (!isMiningBuilding.value) return null
+    const buildingType = props.itemType as BuildingType
+    if (buildingType === 'metalMine') return 'metal'
+    if (buildingType === 'crystalMine') return 'crystal'
+    if (buildingType === 'deuteriumSynthesizer') return 'deuterium'
+    return null
+  })
+
+  // 矿脉储量信息
+  const oreDepositInfo = computed(() => {
+    if (!currentPlanet.value || !miningResourceType.value || !currentPlanet.value.oreDeposits) {
+      return null
+    }
+    const deposits = currentPlanet.value.oreDeposits
+    const resourceType = miningResourceType.value
+    const remaining = deposits[resourceType]
+
+    // 获取深层钻探设施等级（星球级）和采矿技术等级（全局）
+    const deepDrillingLevel = currentPlanet.value.buildings[BuildingType.DeepDrillingFacility] || 0
+    const miningTechLevel = gameStore.player?.technologies?.[TechnologyType.MiningTechnology] || 0
+
+    // 使用增强版计算函数获取带加成的储量上限
+    const enhancedDeposits = oreDepositLogic.calculateEnhancedDeposits(
+      deposits.position,
+      deepDrillingLevel,
+      miningTechLevel
+    )
+    const initial = enhancedDeposits[resourceType]
+
+    // 百分比基于增强后的上限计算
+    const percentage = initial > 0 ? (remaining / initial) * 100 : 0
+    const isWarning = percentage < ORE_DEPOSIT_CONFIG.WARNING_THRESHOLD * 100 && percentage > 0
+    const isDepleted = remaining <= 0
+
+    // 计算当前产量（每小时）
+    const production = resourceLogic.calculateResourceProduction(currentPlanet.value, {
+      resourceProductionBonus: activeBonuses.value.resourceProductionBonus,
+      darkMatterProductionBonus: activeBonuses.value.darkMatterProductionBonus,
+      energyProductionBonus: activeBonuses.value.energyProductionBonus
+    })
+    const productionPerHour = production[resourceType]
+
+    // 计算耗尽时间
+    const depletionTimeHours = productionPerHour > 0 ? remaining / productionPerHour : Infinity
+    const depletionTimeFormatted = oreDepositLogic.formatDepletionTime(depletionTimeHours)
+
+    return {
+      remaining,
+      initial,
+      percentage,
+      isWarning,
+      isDepleted,
+      productionPerHour,
+      depletionTimeFormatted,
+      bonusMultiplier: enhancedDeposits.bonusMultiplier,
+      deepDrillingLevel,
+      miningTechLevel
+    }
   })
 
   const showCapacityColumn = computed(() => {
@@ -717,7 +860,8 @@
         }),
         darkMatterCollector: lvl => ({
           capacity: 1000 + lvl * 100,
-          production: Math.floor(25 * lvl * Math.pow(1.5, lvl))
+          production: Math.floor(25 * lvl * Math.pow(1.5, lvl)),
+          consumption: Math.floor(10 * lvl * Math.pow(1.1, lvl))
         }),
         darkMatterTank: lvl => ({
           capacity: Math.floor(1000 * Math.pow(2, lvl) * storageBonus)
@@ -726,25 +870,39 @@
           production: Math.floor(150 * lvl * Math.pow(1.15, lvl))
         }),
         shipyard: lvl => ({
-          fleetStorage: 1000 * lvl
+          fleetStorage: 1000 * lvl,
+          consumption: Math.floor(8 * lvl * Math.pow(1.1, lvl))
         }),
         hangar: lvl => ({
           fleetStorage: 500 * lvl
-        }),
-        terraformer: () => ({
-          spaceBonus: 30
         }),
         lunarBase: () => ({
           spaceBonus: 30
         }),
         roboticsFactory: lvl => ({
-          buildSpeedBonus: lvl
+          buildSpeedBonus: lvl,
+          consumption: Math.floor(5 * lvl * Math.pow(1.1, lvl))
         }),
         naniteFactory: lvl => ({
-          buildSpeedBonus: lvl * 2
+          buildSpeedBonus: lvl * 2,
+          consumption: Math.floor(20 * lvl * Math.pow(1.15, lvl))
         }),
         researchLab: lvl => ({
-          researchSpeedBonus: lvl
+          researchSpeedBonus: lvl,
+          consumption: Math.floor(12 * lvl * Math.pow(1.1, lvl))
+        }),
+        missileSilo: lvl => ({
+          consumption: Math.floor(8 * lvl * Math.pow(1.1, lvl))
+        }),
+        terraformer: lvl => ({
+          spaceBonus: 30,
+          consumption: Math.floor(25 * lvl * Math.pow(1.15, lvl))
+        }),
+        sensorPhalanx: lvl => ({
+          consumption: Math.floor(15 * lvl * Math.pow(1.12, lvl))
+        }),
+        jumpGate: lvl => ({
+          consumption: Math.floor(50 * lvl * Math.pow(1.2, lvl))
         })
       }
 
@@ -772,7 +930,8 @@
         techType,
         level - 1,
         activeBonuses.value.researchSpeedBonus,
-        researchLabLevel.value
+        researchLabLevel.value,
+        energyTechLevel.value
       )
 
       let researchSpeedBonus = 0

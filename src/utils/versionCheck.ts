@@ -9,10 +9,10 @@ export interface VersionInfo {
 // 检查GitHub最新版本
 export const checkLatestVersion = async (lastCheckTime: number, updateCheckTime: (time: number) => void): Promise<VersionInfo | null> => {
   const now = Date.now()
-  const fiveMinutes = 5 * 60 * 1000 // 5分钟
+  const oneHour = 60 * 60 * 1000 // 1小时
 
-  // 如果距离上次检查不到5分钟，跳过
-  if (now - lastCheckTime < fiveMinutes) {
+  // 如果距离上次检查不到1小时，跳过
+  if (now - lastCheckTime < oneHour) {
     return null
   }
 
@@ -49,9 +49,9 @@ export const checkLatestVersion = async (lastCheckTime: number, updateCheckTime:
   }
 }
 
-// 检查是否可以进行版本检查（距离上次检查是否超过5分钟）
+// 检查是否可以进行版本检查（距离上次检查是否超过1小时）
 export const canCheckVersion = (lastCheckTime: number): boolean => {
   const now = Date.now()
-  const fiveMinutes = 5 * 60 * 1000 // 5分钟
-  return now - lastCheckTime >= fiveMinutes
+  const oneHour = 60 * 60 * 1000 // 1小时
+  return now - lastCheckTime >= oneHour
 }

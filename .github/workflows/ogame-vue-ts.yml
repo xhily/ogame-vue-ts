@@ -2,8 +2,8 @@ name: Docker 多架构构建并发布
 
 on:
   push:
-    branches: [ main ]
-    tags: [ 'v*.*.*' ]          # 打 tag 时也触发
+    branches: [main]
+    tags: ['v*.*.*'] # 打 tag 时也触发
   workflow_dispatch:
 
 permissions:
@@ -37,7 +37,7 @@ jobs:
 
       # 登录 Docker Hub（只在用户名存在时执行）
       - name: 登录 Docker Hub
-        if: vars.DOCKERHUB_USERNAME != ''  # 只检查 vars，忽略 secrets
+        if: vars.DOCKERHUB_USERNAME != '' # 只检查 vars，忽略 secrets
         uses: docker/login-action@v3
         with:
           username: ${{ vars.DOCKERHUB_USERNAME }}

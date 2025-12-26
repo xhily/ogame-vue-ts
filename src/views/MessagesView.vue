@@ -62,14 +62,14 @@
           <CardHeader class="pb-3">
             <div class="flex justify-between items-center gap-2">
               <div class="flex items-center gap-2 min-w-0 flex-1">
-                <Sword class="h-4 w-4 flex-shrink-0" />
+                <Sword class="h-4 w-4 shrink-0" />
                 <CardTitle class="text-base sm:text-lg">{{ t('messagesView.battleReport') }}</CardTitle>
                 <Badge v-if="!report.read" variant="default" class="text-xs">{{ t('messagesView.unread') }}</Badge>
                 <Badge :variant="getBattleResultVariant(report)" class="text-xs">
                   {{ getBattleResultText(report) }}
                 </Badge>
               </div>
-              <Button @click.stop="deleteBattleReport(report.id)" variant="ghost" size="icon" class="h-8 w-8 flex-shrink-0">
+              <Button @click.stop="deleteBattleReport(report.id)" variant="ghost" size="icon" class="h-8 w-8 shrink-0">
                 <X class="h-4 w-4" />
               </Button>
             </div>
@@ -99,12 +99,12 @@
           <CardHeader class="pb-3">
             <div class="flex justify-between items-center gap-2">
               <div class="flex items-center gap-2 min-w-0 flex-1">
-                <Eye class="h-4 w-4 flex-shrink-0" />
+                <Eye class="h-4 w-4 shrink-0" />
                 <CardTitle class="text-base sm:text-lg">{{ t('messagesView.spyReport') }}</CardTitle>
                 <Badge v-if="!report.read" variant="default" class="text-xs">{{ t('messagesView.unread') }}</Badge>
-                <Badge variant="outline" class="text-xs">{{ report.targetPlanetId }}</Badge>
+                <Badge variant="outline" class="text-xs">{{ getSpyReportTargetName(report) }}</Badge>
               </div>
-              <Button @click.stop="deleteSpyReport(report.id)" variant="ghost" size="icon" class="h-8 w-8 flex-shrink-0">
+              <Button @click.stop="deleteSpyReport(report.id)" variant="ghost" size="icon" class="h-8 w-8 shrink-0">
                 <X class="h-4 w-4" />
               </Button>
             </div>
@@ -124,31 +124,35 @@
           <CardHeader class="pb-3">
             <div class="flex justify-between items-center gap-2">
               <div class="flex items-center gap-2 min-w-0 flex-1">
-                <AlertTriangle class="h-4 w-4 flex-shrink-0 text-destructive" />
+                <AlertTriangle class="h-4 w-4 shrink-0 text-destructive" />
                 <CardTitle class="text-base sm:text-lg">{{ t('messagesView.spiedNotification') }}</CardTitle>
                 <Badge v-if="!notification.read" variant="default" class="text-xs">{{ t('messagesView.unread') }}</Badge>
                 <Badge :variant="notification.detectionSuccess ? 'destructive' : 'secondary'" class="text-xs">
                   {{ notification.detectionSuccess ? t('messagesView.detected') : t('messagesView.undetected') }}
                 </Badge>
               </div>
-              <Button @click.stop="deleteSpiedNotification(notification.id)" variant="ghost" size="icon" class="h-8 w-8 flex-shrink-0">
+              <Button @click.stop="deleteSpiedNotification(notification.id)" variant="ghost" size="icon" class="h-8 w-8 shrink-0">
                 <X class="h-4 w-4" />
               </Button>
             </div>
             <CardDescription class="text-xs sm:text-sm">
-              {{ notification.npcName }} → {{ notification.targetPlanetName }} · {{ formatDate(notification.timestamp) }}
+              {{ getNpcName(notification.npcId, notification.npcName) }} → {{ notification.targetPlanetName }} ·
+              {{ formatDate(notification.timestamp) }}
             </CardDescription>
           </CardHeader>
         </Card>
       </TabsContent>
 
-      <!-- NPC相关消息（活动、礼物、被拒绝） -->
+      <!-- NPC相关消息（活动、礼物、被拒绝、贸易提议、情报、联合攻击邀请） -->
       <TabsContent value="npc" class="mt-4 space-y-2 pb-20">
         <Empty
           v-if="
             sortedNPCActivityNotifications.length === 0 &&
             sortedGiftNotifications.length === 0 &&
-            sortedGiftRejectedNotifications.length === 0
+            sortedGiftRejectedNotifications.length === 0 &&
+            sortedTradeOffers.length === 0 &&
+            sortedIntelReports.length === 0 &&
+            sortedJointAttackInvites.length === 0
           "
           class="border rounded-lg"
         >
@@ -157,6 +161,143 @@
             <EmptyDescription>{{ t('messagesView.noNPCActivity') }}</EmptyDescription>
           </EmptyContent>
         </Empty>
+
+        <!-- 贸易提议 -->
+        <Card
+          v-for="offer in sortedTradeOffers"
+          :key="offer.id"
+          @click="openTradeOfferDialog(offer)"
+          class="cursor-pointer hover:shadow-md transition-shadow"
+        >
+          <CardHeader class="pb-3">
+            <div class="flex justify-between items-center gap-2">
+              <div class="flex items-center gap-2 min-w-0 flex-1">
+                <ArrowLeftRight class="h-4 w-4 shrink-0 text-amber-500" />
+                <CardTitle class="text-base sm:text-lg">{{ t('npcBehavior.trade.title') }}</CardTitle>
+                <Badge variant="default" class="text-xs">{{ t('messagesView.pending') }}</Badge>
+                <Badge v-if="isOfferExpired(offer)" variant="destructive" class="text-xs">
+                  {{ t('npcBehavior.trade.expired') }}
+                </Badge>
+              </div>
+              <Button @click.stop="deleteTradeOffer(offer.id)" variant="ghost" size="icon" class="h-8 w-8 shrink-0">
+                <X class="h-4 w-4" />
+              </Button>
+            </div>
+            <CardDescription class="text-xs sm:text-sm">
+              {{ getNpcNameById(offer.npcId) }} · {{ formatDate(offer.timestamp) }}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div class="space-y-2 text-sm">
+              <div class="flex gap-4">
+                <div class="flex-1 flex items-center gap-1">
+                  <span class="text-green-600 dark:text-green-400">{{ t('npcBehavior.trade.offers') }}:</span>
+                  <template v-if="getResourceInfo(offer.offeredResources)">
+                    <ResourceIcon :type="getResourceInfo(offer.offeredResources)!.type" size="sm" />
+                    <NumberWithTooltip :value="getResourceInfo(offer.offeredResources)!.amount" />
+                  </template>
+                  <span v-else>-</span>
+                </div>
+                <div class="flex-1 flex items-center gap-1">
+                  <span class="text-red-600 dark:text-red-400">{{ t('npcBehavior.trade.requests') }}:</span>
+                  <template v-if="getResourceInfo(offer.requestedResources)">
+                    <ResourceIcon :type="getResourceInfo(offer.requestedResources)!.type" size="sm" />
+                    <NumberWithTooltip :value="getResourceInfo(offer.requestedResources)!.amount" />
+                  </template>
+                  <span v-else>-</span>
+                </div>
+              </div>
+              <div class="flex gap-2 mt-2">
+                <Button
+                  @click.stop="acceptTradeOffer(offer)"
+                  variant="default"
+                  size="sm"
+                  class="flex-1"
+                  :disabled="isOfferExpired(offer) || !canAcceptTrade(offer)"
+                >
+                  {{ t('npcBehavior.trade.accept') }}
+                </Button>
+                <Button @click.stop="declineTradeOffer(offer)" variant="outline" size="sm" class="flex-1">
+                  {{ t('npcBehavior.trade.decline') }}
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <!-- 情报报告 -->
+        <Card
+          v-for="intel in sortedIntelReports"
+          :key="intel.id"
+          @click="openIntelReportDialog(intel)"
+          class="cursor-pointer hover:shadow-md transition-shadow"
+        >
+          <CardHeader class="pb-3">
+            <div class="flex justify-between items-center gap-2">
+              <div class="flex items-center gap-2 min-w-0 flex-1">
+                <FileText class="h-4 w-4 shrink-0 text-blue-500" />
+                <CardTitle class="text-base sm:text-lg">{{ t('npcBehavior.intel.title') }}</CardTitle>
+                <Badge v-if="!intel.read" variant="default" class="text-xs">{{ t('messagesView.unread') }}</Badge>
+                <Badge variant="outline" class="text-xs">{{ t(`npcBehavior.intel.types.${intel.intelType}`) }}</Badge>
+              </div>
+              <Button @click.stop="deleteIntelReport(intel.id)" variant="ghost" size="icon" class="h-8 w-8 shrink-0">
+                <X class="h-4 w-4" />
+              </Button>
+            </div>
+            <CardDescription class="text-xs sm:text-sm">
+              {{ t('npcBehavior.intel.from') }}: {{ getNpcNameById(intel.fromNpcId) }} → {{ t('npcBehavior.intel.target') }}:
+              {{ getNpcNameById(intel.targetNpcId) }} ·
+              {{ formatDate(intel.timestamp) }}
+            </CardDescription>
+          </CardHeader>
+        </Card>
+
+        <!-- 联合攻击邀请 -->
+        <Card
+          v-for="invite in sortedJointAttackInvites"
+          :key="invite.id"
+          @click="openJointAttackDialog(invite)"
+          class="cursor-pointer hover:shadow-md transition-shadow"
+        >
+          <CardHeader class="pb-3">
+            <div class="flex justify-between items-center gap-2">
+              <div class="flex items-center gap-2 min-w-0 flex-1">
+                <Swords class="h-4 w-4 shrink-0 text-red-500" />
+                <CardTitle class="text-base sm:text-lg">{{ t('npcBehavior.jointAttack.title') }}</CardTitle>
+                <Badge variant="default" class="text-xs">{{ t('messagesView.pending') }}</Badge>
+                <Badge v-if="isInviteExpired(invite)" variant="destructive" class="text-xs">
+                  {{ t('npcBehavior.jointAttack.expired') }}
+                </Badge>
+              </div>
+              <Button @click.stop="deleteJointAttackInvite(invite.id)" variant="ghost" size="icon" class="h-8 w-8 shrink-0">
+                <X class="h-4 w-4" />
+              </Button>
+            </div>
+            <CardDescription class="text-xs sm:text-sm">
+              {{ getNpcNameById(invite.fromNpcId) }} → {{ getNpcNameById(invite.targetNpcId) }} ({{ invite.targetNpcName }}) ·
+              {{ formatDate(invite.timestamp) }}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div class="space-y-2 text-sm">
+              <div>{{ t('npcBehavior.jointAttack.lootShare') }}: {{ (invite.expectedLootRatio * 100).toFixed(0) }}%</div>
+              <div class="flex gap-2 mt-2">
+                <Button
+                  @click.stop="acceptJointAttack(invite)"
+                  variant="default"
+                  size="sm"
+                  class="flex-1"
+                  :disabled="isInviteExpired(invite)"
+                >
+                  {{ t('npcBehavior.jointAttack.accept') }}
+                </Button>
+                <Button @click.stop="declineJointAttack(invite)" variant="outline" size="sm" class="flex-1">
+                  {{ t('npcBehavior.jointAttack.decline') }}
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         <!-- NPC活动通知 -->
         <Card
@@ -168,21 +309,16 @@
           <CardHeader class="pb-3">
             <div class="flex justify-between items-center gap-2">
               <div class="flex items-center gap-2 min-w-0 flex-1">
-                <Recycle class="h-4 w-4 flex-shrink-0 text-blue-500" />
+                <Recycle class="h-4 w-4 shrink-0 text-blue-500" />
                 <CardTitle class="text-base sm:text-lg">{{ t('messagesView.npcRecycleActivity') }}</CardTitle>
                 <Badge v-if="!notification.read" variant="default" class="text-xs">{{ t('messagesView.unread') }}</Badge>
               </div>
-              <Button
-                @click.stop="deleteNPCActivityNotification(notification.id)"
-                variant="ghost"
-                size="icon"
-                class="h-8 w-8 flex-shrink-0"
-              >
+              <Button @click.stop="deleteNPCActivityNotification(notification.id)" variant="ghost" size="icon" class="h-8 w-8 shrink-0">
                 <X class="h-4 w-4" />
               </Button>
             </div>
             <CardDescription class="text-xs sm:text-sm">
-              {{ notification.npcName }} →
+              {{ getNpcName(notification.npcId, notification.npcName) }} →
               {{
                 notification.targetPlanetName ||
                 `[${notification.targetPosition.galaxy}:${notification.targetPosition.system}:${notification.targetPosition.position}]`
@@ -202,11 +338,13 @@
           <CardHeader class="pb-3">
             <div class="flex justify-between items-center gap-2">
               <div class="flex items-center gap-2 min-w-0 flex-1">
-                <Gift class="h-4 w-4 flex-shrink-0 text-green-600" />
-                <CardTitle class="text-base sm:text-lg">{{ t('messagesView.giftFrom').replace('{npcName}', gift.fromNpcName) }}</CardTitle>
+                <Gift class="h-4 w-4 shrink-0 text-green-600" />
+                <CardTitle class="text-base sm:text-lg">
+                  {{ t('messagesView.giftFrom').replace('{npcName}', getNpcName(gift.fromNpcId, gift.fromNpcName)) }}
+                </CardTitle>
                 <Badge v-if="!gift.read" variant="default" class="text-xs">{{ t('messagesView.unread') }}</Badge>
               </div>
-              <Button @click.stop="deleteGiftNotification(gift.id)" variant="ghost" size="icon" class="h-8 w-8 flex-shrink-0">
+              <Button @click.stop="deleteGiftNotification(gift.id)" variant="ghost" size="icon" class="h-8 w-8 shrink-0">
                 <X class="h-4 w-4" />
               </Button>
             </div>
@@ -252,13 +390,13 @@
           <CardHeader class="pb-3">
             <div class="flex justify-between items-center gap-2">
               <div class="flex items-center gap-2 min-w-0 flex-1">
-                <Ban class="h-4 w-4 flex-shrink-0 text-red-600" />
+                <Ban class="h-4 w-4 shrink-0 text-red-600" />
                 <CardTitle class="text-base sm:text-lg">
-                  {{ t('messagesView.giftRejectedBy').replace('{npcName}', rejection.npcName) }}
+                  {{ t('messagesView.giftRejectedBy').replace('{npcName}', getNpcName(rejection.npcId, rejection.npcName)) }}
                 </CardTitle>
                 <Badge v-if="!rejection.read" variant="default" class="text-xs">{{ t('messagesView.unread') }}</Badge>
               </div>
-              <Button @click.stop="deleteGiftRejectedNotification(rejection.id)" variant="ghost" size="icon" class="h-8 w-8 flex-shrink-0">
+              <Button @click.stop="deleteGiftRejectedNotification(rejection.id)" variant="ghost" size="icon" class="h-8 w-8 shrink-0">
                 <X class="h-4 w-4" />
               </Button>
             </div>
@@ -306,14 +444,14 @@
           <CardHeader class="pb-3">
             <div class="flex justify-between items-center gap-2">
               <div class="flex items-center gap-2 min-w-0 flex-1">
-                <Package class="h-4 w-4 flex-shrink-0" />
+                <Package class="h-4 w-4 shrink-0" />
                 <CardTitle class="text-base sm:text-lg">{{ getMissionTypeName(report.missionType) }}</CardTitle>
                 <Badge v-if="!report.read" variant="default" class="text-xs">{{ t('messagesView.unread') }}</Badge>
                 <Badge :variant="report.success ? 'default' : 'destructive'" class="text-xs">
                   {{ report.success ? t('messagesView.success') : t('messagesView.failed') }}
                 </Badge>
               </div>
-              <Button @click.stop="deleteMissionReport(report.id)" variant="ghost" size="icon" class="h-8 w-8 flex-shrink-0">
+              <Button @click.stop="deleteMissionReport(report.id)" variant="ghost" size="icon" class="h-8 w-8 shrink-0">
                 <X class="h-4 w-4" />
               </Button>
             </div>
@@ -339,322 +477,14 @@
     <!-- 间谍报告对话框 -->
     <SpyReportDialog v-model:open="showSpyDialog" :report="selectedSpyReport" />
 
-    <!-- 被侦查通知详情对话框 -->
-    <Dialog :open="showSpiedDialog" @update:open="showSpiedDialog = $event">
-      <DialogContent class="max-w-2xl">
-        <DialogHeader>
-          <DialogTitle class="flex items-center gap-2">
-            <Eye class="h-5 w-5 text-purple-500" />
-            {{ t('messagesView.spiedNotificationDetails') }}
-          </DialogTitle>
-          <DialogDescription>
-            {{ t('messagesView.spyDetected') }}
-          </DialogDescription>
-        </DialogHeader>
+    <!-- 被侦查通知对话框 -->
+    <SpiedNotificationDialog v-model:open="showSpiedDialog" :notification="selectedSpiedNotification" />
 
-        <div v-if="selectedSpiedNotification" class="space-y-4">
-          <!-- 侦查者信息 -->
-          <div class="p-4 bg-muted/50 rounded-lg">
-            <div class="flex items-center gap-2 mb-2">
-              <h3 class="font-semibold text-lg">{{ selectedSpiedNotification.npcName }}</h3>
-              <Badge variant="destructive">{{ t('messagesView.spyDetected') }}</Badge>
-            </div>
-            <p class="text-sm text-muted-foreground">
-              {{ formatDate(selectedSpiedNotification.timestamp) }}
-            </p>
-          </div>
+    <!-- 任务报告对话框 -->
+    <MissionReportDialog v-model:open="showMissionDialog" :report="selectedMissionReport" />
 
-          <!-- 被侦查星球 -->
-          <div class="space-y-2">
-            <h4 class="font-semibold text-sm">{{ t('messagesView.targetPlanet') }}</h4>
-            <div class="p-3 bg-muted/30 rounded-md flex items-center gap-2">
-              <Globe class="h-4 w-4 text-blue-500" />
-              <span class="font-medium">{{ selectedSpiedNotification.targetPlanetName }}</span>
-            </div>
-          </div>
-
-          <!-- 检测结果 -->
-          <div class="space-y-2">
-            <h4 class="font-semibold text-sm">{{ t('messagesView.detectionResult') }}</h4>
-            <div class="p-3 bg-muted/30 rounded-md">
-              <div v-if="selectedSpiedNotification.detectionSuccess" class="flex items-center gap-2 text-yellow-600 dark:text-yellow-400">
-                <AlertTriangle class="h-5 w-5" />
-                <span class="font-medium">{{ t('messagesView.detectionSuccess') }}</span>
-              </div>
-              <p class="text-sm mt-2">
-                {{
-                  t('messagesView.spiedNotificationMessage', {
-                    npc: selectedSpiedNotification.npcName,
-                    planet: selectedSpiedNotification.targetPlanetName
-                  })
-                }}
-              </p>
-            </div>
-          </div>
-
-          <!-- 建议 -->
-          <div class="p-3 bg-blue-50 dark:bg-blue-950/30 rounded-md border border-blue-200 dark:border-blue-800">
-            <p class="text-sm text-blue-800 dark:text-blue-200">
-              {{ t('messagesView.spiedNotificationTip') }}
-            </p>
-          </div>
-        </div>
-
-        <DialogFooter>
-          <Button variant="outline" @click="showSpiedDialog = false">{{ t('common.close') }}</Button>
-          <Button @click="viewNPCInGalaxy(selectedSpiedNotification?.npcId)">{{ t('messagesView.viewInGalaxy') }}</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-
-    <!-- 任务报告详情对话框 -->
-    <Dialog :open="showMissionDialog" @update:open="showMissionDialog = $event">
-      <DialogContent class="max-w-2xl">
-        <DialogHeader>
-          <DialogTitle class="flex items-center gap-2">
-            <component :is="getMissionIcon(selectedMissionReport?.missionType)" class="h-5 w-5" />
-            {{ t('messagesView.missionReportDetails') }}
-          </DialogTitle>
-          <DialogDescription>
-            {{ t('messagesView.missionDetails') }}
-          </DialogDescription>
-        </DialogHeader>
-
-        <div v-if="selectedMissionReport" class="space-y-4">
-          <!-- 任务状态 -->
-          <div class="p-4 bg-muted/50 rounded-lg">
-            <div class="flex items-center gap-2 mb-2">
-              <h3 class="font-semibold text-lg">{{ getMissionTypeName(selectedMissionReport.missionType) }}</h3>
-              <Badge :variant="selectedMissionReport.success ? 'default' : 'destructive'">
-                {{ selectedMissionReport.success ? t('messagesView.missionSuccess') : t('messagesView.missionFailed') }}
-              </Badge>
-            </div>
-            <p class="text-sm text-muted-foreground">
-              {{ formatDate(selectedMissionReport.timestamp) }}
-            </p>
-          </div>
-
-          <!-- 起点和终点 -->
-          <div class="grid grid-cols-2 gap-4">
-            <div class="space-y-2">
-              <h4 class="font-semibold text-sm">{{ t('messagesView.origin') }}</h4>
-              <div class="p-3 bg-muted/30 rounded-md">
-                <p class="font-medium">{{ selectedMissionReport.originPlanetName }}</p>
-              </div>
-            </div>
-            <div class="space-y-2">
-              <h4 class="font-semibold text-sm">{{ t('messagesView.destination') }}</h4>
-              <div class="p-3 bg-muted/30 rounded-md">
-                <p class="font-medium" v-if="selectedMissionReport.targetPlanetName">{{ selectedMissionReport.targetPlanetName }}</p>
-                <p class="text-sm text-muted-foreground" v-else>
-                  [{{ selectedMissionReport.targetPosition.galaxy }}:{{ selectedMissionReport.targetPosition.system }}:{{
-                    selectedMissionReport.targetPosition.position
-                  }}]
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <!-- 任务详情 -->
-          <div class="space-y-2">
-            <h4 class="font-semibold text-sm">{{ t('messagesView.missionDetails') }}</h4>
-            <div class="p-3 bg-muted/30 rounded-md">
-              <p class="text-sm mb-2">{{ selectedMissionReport.message }}</p>
-
-              <!-- 运输任务详情 -->
-              <div v-if="selectedMissionReport.details?.transportedResources" class="mt-3 space-y-1">
-                <p class="text-xs font-semibold text-muted-foreground">{{ t('messagesView.transportedResources') }}:</p>
-                <div class="grid grid-cols-3 gap-2 text-sm">
-                  <div v-for="res in basicResourceFields" :key="res.key">
-                    {{ t(`resources.${res.key}`) }}: {{ selectedMissionReport.details.transportedResources[res.key].toLocaleString() }}
-                  </div>
-                </div>
-              </div>
-
-              <!-- 回收任务详情 -->
-              <div v-if="selectedMissionReport.details?.recycledResources" class="mt-3 space-y-1">
-                <p class="text-xs font-semibold text-muted-foreground">{{ t('messagesView.recycledResources') }}:</p>
-                <div class="grid grid-cols-2 gap-2 text-sm">
-                  <div v-for="res in debrisResourceFields" :key="res.key">
-                    {{ t(`resources.${res.key}`) }}: {{ selectedMissionReport.details.recycledResources[res.key].toLocaleString() }}
-                  </div>
-                </div>
-                <div v-if="selectedMissionReport.details.remainingDebris" class="mt-2">
-                  <p class="text-xs font-semibold text-muted-foreground">{{ t('messagesView.remainingDebris') }}:</p>
-                  <div class="grid grid-cols-2 gap-2 text-sm text-yellow-600 dark:text-yellow-400">
-                    <div v-for="res in debrisResourceFields" :key="res.key">
-                      {{ t(`resources.${res.key}`) }}: {{ selectedMissionReport.details.remainingDebris[res.key].toLocaleString() }}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- 殖民任务详情 -->
-              <div v-if="selectedMissionReport.details?.newPlanetName" class="mt-3">
-                <p class="text-xs font-semibold text-muted-foreground">{{ t('messagesView.newPlanet') }}:</p>
-                <div class="flex items-center gap-2 mt-1">
-                  <Globe class="h-4 w-4 text-green-500" />
-                  <span class="font-medium">{{ selectedMissionReport.details.newPlanetName }}</span>
-                </div>
-              </div>
-
-              <!-- 导弹攻击详情 -->
-              <div v-if="selectedMissionReport.details?.missileCount !== undefined" class="mt-3 space-y-2">
-                <p class="text-xs font-semibold text-muted-foreground">{{ t('galaxyView.missileAttack') }}:</p>
-                <div class="grid grid-cols-3 gap-2 text-sm">
-                  <div>
-                    <span class="text-muted-foreground">{{ t('galaxyView.missileCount') }}:</span>
-                    <span class="ml-1 font-medium">{{ selectedMissionReport.details.missileCount }}</span>
-                  </div>
-                  <div>
-                    <span class="text-muted-foreground">{{ t('missionReports.hits') }}:</span>
-                    <span class="ml-1 font-medium text-green-600">{{ selectedMissionReport.details.missileHits }}</span>
-                  </div>
-                  <div>
-                    <span class="text-muted-foreground">{{ t('galaxyView.intercepted') }}:</span>
-                    <span class="ml-1 font-medium text-yellow-600">{{ selectedMissionReport.details.missileIntercepted }}</span>
-                  </div>
-                </div>
-                <div v-if="Object.keys(selectedMissionReport.details.defenseLosses || {}).length > 0" class="mt-2">
-                  <p class="text-xs font-semibold text-muted-foreground">{{ t('galaxyView.defenseLosses') }}:</p>
-                  <div class="grid grid-cols-2 gap-1 text-xs mt-1 p-2 bg-red-50 dark:bg-red-950/30 rounded">
-                    <div v-for="(count, defenseType) in selectedMissionReport.details.defenseLosses" :key="defenseType">
-                      <span class="text-muted-foreground">{{ t('defenses.' + defenseType) }}:</span>
-                      <span class="ml-1 font-medium text-red-600 dark:text-red-400">-{{ count }}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- 探险任务详情 - 发现资源 -->
-              <div v-if="selectedMissionReport.details?.foundResources" class="mt-3 space-y-1">
-                <p class="text-xs font-semibold text-muted-foreground">{{ t('messagesView.resources') }}:</p>
-                <div class="grid grid-cols-2 gap-2 text-sm p-2 bg-green-50 dark:bg-green-950/30 rounded">
-                  <div v-for="res in allResourceFields" :key="res.key">
-                    <template v-if="(selectedMissionReport.details?.foundResources?.[res.key] ?? 0) > 0">
-                      <span class="text-muted-foreground">{{ t(`resources.${res.key}`) }}:</span>
-                      <span class="ml-1 font-medium text-green-600 dark:text-green-400">
-                        +{{ (selectedMissionReport.details?.foundResources?.[res.key] ?? 0).toLocaleString() }}
-                      </span>
-                    </template>
-                  </div>
-                </div>
-              </div>
-
-              <!-- 探险任务详情 - 发现舰船 -->
-              <div v-if="selectedMissionReport.details?.foundFleet" class="mt-3 space-y-1">
-                <p class="text-xs font-semibold text-muted-foreground">{{ t('messagesView.fleet') }}:</p>
-                <div class="grid grid-cols-2 gap-2 text-sm p-2 bg-blue-50 dark:bg-blue-950/30 rounded">
-                  <div v-for="(count, shipType) in selectedMissionReport.details.foundFleet" :key="shipType">
-                    <span class="text-muted-foreground">{{ t('ships.' + shipType) }}:</span>
-                    <span class="ml-1 font-medium text-blue-600 dark:text-blue-400">+{{ count }}</span>
-                  </div>
-                </div>
-              </div>
-
-              <!-- 探险任务详情 - 损失舰船 -->
-              <div v-if="selectedMissionReport.details?.fleetLost" class="mt-3 space-y-1">
-                <p class="text-xs font-semibold text-muted-foreground">{{ t('messagesView.attackerLosses') }}:</p>
-                <div class="grid grid-cols-2 gap-2 text-sm p-2 bg-red-50 dark:bg-red-950/30 rounded">
-                  <div v-for="(count, shipType) in selectedMissionReport.details.fleetLost" :key="shipType">
-                    <span class="text-muted-foreground">{{ t('ships.' + shipType) }}:</span>
-                    <span class="ml-1 font-medium text-red-600 dark:text-red-400">-{{ count }}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <DialogFooter>
-          <Button variant="outline" @click="showMissionDialog = false">{{ t('common.close') }}</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-
-    <!-- NPC活动通知详情对话框 -->
-    <Dialog :open="showNPCActivityDialog" @update:open="showNPCActivityDialog = $event">
-      <DialogContent class="max-w-2xl">
-        <DialogHeader>
-          <DialogTitle class="flex items-center gap-2">
-            <Recycle class="h-5 w-5 text-yellow-500" />
-            {{ t('messagesView.npcActivityDetails') }}
-          </DialogTitle>
-          <DialogDescription>
-            {{ t('messagesView.activityDescription') }}
-          </DialogDescription>
-        </DialogHeader>
-
-        <div v-if="selectedNPCActivityNotification" class="space-y-4">
-          <!-- NPC信息 -->
-          <div class="p-4 bg-muted/50 rounded-lg">
-            <div class="flex items-center gap-2 mb-2">
-              <h3 class="font-semibold text-lg">{{ selectedNPCActivityNotification.npcName }}</h3>
-              <Badge variant="secondary">{{ t('messagesView.activityType.' + selectedNPCActivityNotification.activityType) }}</Badge>
-            </div>
-            <p class="text-sm text-muted-foreground">
-              {{ formatDate(selectedNPCActivityNotification.timestamp) }}
-            </p>
-          </div>
-
-          <!-- 活动位置 -->
-          <div class="space-y-2">
-            <h4 class="font-semibold text-sm">{{ t('messagesView.activityLocation') }}</h4>
-            <div class="p-3 bg-muted/30 rounded-md">
-              <div class="flex items-center gap-2 mb-2">
-                <Globe class="h-4 w-4 text-blue-500" />
-                <span class="font-medium">
-                  {{ t('messagesView.position') }}: [{{ selectedNPCActivityNotification.targetPosition.galaxy }}:{{
-                    selectedNPCActivityNotification.targetPosition.system
-                  }}:{{ selectedNPCActivityNotification.targetPosition.position }}]
-                </span>
-              </div>
-              <p v-if="selectedNPCActivityNotification.targetPlanetName" class="text-sm text-muted-foreground">
-                {{ t('messagesView.nearPlanet') }}: {{ selectedNPCActivityNotification.targetPlanetName }}
-              </p>
-            </div>
-          </div>
-
-          <!-- 活动描述 -->
-          <div class="space-y-2">
-            <h4 class="font-semibold text-sm">{{ t('messagesView.activityDescription') }}</h4>
-            <div class="p-3 bg-muted/30 rounded-md">
-              <p class="text-sm">
-                {{
-                  t('messagesView.npcActivityMessage', {
-                    npc: selectedNPCActivityNotification.npcName,
-                    activity: t('messagesView.activityType.' + selectedNPCActivityNotification.activityType),
-                    position: `[${selectedNPCActivityNotification.targetPosition.galaxy}:${selectedNPCActivityNotification.targetPosition.system}:${selectedNPCActivityNotification.targetPosition.position}]`
-                  })
-                }}
-              </p>
-            </div>
-          </div>
-
-          <!-- 到达时间 -->
-          <div class="space-y-2">
-            <h4 class="font-semibold text-sm">{{ t('messagesView.arrivalTime') }}</h4>
-            <div class="p-3 bg-muted/30 rounded-md">
-              <p class="font-medium">{{ formatDate(selectedNPCActivityNotification.arrivalTime) }}</p>
-            </div>
-          </div>
-
-          <!-- 提示信息 -->
-          <div class="p-3 bg-yellow-50 dark:bg-yellow-950/30 rounded-md border border-yellow-200 dark:border-yellow-800">
-            <p class="text-sm text-yellow-800 dark:text-yellow-200">
-              {{ t('messagesView.npcActivityTip') }}
-            </p>
-          </div>
-        </div>
-
-        <DialogFooter>
-          <Button variant="outline" @click="showNPCActivityDialog = false">{{ t('common.close') }}</Button>
-          <Button @click="viewLocationInGalaxy(selectedNPCActivityNotification?.targetPosition)">
-            {{ t('messagesView.viewInGalaxy') }}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    <!-- NPC活动通知对话框 -->
+    <NPCActivityDialog v-model:open="showNPCActivityDialog" :notification="selectedNPCActivityNotification" />
   </div>
 </template>
 
@@ -662,19 +492,37 @@
   import { useGameStore } from '@/stores/gameStore'
   import { useI18n } from '@/composables/useI18n'
   import { computed, ref } from 'vue'
-  import { useRouter } from 'vue-router'
   import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
   import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
   import { Button } from '@/components/ui/button'
   import { Badge } from '@/components/ui/badge'
-  import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
   import { FixedPagination } from '@/components/ui/pagination'
   import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
   import { Checkbox } from '@/components/ui/checkbox'
-  import BattleReportDialog from '@/components/BattleReportDialog.vue'
-  import SpyReportDialog from '@/components/SpyReportDialog.vue'
+  import BattleReportDialog from '@/components/dialogs/BattleReportDialog.vue'
+  import SpyReportDialog from '@/components/dialogs/SpyReportDialog.vue'
+  import SpiedNotificationDialog from '@/components/dialogs/SpiedNotificationDialog.vue'
+  import MissionReportDialog from '@/components/dialogs/MissionReportDialog.vue'
+  import NPCActivityDialog from '@/components/dialogs/NPCActivityDialog.vue'
+  import ResourceIcon from '@/components/common/ResourceIcon.vue'
+  import NumberWithTooltip from '@/components/common/NumberWithTooltip.vue'
   import { formatDate } from '@/utils/format'
-  import { X, Sword, Eye, AlertTriangle, Package, Recycle, Gift, Ban, Check, Users, Skull, Globe, Compass, Trash2 } from 'lucide-vue-next'
+  import {
+    X,
+    Sword,
+    Eye,
+    AlertTriangle,
+    Package,
+    Recycle,
+    Gift,
+    Ban,
+    Check,
+    Users,
+    Trash2,
+    ArrowLeftRight,
+    FileText,
+    Swords
+  } from 'lucide-vue-next'
   import { Empty, EmptyContent, EmptyDescription } from '@/components/ui/empty'
   import type {
     BattleResult,
@@ -683,14 +531,16 @@
     NPCActivityNotification,
     MissionReport,
     GiftNotification,
-    GiftRejectedNotification
+    GiftRejectedNotification,
+    TradeOffer,
+    IntelReport,
+    JointAttackInvite
   } from '@/types/game'
   import { MissionType } from '@/types/game'
   import { useNPCStore } from '@/stores/npcStore'
   import * as diplomaticLogic from '@/logic/diplomaticLogic'
   import { toast } from 'vue-sonner'
 
-  const router = useRouter()
   const gameStore = useGameStore()
   const npcStore = useNPCStore()
   const { t } = useI18n()
@@ -706,6 +556,9 @@
     | 'npcActivity'
     | 'giftNotifications'
     | 'giftRejected'
+    | 'tradeOffers'
+    | 'intelReports'
+    | 'jointAttackInvites'
   const clearOptions = ref<Record<ClearOptionKey, boolean>>({
     battles: false,
     spyReports: false,
@@ -713,7 +566,10 @@
     missionReports: false,
     npcActivity: false,
     giftNotifications: false,
-    giftRejected: false
+    giftRejected: false,
+    tradeOffers: false,
+    intelReports: false,
+    jointAttackInvites: false
   })
 
   // 清空消息选项配置
@@ -732,20 +588,63 @@
       labelKey: 'clearGiftNotifications',
       count: gameStore.player.giftNotifications?.length || 0
     },
-    { key: 'giftRejected' as ClearOptionKey, labelKey: 'clearGiftRejected', count: gameStore.player.giftRejectedNotifications?.length || 0 }
+    {
+      key: 'giftRejected' as ClearOptionKey,
+      labelKey: 'clearGiftRejected',
+      count: gameStore.player.giftRejectedNotifications?.length || 0
+    },
+    { key: 'tradeOffers' as ClearOptionKey, labelKey: 'clearTradeOffers', count: gameStore.player.tradeOffers?.length || 0 },
+    { key: 'intelReports' as ClearOptionKey, labelKey: 'clearIntelReports', count: gameStore.player.intelReports?.length || 0 },
+    {
+      key: 'jointAttackInvites' as ClearOptionKey,
+      labelKey: 'clearJointAttackInvites',
+      count: gameStore.player.jointAttackInvites?.length || 0
+    }
   ])
 
   // 基础资源字段配置（用于显示资源列表）
   type BasicResourceKey = 'metal' | 'crystal' | 'deuterium'
   const basicResourceFields: { key: BasicResourceKey }[] = [{ key: 'metal' }, { key: 'crystal' }, { key: 'deuterium' }]
 
-  // 残骸资源字段配置（只有金属和晶体）
-  type DebrisResourceKey = 'metal' | 'crystal'
-  const debrisResourceFields: { key: DebrisResourceKey }[] = [{ key: 'metal' }, { key: 'crystal' }]
+  /**
+   * 获取NPC当前名称
+   * 优先使用当前NPC的实际名称，如果NPC不存在则使用通知中保存的旧名称
+   * 支持通过ID查找，也支持通过旧名称中的ID模式匹配
+   */
+  const getNpcName = (npcId: string | undefined, fallbackName: string): string => {
+    if (!npcStore.npcs?.length) return fallbackName
 
-  // 全部资源字段配置（包含暗物质，用于探险任务）
-  type AllResourceKey = 'metal' | 'crystal' | 'deuterium' | 'darkMatter'
-  const allResourceFields: { key: AllResourceKey }[] = [{ key: 'metal' }, { key: 'crystal' }, { key: 'deuterium' }, { key: 'darkMatter' }]
+    // 1. 先通过 npcId 查找
+    if (npcId) {
+      const npc = npcStore.npcs.find(n => n.id === npcId)
+      if (npc) return npc.name
+    }
+
+    // 2. 尝试从旧名称中提取ID并查找
+    // 旧格式如 "NPC-npc_182"，新ID格式为 "npc_182"
+    const idMatch = fallbackName.match(/npc_\d+/)
+    if (idMatch) {
+      const extractedId = idMatch[0]
+      const npc = npcStore.npcs.find(n => n.id === extractedId)
+      if (npc) return npc.name
+    }
+
+    return fallbackName
+  }
+
+  /**
+   * 获取侦查报告的目标名称
+   * 显示 NPC 名称（如果是 NPC 星球）或星球名称
+   */
+  const getSpyReportTargetName = (report: SpyReport): string => {
+    // 尝试通过 targetPlayerId 获取 NPC 名称
+    if (report.targetPlayerId && report.targetPlayerId !== 'unknown') {
+      const npc = npcStore.npcs.find(n => n.id === report.targetPlayerId)
+      if (npc) return npc.name
+    }
+    // 回退到星球名称
+    return report.targetPlanetName || report.targetPlanetId
+  }
 
   const hasSelectedAny = computed(() => {
     return Object.values(clearOptions.value).some(v => v)
@@ -773,6 +672,15 @@
     if (clearOptions.value.giftRejected) {
       gameStore.player.giftRejectedNotifications = []
     }
+    if (clearOptions.value.tradeOffers) {
+      gameStore.player.tradeOffers = []
+    }
+    if (clearOptions.value.intelReports) {
+      gameStore.player.intelReports = []
+    }
+    if (clearOptions.value.jointAttackInvites) {
+      gameStore.player.jointAttackInvites = []
+    }
 
     // 重置选项
     clearOptions.value = {
@@ -782,7 +690,10 @@
       missionReports: false,
       npcActivity: false,
       giftNotifications: false,
-      giftRejected: false
+      giftRejected: false,
+      tradeOffers: false,
+      intelReports: false,
+      jointAttackInvites: false
     }
 
     // 关闭popover
@@ -886,12 +797,33 @@
     return allMissionReports.value.slice(start, end)
   })
 
-  // NPC标签页合并数据（活动通知 + 礼物通知 + 礼物被拒绝通知）
+  // 贸易提议数据
+  const allTradeOffers = computed(() => {
+    if (!gameStore.player.tradeOffers) return []
+    return [...gameStore.player.tradeOffers].sort((a, b) => b.timestamp - a.timestamp)
+  })
+
+  // 情报报告数据
+  const allIntelReports = computed(() => {
+    if (!gameStore.player.intelReports) return []
+    return [...gameStore.player.intelReports].sort((a, b) => b.timestamp - a.timestamp)
+  })
+
+  // 联合攻击邀请数据
+  const allJointAttackInvites = computed(() => {
+    if (!gameStore.player.jointAttackInvites) return []
+    return [...gameStore.player.jointAttackInvites].sort((a, b) => b.timestamp - a.timestamp)
+  })
+
+  // NPC标签页合并数据（活动通知 + 礼物通知 + 礼物被拒绝通知 + 贸易提议 + 情报报告 + 联合攻击邀请）
   const allNPCTabItems = computed(() => {
     const activities = allNPCActivityNotifications.value.map(item => ({ ...item, type: 'activity' as const }))
     const gifts = allGiftNotifications.value.map(item => ({ ...item, type: 'gift' as const }))
     const rejections = allGiftRejectedNotifications.value.map(item => ({ ...item, type: 'rejection' as const }))
-    return [...activities, ...gifts, ...rejections].sort((a, b) => b.timestamp - a.timestamp)
+    const trades = allTradeOffers.value.map(item => ({ ...item, type: 'trade' as const }))
+    const intels = allIntelReports.value.map(item => ({ ...item, type: 'intel' as const }))
+    const jointAttacks = allJointAttackInvites.value.map(item => ({ ...item, type: 'jointAttack' as const }))
+    return [...activities, ...gifts, ...rejections, ...trades, ...intels, ...jointAttacks].sort((a, b) => b.timestamp - a.timestamp)
   })
 
   const npcTabTotalPages = computed(() => Math.ceil(allNPCTabItems.value.length / ITEMS_PER_PAGE))
@@ -912,6 +844,18 @@
 
   const sortedGiftRejectedNotifications = computed(() => {
     return paginatedNPCTabItems.value.filter(item => item.type === 'rejection')
+  })
+
+  const sortedTradeOffers = computed(() => {
+    return paginatedNPCTabItems.value.filter(item => item.type === 'trade')
+  })
+
+  const sortedIntelReports = computed(() => {
+    return paginatedNPCTabItems.value.filter(item => item.type === 'intel')
+  })
+
+  const sortedJointAttackInvites = computed(() => {
+    return paginatedNPCTabItems.value.filter(item => item.type === 'jointAttack')
   })
 
   // 未读战斗报告数量
@@ -964,14 +908,38 @@
     return gameStore.player.giftRejectedNotifications.filter(n => !n.read).length
   })
 
+  // 待处理贸易提议数量（未过期）
+  const pendingTradeOffers = computed(() => {
+    const now = Date.now()
+    return (gameStore.player.tradeOffers || []).filter(o => o.expiresAt > now).length
+  })
+
+  // 未读情报报告数量
+  const unreadIntelReports = computed(() => {
+    return (gameStore.player.intelReports || []).filter(r => !r.read).length
+  })
+
+  // 待处理联合攻击邀请数量（未过期）
+  const pendingJointAttackInvites = computed(() => {
+    const now = Date.now()
+    return (gameStore.player.jointAttackInvites || []).filter(i => i.expiresAt > now).length
+  })
+
   // 合并：侦查相关未读总数（侦查报告 + 被侦查通知）
   const unreadSpyTotal = computed(() => {
     return unreadSpyReports.value + unreadSpiedNotifications.value
   })
 
-  // 合并：NPC相关未读总数（NPC活动 + 礼物通知 + 礼物被拒绝）
+  // 合并：NPC相关未读总数（NPC活动 + 礼物通知 + 礼物被拒绝 + 贸易提议 + 情报 + 联合攻击邀请）
   const unreadNPCTotal = computed(() => {
-    return unreadNPCActivity.value + unreadGiftNotifications.value + unreadGiftRejected.value
+    return (
+      unreadNPCActivity.value +
+      unreadGiftNotifications.value +
+      unreadGiftRejected.value +
+      pendingTradeOffers.value +
+      unreadIntelReports.value +
+      pendingJointAttackInvites.value
+    )
   })
 
   // 标签页配置
@@ -1149,13 +1117,17 @@
   // 获取任务类型名称
   const getMissionTypeName = (missionType: string): string => {
     const typeMap: Record<string, string> = {
+      [MissionType.Attack]: t('fleetView.attack'),
       [MissionType.Transport]: t('fleetView.transport'),
       [MissionType.Colonize]: t('fleetView.colonize'),
+      [MissionType.Spy]: t('fleetView.spy'),
       [MissionType.Deploy]: t('fleetView.deploy'),
       [MissionType.Expedition]: t('fleetView.expedition'),
       [MissionType.Recycle]: t('fleetView.recycle'),
       [MissionType.Destroy]: t('fleetView.destroy'),
-      [MissionType.MissileAttack]: t('galaxyView.missileAttack')
+      [MissionType.MissileAttack]: t('galaxyView.missileAttack'),
+      [MissionType.HarvestDarkMatter]: t('fleetView.harvestDarkMatter'),
+      [MissionType.Station]: t('fleetView.station')
     }
     return typeMap[missionType] || missionType
   }
@@ -1238,57 +1210,184 @@
     }
   }
 
-  // 查看NPC在星系中的位置
-  const viewNPCInGalaxy = (npcId?: string) => {
-    if (!npcId) return
+  // ========== 贸易提议相关 ==========
+
+  // 通过 NPC ID 获取名称
+  const getNpcNameById = (npcId: string): string => {
     const npc = npcStore.npcs.find(n => n.id === npcId)
-    if (!npc || npc.planets.length === 0) return
-
-    const targetPlanet = npc.planets[0]
-    if (!targetPlanet) return
-
-    showSpiedDialog.value = false
-    router.push({
-      path: '/galaxy',
-      query: {
-        galaxy: targetPlanet.position.galaxy,
-        system: targetPlanet.position.system,
-        highlightNpc: npcId
-      }
-    })
+    return npc?.name || npcId
   }
 
-  // 查看位置在星系中
-  const viewLocationInGalaxy = (position?: { galaxy: number; system: number; position: number }) => {
-    if (!position) return
-
-    showNPCActivityDialog.value = false
-    router.push({
-      path: '/galaxy',
-      query: {
-        galaxy: position.galaxy,
-        system: position.system
-      }
-    })
+  // 检查贸易提议是否过期
+  const isOfferExpired = (offer: TradeOffer): boolean => {
+    const now = Date.now()
+    return offer.expiresAt <= now
   }
 
-  // 获取任务类型图标
-  const getMissionIcon = (missionType?: MissionType) => {
-    if (!missionType) return Package
+  // 检查联合攻击邀请是否过期
+  const isInviteExpired = (invite: JointAttackInvite): boolean => {
+    const now = Date.now()
+    return invite.expiresAt <= now
+  }
 
-    switch (missionType) {
-      case MissionType.Transport:
-        return Package
-      case MissionType.Recycle:
-        return Recycle
-      case MissionType.Colonize:
-        return Globe
-      case MissionType.Expedition:
-        return Compass
-      case MissionType.Destroy:
-        return Skull
-      default:
-        return Package
+  // 辅助函数：从资源对象中提取资源信息（兼容新旧格式）
+  // 用于模板显示和逻辑处理
+  const getResourceInfo = (resource: any): { type: 'metal' | 'crystal' | 'deuterium'; amount: number } | null => {
+    if (!resource) return null
+
+    // 新格式：{ type: 'metal', amount: 1000 }
+    if (resource.type && typeof resource.amount === 'number' && !isNaN(resource.amount)) {
+      return { type: resource.type, amount: resource.amount }
+    }
+
+    // 旧格式：{ metal: 1000, crystal: 0, deuterium: 0 }
+    if (typeof resource.metal === 'number' && resource.metal > 0) {
+      return { type: 'metal', amount: resource.metal }
+    }
+    if (typeof resource.crystal === 'number' && resource.crystal > 0) {
+      return { type: 'crystal', amount: resource.crystal }
+    }
+    if (typeof resource.deuterium === 'number' && resource.deuterium > 0) {
+      return { type: 'deuterium', amount: resource.deuterium }
+    }
+
+    return null
+  }
+
+  // 别名，供内部逻辑使用
+  const extractResourceInfo = getResourceInfo
+
+  // 检查是否可以接受贸易
+  const canAcceptTrade = (offer: TradeOffer): boolean => {
+    const planet = gameStore.player.planets[0]
+    if (!planet) return false
+
+    const requested = extractResourceInfo(offer.requestedResources)
+    if (!requested) return false
+
+    return planet.resources[requested.type] >= requested.amount
+  }
+
+  // 打开贸易提议详情对话框（目前直接操作，后续可添加对话框）
+  const openTradeOfferDialog = (_offer: TradeOffer) => {
+    // 目前贸易提议直接在卡片上操作，不需要单独的对话框
+  }
+
+  // 接受贸易提议
+  const acceptTradeOffer = (offer: TradeOffer) => {
+    if (isOfferExpired(offer)) {
+      toast.error(t('npcBehavior.trade.expired'))
+      return
+    }
+    if (!canAcceptTrade(offer)) {
+      toast.error(t('npcBehavior.trade.acceptFailed'))
+      return
+    }
+
+    const planet = gameStore.player.planets[0]
+    if (!planet) return
+
+    const requested = extractResourceInfo(offer.requestedResources)
+    const offered = extractResourceInfo(offer.offeredResources)
+
+    if (!requested || !offered) {
+      toast.error(t('npcBehavior.trade.acceptFailed'))
+      return
+    }
+
+    // 扣除请求的资源
+    planet.resources[requested.type] -= requested.amount
+
+    // 添加获得的资源
+    planet.resources[offered.type] += offered.amount
+
+    // 移除贸易提议
+    deleteTradeOffer(offer.id)
+
+    // 提高与该NPC的好感度（使用 npcStore）
+    const npcRelation = npcStore.npcs.find(n => n.id === offer.npcId)?.relations?.[gameStore.player.id]
+    if (npcRelation) {
+      npcRelation.reputation += 10
+    }
+
+    toast.success(t('npcBehavior.trade.acceptSuccess'))
+  }
+
+  // 拒绝贸易提议
+  const declineTradeOffer = (offer: TradeOffer) => {
+    deleteTradeOffer(offer.id)
+    toast.info(t('npcBehavior.trade.declined'))
+  }
+
+  // 删除贸易提议
+  const deleteTradeOffer = (offerId: string) => {
+    if (!gameStore.player.tradeOffers) return
+    const index = gameStore.player.tradeOffers.findIndex(o => o.id === offerId)
+    if (index > -1) {
+      gameStore.player.tradeOffers.splice(index, 1)
+    }
+  }
+
+  // ========== 情报报告相关 ==========
+
+  // 打开情报报告详情对话框
+  const openIntelReportDialog = (intel: IntelReport) => {
+    // 标记为已读
+    const originalIntel = gameStore.player.intelReports?.find(i => i.id === intel.id)
+    if (originalIntel && !originalIntel.read) {
+      originalIntel.read = true
+    }
+    // 目前情报报告直接显示在卡片上，后续可添加详情对话框
+  }
+
+  // 删除情报报告
+  const deleteIntelReport = (intelId: string) => {
+    if (!gameStore.player.intelReports) return
+    const index = gameStore.player.intelReports.findIndex(i => i.id === intelId)
+    if (index > -1) {
+      gameStore.player.intelReports.splice(index, 1)
+    }
+  }
+
+  // ========== 联合攻击邀请相关 ==========
+
+  // 打开联合攻击邀请详情对话框
+  const openJointAttackDialog = (_invite: JointAttackInvite) => {
+    // 目前联合攻击邀请直接在卡片上操作，后续可添加详情对话框
+  }
+
+  // 接受联合攻击邀请
+  const acceptJointAttack = (invite: JointAttackInvite) => {
+    if (isInviteExpired(invite)) {
+      toast.error(t('npcBehavior.jointAttack.expired'))
+      return
+    }
+
+    // 移除邀请
+    deleteJointAttackInvite(invite.id)
+
+    // 提高与该NPC的好感度（使用 npcStore）
+    const npcRelation = npcStore.npcs.find(n => n.id === invite.fromNpcId)?.relations?.[gameStore.player.id]
+    if (npcRelation) {
+      npcRelation.reputation += 15
+    }
+
+    toast.success(t('npcBehavior.jointAttack.acceptSuccess'))
+    // 后续可以添加实际的联合攻击逻辑
+  }
+
+  // 拒绝联合攻击邀请
+  const declineJointAttack = (invite: JointAttackInvite) => {
+    deleteJointAttackInvite(invite.id)
+    toast.info(t('npcBehavior.jointAttack.declined'))
+  }
+
+  // 删除联合攻击邀请
+  const deleteJointAttackInvite = (inviteId: string) => {
+    if (!gameStore.player.jointAttackInvites) return
+    const index = gameStore.player.jointAttackInvites.findIndex(i => i.id === inviteId)
+    if (index > -1) {
+      gameStore.player.jointAttackInvites.splice(index, 1)
     }
   }
 </script>

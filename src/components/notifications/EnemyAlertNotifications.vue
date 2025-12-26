@@ -19,7 +19,7 @@
           {{ t('enemyAlert.markAllRead') }}
         </Button>
       </div>
-      <ScrollArea class="h-96">
+      <ScrollArea class="h-auto max-h-96 overflow-y-auto">
         <Empty v-if="activeAlerts.length === 0" class="border-0">
           <EmptyContent>
             <Shield class="h-10 w-10 text-muted-foreground" />
@@ -36,14 +36,14 @@
           >
             <div class="flex items-center gap-3">
               <!-- 左侧：任务图标 -->
-              <div class="flex-shrink-0">
+              <div class="shrink-0">
                 <component :is="getMissionIcon(alert.missionType)" class="h-5 w-5" :class="getMissionIconColor(alert.missionType)" />
               </div>
               <!-- 中间：主要信息 -->
               <div class="flex-1 min-w-0">
                 <div class="flex items-center gap-2">
-                  <span class="font-medium text-sm truncate">{{ alert.npcName }}</span>
-                  <Badge :variant="getMissionBadgeVariant(alert.missionType)" class="text-xs flex-shrink-0">
+                  <span class="font-medium text-sm truncate">{{ getNpcName(alert) }}</span>
+                  <Badge :variant="getMissionBadgeVariant(alert.missionType)" class="text-xs shrink-0">
                     {{ getMissionTypeText(alert.missionType) }}
                   </Badge>
                 </div>
@@ -52,13 +52,13 @@
                 </p>
               </div>
               <!-- 右侧：倒计时 -->
-              <div class="flex-shrink-0 text-right">
+              <div class="shrink-0 text-right">
                 <span class="text-sm font-bold block" :class="getRemainingTimeColor(alert)">
                   {{ formatRemainingTime(alert) }}
                 </span>
               </div>
               <!-- 未读标记 -->
-              <span v-if="!alert.read" class="h-2 w-2 rounded-full bg-destructive flex-shrink-0 animate-pulse" />
+              <span v-if="!alert.read" class="h-2 w-2 rounded-full bg-destructive shrink-0 animate-pulse" />
             </div>
           </div>
         </div>
@@ -94,7 +94,7 @@
         <div class="flex items-center gap-3 p-4 bg-destructive/10 rounded-lg">
           <div class="flex-1">
             <div class="flex items-center gap-2 mb-1">
-              <h3 class="font-semibold text-lg">{{ selectedAlert.npcName }}</h3>
+              <h3 class="font-semibold text-lg">{{ getNpcName(selectedAlert) }}</h3>
               <Badge :variant="getMissionBadgeVariant(selectedAlert.missionType)">
                 {{ getMissionTypeText(selectedAlert.missionType) }}
               </Badge>
@@ -150,6 +150,7 @@
   import { ref, computed, onMounted, onUnmounted } from 'vue'
   import { useRouter } from 'vue-router'
   import { useGameStore } from '@/stores/gameStore'
+  import { useNPCStore } from '@/stores/npcStore'
   import { useI18n } from '@/composables/useI18n'
   import { Button } from '@/components/ui/button'
   import { Badge } from '@/components/ui/badge'
@@ -164,6 +165,7 @@
 
   const router = useRouter()
   const gameStore = useGameStore()
+  const npcStore = useNPCStore()
   const { t } = useI18n()
   const isOpen = ref(false)
   const detailDialogOpen = ref(false)
@@ -192,6 +194,31 @@
       .filter(alert => alert.arrivalTime > now)
       .sort((a, b) => a.arrivalTime - b.arrivalTime) // 按到达时间排序
   })
+
+  /**
+   * 获取NPC当前名称
+   * 优先使用当前NPC的实际名称，如果NPC不存在则尝试从旧名称中提取ID查找
+   */
+  const getNpcName = (alert: IncomingFleetAlert): string => {
+    if (!npcStore.npcs?.length) return alert.npcName
+
+    // 1. 先通过 npcId 查找
+    if (alert.npcId) {
+      const npc = npcStore.npcs.find(n => n.id === alert.npcId)
+      if (npc) return npc.name
+    }
+
+    // 2. 尝试从旧名称中提取ID并查找
+    // 旧格式如 "NPC-npc_182"，新ID格式为 "npc_182"
+    const idMatch = alert.npcName.match(/npc_\d+/)
+    if (idMatch) {
+      const extractedId = idMatch[0]
+      const npc = npcStore.npcs.find(n => n.id === extractedId)
+      if (npc) return npc.name
+    }
+
+    return alert.npcName
+  }
 
   // 获取任务类型图标
   const getMissionIcon = (missionType: MissionType) => {

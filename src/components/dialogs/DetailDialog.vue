@@ -29,7 +29,7 @@
   import { Badge } from '@/components/ui/badge'
   import { useDetailDialogStore } from '@/stores/detailDialogStore'
   import { useI18n } from '@/composables/useI18n'
-  import ItemDetailView from './ItemDetailView.vue'
+  import ItemDetailView from '@/components/common/ItemDetailView.vue'
 
   const { t } = useI18n()
   const dialogStore = useDetailDialogStore()

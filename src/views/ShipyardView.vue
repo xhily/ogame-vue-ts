@@ -122,7 +122,17 @@
               </div>
             </div>
 
-            <Button @click="handleBuild(shipType)" :disabled="!canBuild(shipType)" class="w-full">{{ t('shipyardView.build') }}</Button>
+            <Button @click="handleBuild(shipType, $event)" :disabled="!canBuild(shipType)" class="w-full">{{ t('shipyardView.build') }}</Button>
+
+            <!-- 添加到等待队列按钮 -->
+            <Button
+              v-if="canAddToWaitingQueue(shipType)"
+              @click="handleAddToWaiting(shipType, $event)"
+              variant="outline"
+              class="w-full"
+            >
+              {{ t('queue.addToWaiting') }}
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -157,7 +167,7 @@
   import { Button } from '@/components/ui/button'
   import { Input } from '@/components/ui/input'
   import { Label } from '@/components/ui/label'
-  import ResourceIcon from '@/components/ResourceIcon.vue'
+  import ResourceIcon from '@/components/common/ResourceIcon.vue'
   import {
     AlertDialog,
     AlertDialogAction,
@@ -167,14 +177,17 @@
     AlertDialogHeader,
     AlertDialogTitle
   } from '@/components/ui/alert-dialog'
-  import UnlockRequirement from '@/components/UnlockRequirement.vue'
-  import CardUnlockOverlay from '@/components/CardUnlockOverlay.vue'
+  import UnlockRequirement from '@/components/common/UnlockRequirement.vue'
+  import CardUnlockOverlay from '@/components/common/CardUnlockOverlay.vue'
   import { formatNumber, getResourceCostColor } from '@/utils/format'
   import * as shipValidation from '@/logic/shipValidation'
   import * as publicLogic from '@/logic/publicLogic'
   import * as fleetStorageLogic from '@/logic/fleetStorageLogic'
   import * as shipLogic from '@/logic/shipLogic'
   import * as gameLogic from '@/logic/gameLogic'
+  import * as waitingQueueLogic from '@/logic/waitingQueueLogic'
+  import * as officerLogic from '@/logic/officerLogic'
+  import { triggerQueueAnimation } from '@/composables/useQueueAnimation'
 
   const gameStore = useGameStore()
   const detailDialog = useDetailDialogStore()
@@ -186,6 +199,10 @@
   const alertDialogOpen = ref(false)
   const alertDialogTitle = ref('')
   const alertDialogMessage = ref('')
+
+  // 防抖状态：防止快速点击
+  const isProcessing = ref(false)
+  const DEBOUNCE_DELAY = 300 // 防抖延迟（毫秒）
 
   // 资源类型配置（用于成本显示）
   const costResourceTypes = [
@@ -241,7 +258,14 @@
   }
 
   // 建造舰船
-  const handleBuild = (shipType: ShipType) => {
+  const handleBuild = (shipType: ShipType, event: MouseEvent) => {
+    // 防抖：防止快速点击
+    if (isProcessing.value) return
+    isProcessing.value = true
+    setTimeout(() => {
+      isProcessing.value = false
+    }, DEBOUNCE_DELAY)
+
     const quantity = quantities.value[shipType]
     if (quantity <= 0) {
       alertDialogTitle.value = t('shipyardView.inputError')
@@ -256,6 +280,8 @@
       alertDialogMessage.value = result.reason ? t(result.reason) : t('shipyardView.buildFailedMessage')
       alertDialogOpen.value = true
     } else {
+      // 触发抛物线动画
+      triggerQueueAnimation(event, 'ship')
       quantities.value[shipType] = 0
     }
   }
@@ -299,5 +325,59 @@
       deuterium: config.cost.deuterium * quantity,
       darkMatter: config.cost.darkMatter * quantity
     }
+  }
+
+  // 检查是否可以添加到等待队列
+  const canAddToWaitingQueue = (shipType: ShipType): boolean => {
+    if (!planet.value) return false
+
+    const quantity = quantities.value[shipType]
+    if (quantity <= 0) return false
+
+    // 检查前置条件是否满足
+    const config = SHIPS.value[shipType]
+    if (!publicLogic.checkRequirements(planet.value, gameStore.player.technologies, config.requirements)) {
+      return false
+    }
+
+    // 检查舰队仓储空间是否足够
+    if (!fleetStorageLogic.hasEnoughFleetStorage(planet.value, shipType, quantity, gameStore.player.technologies)) {
+      return false
+    }
+
+    // 检查等待队列是否已满
+    const bonuses = officerLogic.calculateActiveBonuses(gameStore.player.officers, Date.now())
+    const maxWaitingQueue = waitingQueueLogic.getMaxBuildWaitingQueue(planet.value, bonuses.additionalBuildQueue)
+    const waitingQueue = planet.value.waitingBuildQueue || []
+    if (waitingQueue.length >= maxWaitingQueue) {
+      return false
+    }
+
+    // 只有当建造按钮被禁用时（资源不足）才显示等待队列按钮
+    return !canBuild(shipType)
+  }
+
+  // 添加到等待队列
+  const handleAddToWaiting = (shipType: ShipType, event: MouseEvent) => {
+    if (!planet.value) return
+
+    const quantity = quantities.value[shipType]
+    if (quantity <= 0) return
+
+    const item = waitingQueueLogic.createShipWaitingItem(shipType, quantity, planet.value.id)
+
+    const result = waitingQueueLogic.canAddToBuildWaitingQueue(planet.value, item, gameStore.player.officers)
+    if (!result.canAdd) {
+      alertDialogTitle.value = t('queue.waitingQueueFull')
+      alertDialogMessage.value = result.reason ? t(result.reason) : ''
+      alertDialogOpen.value = true
+      return
+    }
+
+    // 触发抛物线动画
+    triggerQueueAnimation(event, 'ship')
+
+    waitingQueueLogic.addToBuildWaitingQueue(planet.value, item)
+    quantities.value[shipType] = 0
   }
 </script>

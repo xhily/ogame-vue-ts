@@ -38,6 +38,34 @@
           </div>
         </div>
 
+        <!-- WebDAV 云同步 -->
+        <div class="flex flex-col gap-3 p-4 border rounded-lg border-blue-500/30 bg-blue-500/5">
+          <div class="flex items-center justify-between">
+            <div class="space-y-1">
+              <h3 class="font-medium flex items-center gap-2">
+                <Cloud class="h-4 w-4 text-blue-500" />
+                {{ t('settings.webdav.title') }}
+              </h3>
+              <p class="text-sm text-muted-foreground">{{ t('settings.webdav.desc') }}</p>
+            </div>
+            <Button @click="showWebDAVConfig = true" variant="outline" size="sm">
+              <Settings2 class="mr-2 h-4 w-4" />
+              {{ t('settings.webdav.config') }}
+            </Button>
+          </div>
+          <div v-if="webdavConfig" class="flex gap-2 pt-2 border-t">
+            <Button @click="handleWebDAVUpload" :disabled="isWebDAVUploading" class="flex-1" variant="outline">
+              <CloudUpload class="mr-2 h-4 w-4" />
+              {{ isWebDAVUploading ? t('settings.webdav.uploading') : t('settings.webdav.upload') }}
+            </Button>
+            <Button @click="showWebDAVFiles = true" class="flex-1" variant="outline">
+              <CloudDownload class="mr-2 h-4 w-4" />
+              {{ t('settings.webdav.download') }}
+            </Button>
+          </div>
+          <p v-else class="text-xs text-muted-foreground">{{ t('settings.webdav.notConfigured') }}</p>
+        </div>
+
         <!-- 清除数据 -->
         <div class="flex items-center justify-between p-4 border rounded-lg border-destructive/50">
           <div class="space-y-1">
@@ -97,7 +125,7 @@
       </CardHeader>
       <CardContent class="space-y-4">
         <!-- 浏览器通知 -->
-        <div class="flex flex-col gap-4 p-4 border rounded-lg">
+        <div class="flex flex-col gap-4 p-4 border rounded-lg" v-if="!Capacitor.isNativePlatform()">
           <div class="flex items-center justify-between">
             <div class="space-y-1">
               <h3 class="font-medium">{{ t('settings.browserNotifications') }}</h3>
@@ -167,6 +195,14 @@
               <Switch
                 :checked="gameStore.notificationSettings?.types.research"
                 @update:checked="(val: boolean) => updateTypeSetting('research', val)"
+              />
+            </div>
+            <!-- 解锁通知 -->
+            <div class="flex items-center justify-between">
+              <Label class="font-normal cursor-pointer" @click="toggleType('unlock')">{{ t('settings.unlockNotification') }}</Label>
+              <Switch
+                :checked="gameStore.notificationSettings?.types.unlock"
+                @update:checked="(val: boolean) => updateTypeSetting('unlock', val)"
               />
             </div>
           </div>
@@ -296,6 +332,12 @@
 
     <!-- 隐私协议弹窗 -->
     <PrivacyDialog v-model:open="showPrivacyDialog" />
+
+    <!-- WebDAV 配置对话框 -->
+    <WebDAVConfigDialog v-model:open="showWebDAVConfig" />
+
+    <!-- WebDAV 文件列表对话框 -->
+    <WebDAVFileListDialog v-model:open="showWebDAVFiles" :config="webdavConfig" @select="handleWebDAVDownload" />
   </div>
 </template>
 
@@ -329,7 +371,11 @@
     ChevronDown,
     ChevronUp,
     RotateCcw,
-    Shield
+    Shield,
+    Cloud,
+    CloudUpload,
+    CloudDownload,
+    Settings2
   } from 'lucide-vue-next'
   import { saveAs } from 'file-saver'
   import { toast } from 'vue-sonner'
@@ -338,9 +384,12 @@
   import pkg from '../../package.json'
   import { checkLatestVersion, canCheckVersion } from '@/utils/versionCheck'
   import type { VersionInfo } from '@/utils/versionCheck'
-  import UpdateDialog from '@/components/UpdateDialog.vue'
-  import PrivacyDialog from '@/components/PrivacyDialog.vue'
+  import UpdateDialog from '@/components/dialogs/UpdateDialog.vue'
+  import PrivacyDialog from '@/components/dialogs/PrivacyDialog.vue'
+  import WebDAVConfigDialog from '@/components/settings/WebDAVConfigDialog.vue'
+  import WebDAVFileListDialog from '@/components/settings/WebDAVFileListDialog.vue'
   import { useHints } from '@/composables/useHints'
+  import { uploadToWebDAV, downloadFromWebDAV } from '@/services/webdavService'
 
   const { t } = useI18n()
   const { hintsEnabled, setHintsEnabled, resetHints } = useHints()
@@ -358,13 +407,19 @@
 
   const isTypesExpanded = ref(false)
 
+  // WebDAV 相关状态
+  const showWebDAVConfig = ref(false)
+  const showWebDAVFiles = ref(false)
+  const webdavConfig = computed(() => gameStore.webdavConfig)
+  const isWebDAVUploading = ref(false)
+
   // 确保通知设置存在
   if (!gameStore.notificationSettings) {
     gameStore.notificationSettings = {
       browser: false,
       inApp: true,
       suppressInFocus: false,
-      types: { construction: true, research: true }
+      types: { construction: true, research: true, unlock: true }
     }
   }
 
@@ -390,13 +445,13 @@
     }
   }
 
-  const updateTypeSetting = (key: 'construction' | 'research', val: boolean) => {
+  const updateTypeSetting = (key: 'construction' | 'research' | 'unlock', val: boolean) => {
     if (gameStore.notificationSettings) {
       gameStore.notificationSettings.types[key] = val
     }
   }
 
-  const toggleType = (key: 'construction' | 'research') => {
+  const toggleType = (key: 'construction' | 'research' | 'unlock') => {
     if (gameStore.notificationSettings) {
       const current = gameStore.notificationSettings.types[key]
       gameStore.notificationSettings.types[key] = !current
@@ -696,5 +751,94 @@
   // 更新背景设置
   const updateBackgroundSetting = (val: boolean) => {
     gameStore.player.backgroundEnabled = val
+  }
+
+  // WebDAV 上传
+  const handleWebDAVUpload = async () => {
+    if (!webdavConfig.value) return
+
+    isWebDAVUploading.value = true
+    try {
+      // 获取游戏数据
+      const gameData = localStorage.getItem(pkg.name)
+      const universeData = localStorage.getItem(`${pkg.name}-universe`)
+      const npcData = localStorage.getItem(`${pkg.name}-npcs`)
+
+      if (!gameData) {
+        toast.error(t('settings.exportFailed'))
+        return
+      }
+
+      // 合并数据
+      const exportData = {
+        game: gameData,
+        npcs: npcData,
+        universe: universeData || null
+      }
+
+      const jsonString = JSON.stringify(exportData, null, 2)
+      const result = await uploadToWebDAV(webdavConfig.value, jsonString)
+
+      if (result.success) {
+        toast.success(t('settings.webdav.uploadSuccess'))
+      } else {
+        toast.error(t(result.messageKey) || t('settings.webdav.uploadFailed'))
+      }
+    } catch (error) {
+      console.error('WebDAV upload failed:', error)
+      toast.error(t('settings.webdav.uploadFailed'))
+    } finally {
+      isWebDAVUploading.value = false
+    }
+  }
+
+  // WebDAV 下载
+  const handleWebDAVDownload = async (fileName: string) => {
+    if (!webdavConfig.value) return
+
+    try {
+      const result = await downloadFromWebDAV(webdavConfig.value, fileName)
+
+      if (!result.success || !result.data) {
+        toast.error(t(result.messageKey) || t('settings.webdav.downloadFailed'))
+        return
+      }
+
+      // 确认导入
+      confirmTitle.value = t('settings.importConfirmTitle')
+      confirmMessage.value = t('settings.importConfirmMessage')
+      showConfirmDialog.value = true
+      gameStore.isPaused = true
+
+      confirmCallback = () => {
+        try {
+          const importData = JSON.parse(result.data!)
+
+          // 兼容旧版本格式
+          if (typeof importData === 'string' || !importData.game) {
+            localStorage.setItem(pkg.name, result.data!)
+          } else {
+            if (importData.game) {
+              localStorage.setItem(pkg.name, importData.game)
+            }
+            if (importData.universe) {
+              localStorage.setItem(`${pkg.name}-universe`, importData.universe)
+            }
+            if (importData.npcs) {
+              localStorage.setItem(`${pkg.name}-npcs`, importData.npcs)
+            }
+          }
+
+          toast.success(t('settings.importSuccess'))
+          setTimeout(() => window.location.reload(), 1000)
+        } catch (error) {
+          const message = error instanceof Error ? error.message : String(error)
+          toast.error(t('settings.importFailed') + ': ' + message)
+        }
+      }
+    } catch (error) {
+      console.error('WebDAV download failed:', error)
+      toast.error(t('settings.webdav.downloadFailed'))
+    }
   }
 </script>

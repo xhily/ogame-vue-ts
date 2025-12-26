@@ -1,5 +1,6 @@
 import type { Planet, DebrisField, NPC } from '@/types/game'
 import { decryptData, encryptData } from './crypto'
+import { generatePlanetTemperature } from '@/logic/planetLogic'
 import pkg from '../../package.json'
 
 /**
@@ -99,6 +100,65 @@ export const migrateGameData = (): void => {
       needsSave = true
     }
 
+    // 迁移温度数据：为没有温度的星球生成温度
+    // 玩家星球
+    if (oldData.player?.planets && Array.isArray(oldData.player.planets)) {
+      oldData.player.planets.forEach((planet: Planet) => {
+        // 月球不需要温度
+        if (!planet.isMoon && !planet.temperature) {
+          planet.temperature = generatePlanetTemperature(planet.position.position)
+          needsSave = true
+        }
+        // 迁移矿脉数据：确保所有矿脉都有 position 字段
+        if (planet.oreDeposits && !planet.isMoon) {
+          const deposits = planet.oreDeposits as any
+          // 情况1：旧格式有 initialMetal，需要删除并添加 position
+          if (deposits.initialMetal !== undefined) {
+            delete deposits.initialMetal
+            delete deposits.initialCrystal
+            delete deposits.initialDeuterium
+            needsSave = true
+          }
+          // 情况2：没有 position 字段，需要添加
+          if (!deposits.position) {
+            deposits.position = { ...planet.position }
+            needsSave = true
+          }
+        }
+      })
+    }
+
+    // NPC星球
+    if (oldData.npcs && Array.isArray(oldData.npcs)) {
+      oldData.npcs.forEach((npc: NPC) => {
+        if (npc.planets && Array.isArray(npc.planets)) {
+          npc.planets.forEach((planet: Planet) => {
+            // 月球不需要温度
+            if (!planet.isMoon && !planet.temperature) {
+              planet.temperature = generatePlanetTemperature(planet.position.position)
+              needsSave = true
+            }
+            // 迁移矿脉数据：确保所有矿脉都有 position 字段
+            if (planet.oreDeposits && !planet.isMoon) {
+              const deposits = planet.oreDeposits as any
+              // 情况1：旧格式有 initialMetal，需要删除
+              if (deposits.initialMetal !== undefined) {
+                delete deposits.initialMetal
+                delete deposits.initialCrystal
+                delete deposits.initialDeuterium
+                needsSave = true
+              }
+              // 情况2：没有 position 字段，需要添加
+              if (!deposits.position) {
+                deposits.position = { ...planet.position }
+                needsSave = true
+              }
+            }
+          })
+        }
+      })
+    }
+
     // 迁移 player.diplomaticRelations 到 npc.relations
     // 旧版本使用 player.diplomaticRelations[npcId] 存储玩家对NPC的关系
     // 新版本统一使用 npc.relations[playerId] 存储NPC对玩家的关系
@@ -136,7 +196,6 @@ export const migrateGameData = (): void => {
       // 删除旧的 diplomaticRelations 字段
       delete oldData.player.diplomaticRelations
       needsSave = true
-      console.log('[Migration] Migrated player.diplomaticRelations to npc.relations')
     }
 
     // 检查是否需要迁移地图数据
@@ -160,6 +219,10 @@ export const migrateGameData = (): void => {
         Object.entries(oldPlanets).forEach(([key, planet]) => {
           // 只迁移非玩家星球
           if (!playerPlanetIds.has(planet.id)) {
+            // 为没有温度的星球生成温度
+            if (!planet.isMoon && !planet.temperature) {
+              planet.temperature = generatePlanetTemperature(planet.position.position)
+            }
             universeData.planets[key] = planet
           }
         })
@@ -178,10 +241,38 @@ export const migrateGameData = (): void => {
       localStorage.setItem(universeStorageKey, encryptData(universeData))
     }
 
+    // 检查并更新已存在的 universeStore 数据中的星球温度
+    const existingUniverseData = localStorage.getItem(universeStorageKey)
+    if (existingUniverseData) {
+      try {
+        let universeData: { planets: Record<string, Planet>; debrisFields: Record<string, DebrisField> }
+        try {
+          universeData = decryptData(existingUniverseData)
+        } catch {
+          universeData = JSON.parse(existingUniverseData)
+        }
+
+        let universePlanetMigrated = false
+        if (universeData.planets) {
+          Object.values(universeData.planets).forEach((planet: Planet) => {
+            if (!planet.isMoon && !planet.temperature) {
+              planet.temperature = generatePlanetTemperature(planet.position.position)
+              universePlanetMigrated = true
+            }
+          })
+        }
+
+        if (universePlanetMigrated) {
+          localStorage.setItem(universeStorageKey, encryptData(universeData))
+        }
+      } catch (error) {
+        console.error('[Migration] Failed to migrate universe planets temperature:', error)
+      }
+    }
+
     // 如果有任何数据被修改，保存gameStore数据
     if (needsSave) {
       localStorage.setItem(storageKey, encryptData(oldData))
-      console.log('[Migration] Game data migrated successfully')
     }
   } catch (error) {
     console.error('[Migration] Failed to migrate game data:', error)

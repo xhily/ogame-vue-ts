@@ -107,7 +107,7 @@
   } from '@/components/ui/alert-dialog'
   import { Checkbox } from '@/components/ui/checkbox'
   import { Rocket, Languages, Shield } from 'lucide-vue-next'
-  import PrivacyDialog from '@/components/PrivacyDialog.vue'
+  import PrivacyDialog from '@/components/dialogs/PrivacyDialog.vue'
   import pkg from '../../package.json'
 
   const router = useRouter()
