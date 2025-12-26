@@ -538,6 +538,8 @@ export default {
     },
     recycle: 'Reciclar',
     destroy: 'Destrucción Planetaria',
+    harvestDarkMatter: 'Recolectar Materia Oscura',
+    station: 'Estacionar',
     transportResources: 'Transportar Recursos',
     totalCargoCapacity: 'Capacidad de Carga Total',
     used: 'Usado',
@@ -1785,6 +1787,8 @@ export default {
       branchUnlocked: '¡Nueva rama de historia desbloqueada!'
     },
     dialogue: {
+      title: 'Diálogo de historia',
+      description: 'Contenido del diálogo de la campaña',
       skip: 'Saltar',
       continue: 'Continuar',
       finish: 'Finalizar',
@@ -2215,5 +2219,26 @@ export default {
       reputationBonus: 'Bonificación de Reputación',
       reputationBonusDesc: 'Tu aliado {npcName} habla bien de ti ante {targetNpc}'
     }
+  },
+  webdav: {
+    connectionSuccess: 'Conexión WebDAV exitosa',
+    connectionSuccessDirectoryCreated: 'Conexión WebDAV exitosa, directorio de guardado creado',
+    authFailed: 'Autenticación fallida, verifica el nombre de usuario y contraseña',
+    directoryNotExist: 'El directorio no existe y no se puede crear',
+    networkError: 'Error de red, verifica la dirección del servidor y la red',
+    unknownError: 'Error desconocido',
+    uploadSuccess: 'Guardado subido exitosamente',
+    uploadFailed: 'Error al subir',
+    downloadSuccess: 'Guardado descargado exitosamente',
+    downloadFailed: 'Error al descargar',
+    noSaveFiles: 'No hay archivos de guardado en el servidor',
+    fileListSuccess: 'Lista de guardados obtenida exitosamente',
+    fileListFailed: 'Error al obtener la lista de guardados',
+    deleteSuccess: 'Guardado eliminado exitosamente',
+    deleteFailed: 'Error al eliminar',
+    serverError: 'Error del servidor',
+    notConfigured: 'WebDAV no configurado',
+    invalidUrl: 'URL de WebDAV inválida',
+    timeout: 'Tiempo de conexión agotado'
   }
 }

@@ -1,8 +1,6 @@
 <template>
   <!-- 首页：无侧边栏/头部 -->
-  <template v-if="isHomePage">
-    <RouterView />
-  </template>
+  <RouterView v-if="isHomePage" />
 
   <!-- 其他页面：完整布局（含侧边栏） -->
   <SidebarProvider v-else :open="sidebarOpen" @update:open="handleSidebarOpenChange">
@@ -132,13 +130,6 @@
                 <!-- 正在执行的舰队任务数量 -->
                 <SidebarMenuBadge v-if="item.path === '/fleet' && activeFleetMissionsCount > 0" class="bg-primary text-primary-foreground">
                   {{ activeFleetMissionsCount }}
-                </SidebarMenuBadge>
-                <!-- 未读外交报告数量 -->
-                <SidebarMenuBadge
-                  v-if="item.path === '/diplomacy' && unreadDiplomaticReportsCount > 0"
-                  class="bg-destructive text-destructive-foreground"
-                >
-                  {{ unreadDiplomaticReportsCount }}
                 </SidebarMenuBadge>
               </SidebarMenuButton>
             </SidebarMenuItem>
@@ -736,11 +727,6 @@
     const fleetMissions = gameStore.player.fleetMissions.filter(m => m.status === 'outbound' || m.status === 'returning').length
     const flyingMissiles = gameStore.player.missileAttacks?.filter(m => m.status === 'flying').length || 0
     return fleetMissions + flyingMissiles
-  })
-
-  // 未读外交报告数量
-  const unreadDiplomaticReportsCount = computed(() => {
-    return (gameStore.player.diplomaticReports || []).filter(r => !r.read).length
   })
 
   // 月球相关

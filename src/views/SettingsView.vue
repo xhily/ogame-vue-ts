@@ -792,7 +792,7 @@
       if (result.success) {
         toast.success(t('settings.webdav.uploadSuccess'))
       } else {
-        toast.error(result.message || t('settings.webdav.uploadFailed'))
+        toast.error(t(result.messageKey) || t('settings.webdav.uploadFailed'))
       }
     } catch (error) {
       console.error('WebDAV upload failed:', error)
@@ -810,7 +810,7 @@
       const result = await downloadFromWebDAV(webdavConfig.value, fileName)
 
       if (!result.success || !result.data) {
-        toast.error(result.message || t('settings.webdav.downloadFailed'))
+        toast.error(t(result.messageKey) || t('settings.webdav.downloadFailed'))
         return
       }
 

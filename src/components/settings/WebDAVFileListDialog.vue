@@ -121,7 +121,7 @@ const loadFiles = async () => {
     if (result.success && result.files) {
       files.value = result.files
     } else {
-      error.value = result.message || t('settings.webdav.loadFailed')
+      error.value = t(result.messageKey) || t('settings.webdav.loadFailed')
     }
   } catch (e) {
     error.value = e instanceof Error ? e.message : String(e)
@@ -174,7 +174,7 @@ const handleDelete = async (fileName: string) => {
       selectedFile.value = null
     }
   } else {
-    toast.error(result.message || t('settings.webdav.deleteFailed'))
+    toast.error(t(result.messageKey) || t('settings.webdav.deleteFailed'))
   }
 }
 </script>

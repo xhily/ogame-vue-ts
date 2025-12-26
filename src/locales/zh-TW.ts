@@ -542,6 +542,8 @@ export default {
     },
     recycle: '回收',
     destroy: '行星毀滅',
+    harvestDarkMatter: '暗物質採集',
+    station: '駐守協防',
     transportResources: '運輸資源',
     totalCargoCapacity: '總載貨量',
     used: '已用',
@@ -1945,6 +1947,27 @@ export default {
       reputationBonusDesc: '你的盟友{npcName}向{targetNpc}說了你的好話'
     }
   },
+  webdav: {
+    connectionSuccess: 'WebDAV 連線成功',
+    connectionSuccessDirectoryCreated: 'WebDAV 連線成功，已建立存檔目錄',
+    authFailed: '認證失敗，請檢查使用者名稱和密碼',
+    directoryNotExist: '目錄不存在且無法建立',
+    networkError: '網路錯誤，請檢查伺服器位址和網路連線',
+    unknownError: '未知錯誤',
+    uploadSuccess: '存檔上傳成功',
+    uploadFailed: '上傳失敗',
+    downloadSuccess: '存檔下載成功',
+    downloadFailed: '下載失敗',
+    noSaveFiles: '伺服器上沒有存檔',
+    fileListSuccess: '取得存檔列表成功',
+    fileListFailed: '取得存檔列表失敗',
+    deleteSuccess: '存檔刪除成功',
+    deleteFailed: '刪除失敗',
+    serverError: '伺服器錯誤',
+    notConfigured: 'WebDAV 未設定',
+    invalidUrl: '無效的 WebDAV URL',
+    timeout: '連線逾時'
+  },
   campaign: {
     name: '戰役',
     description: '探索神秘的銀河系，揭開古代文明的秘密',
@@ -1972,6 +1995,8 @@ export default {
       branchUnlocked: '新的故事分支已解鎖！'
     },
     dialogue: {
+      title: '劇情對話',
+      description: '戰役劇情對話內容',
       skip: '跳過',
       continue: '繼續',
       finish: '完成',

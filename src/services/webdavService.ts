@@ -4,10 +4,10 @@
  */
 
 export interface WebDAVConfig {
-  serverUrl: string // WebDAV 服务器地址，如 https://dav.jianguoyun.com/dav/
+  serverUrl: string // WebDAV 服务器地址
   username: string // 用户名
   password: string // 密码或应用专用密码
-  basePath: string // 存档存放路径，如 /ogame-saves/
+  basePath: string // 存档存放路径
 }
 
 export interface WebDAVFile {
@@ -16,6 +16,49 @@ export interface WebDAVFile {
   size: number
   lastModified: Date
   isDirectory: boolean
+}
+
+// WebDAV 消息 key（用于 i18n）
+export const WebDAVMessageKey = {
+  // 连接相关
+  connectionSuccess: 'webdav.connectionSuccess',
+  connectionSuccessDirectoryCreated: 'webdav.connectionSuccessDirectoryCreated',
+  authFailed: 'webdav.authFailed',
+  directoryNotExist: 'webdav.directoryNotExist',
+  connectionFailedHttp: 'webdav.connectionFailedHttp',
+  networkError: 'webdav.networkError',
+  connectionError: 'webdav.connectionError',
+
+  // 上传相关
+  uploadSuccess: 'webdav.uploadSuccess',
+  noWritePermission: 'webdav.noWritePermission',
+  insufficientStorage: 'webdav.insufficientStorage',
+  uploadFailedHttp: 'webdav.uploadFailedHttp',
+  uploadError: 'webdav.uploadError',
+
+  // 下载相关
+  fileNotExist: 'webdav.fileNotExist',
+  downloadFailedHttp: 'webdav.downloadFailedHttp',
+  downloadError: 'webdav.downloadError',
+
+  // 列表相关
+  listFailedHttp: 'webdav.listFailedHttp',
+  listError: 'webdav.listError',
+
+  // 删除相关
+  deleteFailedHttp: 'webdav.deleteFailedHttp',
+  deleteError: 'webdav.deleteError'
+} as const
+
+export type WebDAVMessageKeyType = (typeof WebDAVMessageKey)[keyof typeof WebDAVMessageKey]
+
+export interface WebDAVResult {
+  success: boolean
+  messageKey: WebDAVMessageKeyType
+  messageParams?: Record<string, string | number>
+  fileName?: string
+  data?: string
+  files?: WebDAVFile[]
 }
 
 const STORAGE_KEY = 'ogame-webdav-config'
@@ -66,7 +109,7 @@ const normalizePath = (serverUrl: string, basePath: string, fileName?: string): 
 }
 
 // 测试 WebDAV 连接
-export const testWebDAVConnection = async (config: WebDAVConfig): Promise<{ success: boolean; message: string }> => {
+export const testWebDAVConnection = async (config: WebDAVConfig): Promise<WebDAVResult> => {
   try {
     const url = normalizePath(config.serverUrl, config.basePath)
 
@@ -80,33 +123,30 @@ export const testWebDAVConnection = async (config: WebDAVConfig): Promise<{ succ
     })
 
     if (response.ok || response.status === 207) {
-      return { success: true, message: 'WebDAV 连接成功' }
+      return { success: true, messageKey: WebDAVMessageKey.connectionSuccess }
     }
 
     if (response.status === 401) {
-      return { success: false, message: '认证失败，请检查用户名和密码' }
+      return { success: false, messageKey: WebDAVMessageKey.authFailed }
     }
 
     if (response.status === 404) {
       // 尝试创建目录
       const createResult = await createDirectory(config, config.basePath)
       if (createResult) {
-        return { success: true, message: 'WebDAV 连接成功，已创建存档目录' }
+        return { success: true, messageKey: WebDAVMessageKey.connectionSuccessDirectoryCreated }
       }
-      return { success: false, message: '目录不存在且无法创建' }
+      return { success: false, messageKey: WebDAVMessageKey.directoryNotExist }
     }
 
-    return { success: false, message: `连接失败: HTTP ${response.status}` }
+    return { success: false, messageKey: WebDAVMessageKey.connectionFailedHttp, messageParams: { status: response.status } }
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error)
+    const errorMessage = error instanceof Error ? error.message : String(error)
     // CORS 错误的处理
-    if (message.includes('Failed to fetch') || message.includes('NetworkError')) {
-      return {
-        success: false,
-        message: '网络错误，可能是 CORS 限制。建议使用支持 CORS 的 WebDAV 服务或通过代理访问。'
-      }
+    if (errorMessage.includes('Failed to fetch') || errorMessage.includes('NetworkError')) {
+      return { success: false, messageKey: WebDAVMessageKey.networkError }
     }
-    return { success: false, message: `连接错误: ${message}` }
+    return { success: false, messageKey: WebDAVMessageKey.connectionError, messageParams: { error: errorMessage } }
   }
 }
 
@@ -130,11 +170,7 @@ const createDirectory = async (config: WebDAVConfig, path: string): Promise<bool
 }
 
 // 上传存档到 WebDAV
-export const uploadToWebDAV = async (
-  config: WebDAVConfig,
-  data: string,
-  fileName?: string
-): Promise<{ success: boolean; message: string; fileName?: string }> => {
+export const uploadToWebDAV = async (config: WebDAVConfig, data: string, fileName?: string): Promise<WebDAVResult> => {
   try {
     // 生成带时间戳的文件名
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)
@@ -151,25 +187,25 @@ export const uploadToWebDAV = async (
     })
 
     if (response.ok || response.status === 201 || response.status === 204) {
-      return { success: true, message: '上传成功', fileName: actualFileName }
+      return { success: true, messageKey: WebDAVMessageKey.uploadSuccess, fileName: actualFileName }
     }
 
     if (response.status === 401) {
-      return { success: false, message: '认证失败' }
+      return { success: false, messageKey: WebDAVMessageKey.authFailed }
     }
 
     if (response.status === 403) {
-      return { success: false, message: '没有写入权限' }
+      return { success: false, messageKey: WebDAVMessageKey.noWritePermission }
     }
 
     if (response.status === 507) {
-      return { success: false, message: '存储空间不足' }
+      return { success: false, messageKey: WebDAVMessageKey.insufficientStorage }
     }
 
-    return { success: false, message: `上传失败: HTTP ${response.status}` }
+    return { success: false, messageKey: WebDAVMessageKey.uploadFailedHttp, messageParams: { status: response.status } }
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error)
-    return { success: false, message: `上传错误: ${message}` }
+    const errorMessage = error instanceof Error ? error.message : String(error)
+    return { success: false, messageKey: WebDAVMessageKey.uploadError, messageParams: { error: errorMessage } }
   }
 }
 
@@ -212,7 +248,7 @@ const parsePropfindResponse = (xml: string, _basePath: string): WebDAVFile[] => 
 }
 
 // 列出 WebDAV 目录中的存档文件
-export const listWebDAVFiles = async (config: WebDAVConfig): Promise<{ success: boolean; files?: WebDAVFile[]; message?: string }> => {
+export const listWebDAVFiles = async (config: WebDAVConfig): Promise<WebDAVResult> => {
   try {
     const url = normalizePath(config.serverUrl, config.basePath)
 
@@ -227,29 +263,26 @@ export const listWebDAVFiles = async (config: WebDAVConfig): Promise<{ success: 
 
     if (!response.ok && response.status !== 207) {
       if (response.status === 401) {
-        return { success: false, message: '认证失败' }
+        return { success: false, messageKey: WebDAVMessageKey.authFailed }
       }
       if (response.status === 404) {
-        return { success: false, message: '目录不存在' }
+        return { success: false, messageKey: WebDAVMessageKey.directoryNotExist }
       }
-      return { success: false, message: `获取文件列表失败: HTTP ${response.status}` }
+      return { success: false, messageKey: WebDAVMessageKey.listFailedHttp, messageParams: { status: response.status } }
     }
 
     const xml = await response.text()
     const files = parsePropfindResponse(xml, config.basePath)
 
-    return { success: true, files }
+    return { success: true, messageKey: WebDAVMessageKey.connectionSuccess, files }
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error)
-    return { success: false, message: `获取文件列表错误: ${message}` }
+    const errorMessage = error instanceof Error ? error.message : String(error)
+    return { success: false, messageKey: WebDAVMessageKey.listError, messageParams: { error: errorMessage } }
   }
 }
 
 // 从 WebDAV 下载存档
-export const downloadFromWebDAV = async (
-  config: WebDAVConfig,
-  fileName: string
-): Promise<{ success: boolean; data?: string; message?: string }> => {
+export const downloadFromWebDAV = async (config: WebDAVConfig, fileName: string): Promise<WebDAVResult> => {
   try {
     const url = normalizePath(config.serverUrl, config.basePath, fileName)
 
@@ -262,27 +295,24 @@ export const downloadFromWebDAV = async (
 
     if (!response.ok) {
       if (response.status === 401) {
-        return { success: false, message: '认证失败' }
+        return { success: false, messageKey: WebDAVMessageKey.authFailed }
       }
       if (response.status === 404) {
-        return { success: false, message: '文件不存在' }
+        return { success: false, messageKey: WebDAVMessageKey.fileNotExist }
       }
-      return { success: false, message: `下载失败: HTTP ${response.status}` }
+      return { success: false, messageKey: WebDAVMessageKey.downloadFailedHttp, messageParams: { status: response.status } }
     }
 
     const data = await response.text()
-    return { success: true, data }
+    return { success: true, messageKey: WebDAVMessageKey.connectionSuccess, data }
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error)
-    return { success: false, message: `下载错误: ${message}` }
+    const errorMessage = error instanceof Error ? error.message : String(error)
+    return { success: false, messageKey: WebDAVMessageKey.downloadError, messageParams: { error: errorMessage } }
   }
 }
 
 // 删除 WebDAV 文件
-export const deleteFromWebDAV = async (
-  config: WebDAVConfig,
-  fileName: string
-): Promise<{ success: boolean; message?: string }> => {
+export const deleteFromWebDAV = async (config: WebDAVConfig, fileName: string): Promise<WebDAVResult> => {
   try {
     const url = normalizePath(config.serverUrl, config.basePath, fileName)
 
@@ -294,20 +324,20 @@ export const deleteFromWebDAV = async (
     })
 
     if (response.ok || response.status === 204) {
-      return { success: true }
+      return { success: true, messageKey: WebDAVMessageKey.connectionSuccess }
     }
 
     if (response.status === 401) {
-      return { success: false, message: '认证失败' }
+      return { success: false, messageKey: WebDAVMessageKey.authFailed }
     }
 
     if (response.status === 404) {
-      return { success: true } // 文件不存在也视为删除成功
+      return { success: true, messageKey: WebDAVMessageKey.connectionSuccess } // 文件不存在也视为删除成功
     }
 
-    return { success: false, message: `删除失败: HTTP ${response.status}` }
+    return { success: false, messageKey: WebDAVMessageKey.deleteFailedHttp, messageParams: { status: response.status } }
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error)
-    return { success: false, message: `删除错误: ${message}` }
+    const errorMessage = error instanceof Error ? error.message : String(error)
+    return { success: false, messageKey: WebDAVMessageKey.deleteError, messageParams: { error: errorMessage } }
   }
 }

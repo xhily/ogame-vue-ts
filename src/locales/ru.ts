@@ -622,7 +622,9 @@ export default {
     jumpGateSuccessMessage: 'Флот мгновенно переброшен к {target}',
     jumpGateFailed: 'Переброска через ворота не удалась',
     jumpGateFailedMessage: 'Проверьте состояние ворот и конфигурацию флота',
-    destroy: 'Уничтожение'
+    destroy: 'Уничтожение',
+    harvestDarkMatter: 'Сбор тёмной материи',
+    station: 'Расположение'
   },
   officersView: {
     title: 'Офицеры',
@@ -1851,6 +1853,27 @@ export default {
       reputationBonusDesc: 'Ваш союзник {npcName} хорошо отзывается о вас {targetNpc}'
     }
   },
+  webdav: {
+    connectionSuccess: 'Подключение WebDAV успешно',
+    connectionSuccessDirectoryCreated: 'Подключение WebDAV успешно, каталог сохранений создан',
+    authFailed: 'Ошибка аутентификации, проверьте имя пользователя и пароль',
+    directoryNotExist: 'Каталог не существует и не может быть создан',
+    networkError: 'Ошибка сети, проверьте адрес сервера и сеть',
+    unknownError: 'Неизвестная ошибка',
+    uploadSuccess: 'Сохранение успешно загружено',
+    uploadFailed: 'Ошибка загрузки',
+    downloadSuccess: 'Сохранение успешно скачано',
+    downloadFailed: 'Ошибка скачивания',
+    noSaveFiles: 'На сервере нет сохранений',
+    fileListSuccess: 'Список сохранений получен',
+    fileListFailed: 'Ошибка получения списка сохранений',
+    deleteSuccess: 'Сохранение успешно удалено',
+    deleteFailed: 'Ошибка удаления',
+    serverError: 'Ошибка сервера',
+    notConfigured: 'WebDAV не настроен',
+    invalidUrl: 'Недействительный URL WebDAV',
+    timeout: 'Превышено время ожидания'
+  },
   campaign: {
     name: 'Кампания',
     description: 'Исследуйте загадочную галактику и раскройте древние тайны',
@@ -1878,6 +1901,8 @@ export default {
       branchUnlocked: 'Новая сюжетная ветка разблокирована!'
     },
     dialogue: {
+      title: 'Сюжетный диалог',
+      description: 'Содержание сюжетного диалога кампании',
       skip: 'Пропустить',
       continue: 'Продолжить',
       finish: 'Завершить',

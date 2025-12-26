@@ -14,11 +14,11 @@
 
   // 使用纯色背景，在 Android WebView 中更可靠
   const colors = {
-    metal: 'bg-slate-500',
-    crystal: 'bg-cyan-500',
-    deuterium: 'bg-green-500',
-    darkMatter: 'bg-purple-700',
-    energy: 'bg-yellow-500'
+    metal: 'bg-gradient-to-br from-slate-400 to-slate-600',
+    crystal: 'bg-gradient-to-br from-cyan-400 to-blue-600',
+    deuterium: 'bg-gradient-to-br from-green-400 to-emerald-600',
+    darkMatter: 'bg-gradient-to-br from-purple-600 to-indigo-900',
+    energy: 'bg-gradient-to-br from-yellow-400 to-orange-500'
   }
 
   const sizes = {

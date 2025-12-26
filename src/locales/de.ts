@@ -549,6 +549,8 @@ export default {
       }
     },
     recycle: 'Recyceln',
+    harvestDarkMatter: 'Dunkle Materie ernten',
+    station: 'Stationieren',
     transportResources: 'Ressourcen transportieren',
     totalCargoCapacity: 'Gesamtladekapazität',
     used: 'Verwendet',
@@ -1823,6 +1825,27 @@ export default {
       reputationBonusDesc: 'Dein Verbündeter {npcName} spricht gut von dir zu {targetNpc}'
     }
   },
+  webdav: {
+    connectionSuccess: 'WebDAV-Verbindung erfolgreich',
+    connectionSuccessDirectoryCreated: 'WebDAV-Verbindung erfolgreich, Speicherverzeichnis erstellt',
+    authFailed: 'Authentifizierung fehlgeschlagen, bitte Benutzername und Passwort überprüfen',
+    directoryNotExist: 'Verzeichnis existiert nicht und konnte nicht erstellt werden',
+    networkError: 'Netzwerkfehler, bitte Serveradresse und Netzwerk überprüfen',
+    unknownError: 'Unbekannter Fehler',
+    uploadSuccess: 'Spielstand erfolgreich hochgeladen',
+    uploadFailed: 'Hochladen fehlgeschlagen',
+    downloadSuccess: 'Spielstand erfolgreich heruntergeladen',
+    downloadFailed: 'Herunterladen fehlgeschlagen',
+    noSaveFiles: 'Keine Spielstände auf dem Server',
+    fileListSuccess: 'Spielstandliste erfolgreich abgerufen',
+    fileListFailed: 'Abrufen der Spielstandliste fehlgeschlagen',
+    deleteSuccess: 'Spielstand erfolgreich gelöscht',
+    deleteFailed: 'Löschen fehlgeschlagen',
+    serverError: 'Serverfehler',
+    notConfigured: 'WebDAV nicht konfiguriert',
+    invalidUrl: 'Ungültige WebDAV-URL',
+    timeout: 'Verbindungszeitüberschreitung'
+  },
   campaign: {
     name: 'Kampagne',
     description: 'Erkunde die mysteriöse Galaxie und entdecke antike Geheimnisse',
@@ -1849,6 +1872,8 @@ export default {
       branchUnlocked: 'Neuer Storyzweig freigeschaltet!'
     },
     dialogue: {
+      title: 'Story-Dialog',
+      description: 'Kampagnen-Story-Dialoginhalt',
       skip: 'Überspringen',
       continue: 'Weiter',
       finish: 'Beenden',

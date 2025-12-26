@@ -532,6 +532,8 @@ export default {
     },
     recycle: '회수',
     destroy: '행성 파괴',
+    harvestDarkMatter: '암흑 물질 수확',
+    station: '주둔',
     transportResources: '자원 수송',
     totalCargoCapacity: '총 적재량',
     used: '사용됨',
@@ -1795,6 +1797,27 @@ export default {
       reputationBonusDesc: '동맹 {npcName}이(가) {targetNpc}에게 당신을 좋게 말하고 있습니다'
     }
   },
+  webdav: {
+    connectionSuccess: 'WebDAV 연결 성공',
+    connectionSuccessDirectoryCreated: 'WebDAV 연결 성공, 저장 디렉토리 생성됨',
+    authFailed: '인증 실패, 사용자 이름과 비밀번호를 확인하세요',
+    directoryNotExist: '디렉토리가 존재하지 않으며 생성할 수 없습니다',
+    networkError: '네트워크 오류, 서버 주소와 네트워크를 확인하세요',
+    unknownError: '알 수 없는 오류',
+    uploadSuccess: '저장 파일 업로드 성공',
+    uploadFailed: '업로드 실패',
+    downloadSuccess: '저장 파일 다운로드 성공',
+    downloadFailed: '다운로드 실패',
+    noSaveFiles: '서버에 저장 파일이 없습니다',
+    fileListSuccess: '저장 파일 목록 가져오기 성공',
+    fileListFailed: '저장 파일 목록 가져오기 실패',
+    deleteSuccess: '저장 파일 삭제 성공',
+    deleteFailed: '삭제 실패',
+    serverError: '서버 오류',
+    notConfigured: 'WebDAV가 구성되지 않았습니다',
+    invalidUrl: '잘못된 WebDAV URL',
+    timeout: '연결 시간 초과'
+  },
   campaign: {
     name: '캠페인',
     description: '신비로운 은하를 탐험하고 고대의 비밀을 밝혀내세요',
@@ -1821,6 +1844,8 @@ export default {
       branchUnlocked: '새로운 스토리 분기가 해금되었습니다!'
     },
     dialogue: {
+      title: '스토리 대화',
+      description: '캠페인 스토리 대화 내용',
       skip: '건너뛰기',
       continue: '계속',
       finish: '완료',

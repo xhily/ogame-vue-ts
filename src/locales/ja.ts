@@ -641,7 +641,9 @@ export default {
     jumpGateSuccessMessage: '艦隊は{target}へ瞬時に転送されました',
     jumpGateFailed: 'ジャンプゲート転送失敗',
     jumpGateFailedMessage: 'ジャンプゲートの状態と艦隊構成を確認してください',
-    destroy: '破壊'
+    destroy: '破壊',
+    harvestDarkMatter: 'ダークマター採取',
+    station: '駐留'
   },
   officersView: {
     title: '士官',
@@ -1854,6 +1856,27 @@ export default {
       reputationBonusDesc: '同盟の{npcName}が{targetNpc}にあなたのことを良く言っています'
     }
   },
+  webdav: {
+    connectionSuccess: 'WebDAV接続成功',
+    connectionSuccessDirectoryCreated: 'WebDAV接続成功、保存ディレクトリを作成しました',
+    authFailed: '認証失敗、ユーザー名とパスワードを確認してください',
+    directoryNotExist: 'ディレクトリが存在せず、作成できませんでした',
+    networkError: 'ネットワークエラー、サーバーアドレスとネットワークを確認してください',
+    unknownError: '不明なエラー',
+    uploadSuccess: 'セーブデータのアップロード成功',
+    uploadFailed: 'アップロード失敗',
+    downloadSuccess: 'セーブデータのダウンロード成功',
+    downloadFailed: 'ダウンロード失敗',
+    noSaveFiles: 'サーバーにセーブデータがありません',
+    fileListSuccess: 'セーブデータリストの取得成功',
+    fileListFailed: 'セーブデータリストの取得失敗',
+    deleteSuccess: 'セーブデータの削除成功',
+    deleteFailed: '削除失敗',
+    serverError: 'サーバーエラー',
+    notConfigured: 'WebDAVが設定されていません',
+    invalidUrl: '無効なWebDAV URL',
+    timeout: '接続タイムアウト'
+  },
   campaign: {
     name: 'キャンペーン',
     description: '神秘的な銀河を探索し、古代の秘密を解き明かす',
@@ -1881,6 +1904,8 @@ export default {
       branchUnlocked: '新しいストーリー分岐が解放されました！'
     },
     dialogue: {
+      title: 'ストーリー対話',
+      description: 'キャンペーンストーリーの対話内容',
       skip: 'スキップ',
       continue: '続ける',
       finish: '完了',

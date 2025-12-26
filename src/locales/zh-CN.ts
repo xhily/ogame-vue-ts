@@ -32,7 +32,8 @@ export default {
     exitConfirmTitle: '退出游戏',
     exitConfirmMessage: '确定要退出游戏吗？游戏进度会自动保存。',
     points: '积分',
-    retry: '重试'
+    retry: '重试',
+    playerName: '玩家名称'
   },
   errors: {
     requirementsNotMet: '不满足前置条件',
@@ -525,6 +526,8 @@ export default {
     },
     recycle: '回收',
     destroy: '行星毁灭',
+    harvestDarkMatter: '暗物质采集',
+    station: '驻守协防',
     transportResources: '运输资源',
     totalCargoCapacity: '总载货量',
     used: '已用',
@@ -1796,6 +1799,8 @@ export default {
       branchUnlocked: '新的故事分支已解锁！'
     },
     dialogue: {
+      title: '剧情对话',
+      description: '战役剧情对话内容',
       skip: '跳过',
       continue: '继续',
       finish: '完成',
@@ -2106,5 +2111,31 @@ export default {
         epilogue_1: '银河系广阔无垠，还有无数秘密等待你去发现...'
       }
     }
+  },
+  webdav: {
+    // 连接相关
+    connectionSuccess: 'WebDAV 连接成功',
+    connectionSuccessDirectoryCreated: 'WebDAV 连接成功，已创建存档目录',
+    authFailed: '认证失败，请检查用户名和密码',
+    directoryNotExist: '目录不存在且无法创建',
+    connectionFailedHttp: '连接失败: HTTP {status}',
+    networkError: '网络错误，可能是 CORS 限制。建议使用支持 CORS 的 WebDAV 服务或通过代理访问。',
+    connectionError: '连接错误: {error}',
+    // 上传相关
+    uploadSuccess: '上传成功',
+    noWritePermission: '没有写入权限',
+    insufficientStorage: '存储空间不足',
+    uploadFailedHttp: '上传失败: HTTP {status}',
+    uploadError: '上传错误: {error}',
+    // 下载相关
+    fileNotExist: '文件不存在',
+    downloadFailedHttp: '下载失败: HTTP {status}',
+    downloadError: '下载错误: {error}',
+    // 列表相关
+    listFailedHttp: '获取文件列表失败: HTTP {status}',
+    listError: '获取文件列表错误: {error}',
+    // 删除相关
+    deleteFailedHttp: '删除失败: HTTP {status}',
+    deleteError: '删除错误: {error}'
   }
 }

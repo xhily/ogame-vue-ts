@@ -1,8 +1,13 @@
 package games.wenzi.ogame;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
+import android.animation.ObjectAnimator;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.view.View;
 import android.view.Window;
+import android.view.animation.AccelerateDecelerateInterpolator;
 import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
@@ -21,6 +26,29 @@ public class MainActivity extends BridgeActivity {
 
         // 保持 SplashScreen 直到 WebView 加载完成
         splashScreen.setKeepOnScreenCondition(() -> !isWebViewReady);
+
+        // 设置淡出退出动画
+        splashScreen.setOnExitAnimationListener(splashScreenView -> {
+            // 创建淡出动画
+            ObjectAnimator fadeOut = ObjectAnimator.ofFloat(
+                splashScreenView.getView(),
+                View.ALPHA,
+                1f,
+                0f
+            );
+            fadeOut.setInterpolator(new AccelerateDecelerateInterpolator());
+            fadeOut.setDuration(300);
+
+            // 动画结束后移除 SplashScreen
+            fadeOut.addListener(new AnimatorListenerAdapter() {
+                @Override
+                public void onAnimationEnd(Animator animation) {
+                    splashScreenView.remove();
+                }
+            });
+
+            fadeOut.start();
+        });
 
         super.onCreate(savedInstanceState);
 

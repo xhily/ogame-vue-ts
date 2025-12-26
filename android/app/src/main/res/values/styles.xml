@@ -22,7 +22,12 @@
   <!-- 启动画面主题 - 延长显示直到 WebView 加载完成 -->
   <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
     <item name="windowSplashScreenBackground">@color/splash_background</item>
-    <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
+    <!-- 使用较小的自定义图标避免模糊 -->
+    <item name="windowSplashScreenAnimatedIcon">@drawable/splash_icon</item>
+    <!-- 图标大小限制 -->
+    <item name="windowSplashScreenIconBackgroundColor">@color/splash_background</item>
+    <!-- 退出动画时长 -->
+    <item name="android:windowSplashScreenAnimationDuration">500</item>
     <item name="postSplashScreenTheme">@style/AppTheme.NoActionBar</item>
   </style>
 </resources>

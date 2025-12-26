@@ -1117,13 +1117,17 @@
   // 获取任务类型名称
   const getMissionTypeName = (missionType: string): string => {
     const typeMap: Record<string, string> = {
+      [MissionType.Attack]: t('fleetView.attack'),
       [MissionType.Transport]: t('fleetView.transport'),
       [MissionType.Colonize]: t('fleetView.colonize'),
+      [MissionType.Spy]: t('fleetView.spy'),
       [MissionType.Deploy]: t('fleetView.deploy'),
       [MissionType.Expedition]: t('fleetView.expedition'),
       [MissionType.Recycle]: t('fleetView.recycle'),
       [MissionType.Destroy]: t('fleetView.destroy'),
-      [MissionType.MissileAttack]: t('galaxyView.missileAttack')
+      [MissionType.MissileAttack]: t('galaxyView.missileAttack'),
+      [MissionType.HarvestDarkMatter]: t('fleetView.harvestDarkMatter'),
+      [MissionType.Station]: t('fleetView.station')
     }
     return typeMap[missionType] || missionType
   }

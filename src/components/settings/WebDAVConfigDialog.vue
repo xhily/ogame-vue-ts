@@ -152,7 +152,11 @@ const handleTest = async () => {
   testResult.value = null
 
   try {
-    testResult.value = await testWebDAVConnection(config.value)
+    const result = await testWebDAVConnection(config.value)
+    testResult.value = {
+      success: result.success,
+      message: t(result.messageKey)
+    }
   } finally {
     isTesting.value = false
   }

@@ -532,6 +532,8 @@ export default {
     },
     recycle: 'Recycle',
     destroy: 'Planet Destruction',
+    harvestDarkMatter: 'Harvest Dark Matter',
+    station: 'Station',
     transportResources: 'Transport Resources',
     totalCargoCapacity: 'Total Cargo Capacity',
     used: 'Used',
@@ -1781,6 +1783,8 @@ export default {
       branchUnlocked: 'New story branch unlocked!'
     },
     dialogue: {
+      title: 'Story Dialogue',
+      description: 'Campaign story dialogue content',
       skip: 'Skip',
       continue: 'Continue',
       finish: 'Finish',
@@ -2207,5 +2211,31 @@ export default {
       reputationBonus: 'Reputation Bonus',
       reputationBonusDesc: 'Your ally {npcName} speaks well of you to {targetNpc}'
     }
+  },
+  webdav: {
+    // Connection
+    connectionSuccess: 'WebDAV connection successful',
+    connectionSuccessDirectoryCreated: 'WebDAV connection successful, save directory created',
+    authFailed: 'Authentication failed, please check username and password',
+    directoryNotExist: 'Directory does not exist and cannot be created',
+    connectionFailedHttp: 'Connection failed: HTTP {status}',
+    networkError: 'Network error, possibly CORS restriction. Try using a CORS-enabled WebDAV service or proxy.',
+    connectionError: 'Connection error: {error}',
+    // Upload
+    uploadSuccess: 'Upload successful',
+    noWritePermission: 'No write permission',
+    insufficientStorage: 'Insufficient storage space',
+    uploadFailedHttp: 'Upload failed: HTTP {status}',
+    uploadError: 'Upload error: {error}',
+    // Download
+    fileNotExist: 'File does not exist',
+    downloadFailedHttp: 'Download failed: HTTP {status}',
+    downloadError: 'Download error: {error}',
+    // List
+    listFailedHttp: 'Failed to get file list: HTTP {status}',
+    listError: 'Error getting file list: {error}',
+    // Delete
+    deleteFailedHttp: 'Delete failed: HTTP {status}',
+    deleteError: 'Delete error: {error}'
   }
 }

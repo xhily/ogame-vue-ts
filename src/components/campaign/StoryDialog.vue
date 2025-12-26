@@ -1,6 +1,12 @@
 <template>
   <Dialog :open="true" @update:open="handleClose">
     <DialogContent class="max-w-2xl p-0 overflow-hidden bg-gradient-to-b from-background to-background/95">
+      <!-- 可访问性标题（隐藏） -->
+      <VisuallyHidden>
+        <DialogTitle>{{ t('campaign.dialogue.title') }}</DialogTitle>
+        <DialogDescription>{{ t('campaign.dialogue.description') }}</DialogDescription>
+      </VisuallyHidden>
+
       <!-- 对话框头部 - 星空效果 -->
       <div class="absolute inset-0 pointer-events-none overflow-hidden">
         <div class="stars-bg" />
@@ -80,7 +86,8 @@
 <script setup lang="ts">
   import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
   import { useI18n } from '@/composables/useI18n'
-  import { Dialog, DialogContent } from '@/components/ui/dialog'
+  import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog'
+  import { VisuallyHidden } from 'reka-ui'
   import { Button } from '@/components/ui/button'
   import type { StoryDialogue, DialogueChoice } from '@/types/game'
   import { User, Bot, HelpCircle, MessageCircle, ChevronRight } from 'lucide-vue-next'
