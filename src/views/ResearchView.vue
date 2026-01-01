@@ -50,10 +50,20 @@
                   </span>
                 </div>
               </div>
+              <!-- 研究时间 -->
+              <div class="flex items-center gap-1.5 sm:gap-2">
+                <Clock class="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground" />
+                <span class="font-medium text-xs sm:text-sm text-muted-foreground">{{ formatTime(getResearchTime(techType)) }}</span>
+              </div>
             </div>
 
-            <Button @click="handleResearch(techType)" :disabled="!canResearch(techType)" class="w-full">
+            <Button @click="handleResearch(techType, $event)" :disabled="!canResearch(techType)" class="w-full">
               {{ getResearchButtonText(techType) }}
+            </Button>
+
+            <!-- 添加到等待队列按钮 -->
+            <Button v-if="canAddToWaitingQueue(techType)" @click="handleAddToWaiting(techType, $event)" variant="outline" class="w-full">
+              {{ t('queue.addToWaiting') }}
             </Button>
           </div>
         </CardContent>
@@ -71,8 +81,8 @@
           <AlertDialogDescription v-else>
             <div class="space-y-2">
               <div v-for="(req, index) in alertDialogRequirements" :key="index" class="flex items-center gap-2 text-sm">
-                <Check v-if="req.met" :size="16" class="text-green-500 flex-shrink-0" />
-                <X v-else :size="16" class="text-red-500 flex-shrink-0" />
+                <Check v-if="req.met" :size="16" class="text-green-500 shrink-0" />
+                <X v-else :size="16" class="text-red-500 shrink-0" />
                 <span>{{ req.name }}: Lv {{ req.requiredLevel }} ({{ t('common.current') }}: Lv {{ req.currentLevel }})</span>
               </div>
             </div>
@@ -97,7 +107,7 @@
   import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
   import { Button } from '@/components/ui/button'
   import { Badge } from '@/components/ui/badge'
-  import ResourceIcon from '@/components/ResourceIcon.vue'
+  import ResourceIcon from '@/components/common/ResourceIcon.vue'
   import {
     AlertDialog,
     AlertDialogAction,
@@ -107,14 +117,17 @@
     AlertDialogHeader,
     AlertDialogTitle
   } from '@/components/ui/alert-dialog'
-  import UnlockRequirement from '@/components/UnlockRequirement.vue'
-  import CardUnlockOverlay from '@/components/CardUnlockOverlay.vue'
-  import { Check, X } from 'lucide-vue-next'
-  import { formatNumber, getResourceCostColor } from '@/utils/format'
+  import UnlockRequirement from '@/components/common/UnlockRequirement.vue'
+  import CardUnlockOverlay from '@/components/common/CardUnlockOverlay.vue'
+  import { Check, X, Clock } from 'lucide-vue-next'
+  import { formatNumber, formatTime, getResourceCostColor } from '@/utils/format'
   import * as publicLogic from '@/logic/publicLogic'
   import * as researchLogic from '@/logic/researchLogic'
   import * as researchValidation from '@/logic/researchValidation'
   import * as gameLogic from '@/logic/gameLogic'
+  import * as officerLogic from '@/logic/officerLogic'
+  import * as waitingQueueLogic from '@/logic/waitingQueueLogic'
+  import { triggerQueueAnimation } from '@/composables/useQueueAnimation'
 
   const gameStore = useGameStore()
   const detailDialog = useDetailDialogStore()
@@ -129,6 +142,10 @@
   const alertDialogMessage = ref('')
   const alertDialogRequirements = ref<Array<{ name: string; requiredLevel: number; currentLevel: number; met: boolean }>>([])
   const alertDialogShowRequirements = ref(false)
+
+  // 防抖状态：防止快速点击
+  const isProcessing = ref(false)
+  const DEBOUNCE_DELAY = 300 // 防抖延迟（毫秒）
 
   // 资源类型配置（用于成本显示）
   const costResourceTypes = [
@@ -238,7 +255,14 @@
   }
 
   // 研究科技
-  const handleResearch = (techType: TechnologyType) => {
+  const handleResearch = (techType: TechnologyType, event: MouseEvent) => {
+    // 防抖：防止快速点击
+    if (isProcessing.value) return
+    isProcessing.value = true
+    setTimeout(() => {
+      isProcessing.value = false
+    }, DEBOUNCE_DELAY)
+
     // 检查前置条件
     if (!checkUpgradeRequirements(techType)) {
       alertDialogTitle.value = t('common.requirementsNotMet')
@@ -255,6 +279,9 @@
       alertDialogMessage.value = t('researchView.researchFailedMessage')
       alertDialogShowRequirements.value = false
       alertDialogOpen.value = true
+    } else {
+      // 触发抛物线动画
+      triggerQueueAnimation(event, 'technology')
     }
   }
 
@@ -300,5 +327,89 @@
 
   const getTechnologyCost = (techType: TechnologyType, targetLevel: number): Resources => {
     return researchLogic.calculateTechnologyCost(techType, targetLevel)
+  }
+
+  // 获取研究时间（秒）
+  const getResearchTime = (techType: TechnologyType): number => {
+    if (!planet.value) return 0
+    const currentLevel = getTechLevel(techType)
+    const researchLabLevel = planet.value.buildings['researchLab'] || 0
+    const energyTechLevel = player.value.technologies['energyTechnology'] || 0
+    const bonuses = officerLogic.calculateActiveBonuses(player.value.officers, gameStore.gameTime)
+
+    return researchLogic.calculateTechnologyTime(techType, currentLevel, bonuses.researchSpeedBonus, researchLabLevel, energyTechLevel)
+  }
+
+  // 检查是否可以添加到等待队列
+  const canAddToWaitingQueue = (techType: TechnologyType): boolean => {
+    if (!planet.value) return false
+
+    const config = TECHNOLOGIES.value[techType]
+    const currentLevel = getTechLevel(techType)
+
+    // 计算目标等级：当前等级 + 正式队列中的升级数 + 等待队列中的升级数 + 1
+    const upgradesInResearchQueue = player.value.researchQueue.filter(q => q.type === 'technology' && q.itemType === techType).length
+    const waitingQueue = player.value.waitingResearchQueue || []
+    const upgradesInWaitingQueue = waitingQueue.filter(q => q.type === 'technology' && q.itemType === techType).length
+    const targetLevel = currentLevel + upgradesInResearchQueue + upgradesInWaitingQueue + 1
+
+    // 检查是否达到等级上限（使用计算后的目标等级）
+    if (config.maxLevel !== undefined && targetLevel > config.maxLevel) {
+      return false
+    }
+
+    // 检查目标等级的前置条件是否满足
+    // 如果该科技已经在队列中（正式或等待），说明基本条件已满足，跳过检查
+    const alreadyInQueue = upgradesInResearchQueue > 0 || upgradesInWaitingQueue > 0
+    if (!alreadyInQueue) {
+      // 第一次添加时，检查当前等级+1的前置条件
+      if (!checkUpgradeRequirements(techType)) {
+        return false
+      }
+    } else {
+      // 后续添加时，检查目标等级的前置条件
+      const requirements = publicLogic.getLevelRequirements(config, targetLevel)
+      if (requirements && Object.keys(requirements).length > 0) {
+        if (!publicLogic.checkRequirements(planet.value, gameStore.player.technologies, requirements)) {
+          return false
+        }
+      }
+    }
+
+    // 科技可以多次排队（比如能源技术升级到2、3、4、5级）
+    // 只需要检查等待队列是否已满
+    const maxWaitingQueue = waitingQueueLogic.getMaxResearchWaitingQueue(player.value.technologies)
+    if (waitingQueue.length >= maxWaitingQueue) {
+      return false
+    }
+
+    return true
+  }
+
+  // 添加到等待队列
+  const handleAddToWaiting = (techType: TechnologyType, event: MouseEvent) => {
+    const currentLevel = getTechLevel(techType)
+
+    // 计算目标等级：当前等级 + 正式队列中的升级数 + 等待队列中的升级数 + 1
+    const upgradesInResearchQueue = player.value.researchQueue.filter(q => q.type === 'technology' && q.itemType === techType).length
+    const waitingQueue = player.value.waitingResearchQueue || []
+    const upgradesInWaitingQueue = waitingQueue.filter(q => q.type === 'technology' && q.itemType === techType).length
+    const targetLevel = currentLevel + upgradesInResearchQueue + upgradesInWaitingQueue + 1
+
+    const item = waitingQueueLogic.createResearchWaitingItem(techType, targetLevel)
+
+    const result = waitingQueueLogic.canAddToResearchWaitingQueue(player.value, item)
+    if (!result.canAdd) {
+      alertDialogTitle.value = t('queue.waitingQueueFull')
+      alertDialogMessage.value = result.reason ? t(result.reason) : ''
+      alertDialogShowRequirements.value = false
+      alertDialogOpen.value = true
+      return
+    }
+
+    // 触发抛物线动画
+    triggerQueueAnimation(event, 'technology')
+
+    waitingQueueLogic.addToResearchWaitingQueue(player.value, item)
   }
 </script>

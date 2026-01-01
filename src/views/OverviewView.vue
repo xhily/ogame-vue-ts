@@ -9,6 +9,10 @@
       <p class="text-xs sm:text-sm text-muted-foreground">
         {{ t('planet.position') }}: [{{ planet.position.galaxy }}:{{ planet.position.system }}:{{ planet.position.position }}]
       </p>
+      <!-- 温度信息 -->
+      <p v-if="planet.temperature && !planet.isMoon" class="text-xs sm:text-sm text-muted-foreground">
+        {{ t('planet.temperature') }}: {{ planet.temperature.min }}°C {{ t('common.to') }} {{ planet.temperature.max }}°C
+      </p>
       <!-- 月球信息 -->
       <div v-if="!planet.isMoon && moon" class="mt-2">
         <Button @click="switchToMoon" variant="outline" size="sm">
@@ -28,11 +32,10 @@
       <CardContent>
         <Tabs default-value="overview" class="w-full">
           <TabsList class="grid w-full grid-cols-3">
-            <TabsTrigger value="overview">概览</TabsTrigger>
-            <TabsTrigger value="production">产量详情</TabsTrigger>
-            <TabsTrigger value="consumption">消耗详情</TabsTrigger>
+            <TabsTrigger value="overview">{{ t('overview.tabOverview') }}</TabsTrigger>
+            <TabsTrigger value="production">{{ t('overview.tabProduction') }}</TabsTrigger>
+            <TabsTrigger value="consumption">{{ t('overview.tabConsumption') }}</TabsTrigger>
           </TabsList>
-
           <!-- 概览标签页 -->
           <TabsContent value="overview" class="mt-4">
             <Table>
@@ -177,7 +180,7 @@
         <CardDescription>{{ t('overview.currentShips') }}</CardDescription>
       </CardHeader>
       <CardContent>
-        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
+        <div class="grid grid-cols-3 sm:grid-cols-4 gap-3 sm:gap-4">
           <div v-for="(count, shipType) in planet.fleet" :key="shipType">
             <p class="text-xs sm:text-sm text-muted-foreground">{{ SHIPS[shipType].name }}</p>
             <p class="text-lg sm:text-xl font-bold">{{ count }}</p>
@@ -198,7 +201,7 @@
   import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
   import { Button } from '@/components/ui/button'
   import { Badge } from '@/components/ui/badge'
-  import ResourceIcon from '@/components/ResourceIcon.vue'
+  import ResourceIcon from '@/components/common/ResourceIcon.vue'
   import { formatNumber, getResourceColor } from '@/utils/format'
   import { scaleNumber } from '@/utils/speed'
   import type { Planet } from '@/types/game'
@@ -242,7 +245,23 @@
   ]
 
   // 消耗类型配置
-  const consumptionTypes = [{ key: 'metalMine' as const }, { key: 'crystalMine' as const }, { key: 'deuteriumSynthesizer' as const }]
+  const consumptionTypes = [
+    // 资源建筑
+    { key: 'metalMine' as const },
+    { key: 'crystalMine' as const },
+    { key: 'deuteriumSynthesizer' as const },
+    // 设施建筑
+    { key: 'roboticsFactory' as const },
+    { key: 'naniteFactory' as const },
+    { key: 'shipyard' as const },
+    { key: 'researchLab' as const },
+    { key: 'missileSilo' as const },
+    { key: 'terraformer' as const },
+    { key: 'darkMatterCollector' as const },
+    // 月球建筑
+    { key: 'sensorPhalanx' as const },
+    { key: 'jumpGate' as const }
+  ]
 
   // 月球相关
   const moon = computed(() => {

@@ -7,14 +7,11 @@
     leave-from-class="translate-y-0 opacity-100"
     leave-to-class="-translate-y-4 opacity-0"
   >
-    <div
-      v-if="isHintVisible && currentHint"
-      class="fixed top-2 right-2 max-w-[280px] sm:top-4 sm:right-4 sm:max-w-xs z-50 pointer-events-auto"
-    >
+    <div v-if="isHintVisible && currentHint" class="fixed top-16 right-2 max-w-[280px] z-100 pointer-events-auto">
       <div class="bg-card border rounded-lg shadow-lg p-3" role="alert" aria-live="polite">
         <!-- 标题栏 -->
         <div class="flex items-center gap-2 mb-2">
-          <component :is="getIcon(currentHint.icon)" class="h-4 w-4 text-primary flex-shrink-0" />
+          <component :is="getIcon(currentHint.icon)" class="h-4 w-4 text-primary shrink-0" />
           <h4 class="font-medium text-sm">{{ t(currentHint.titleKey) }}</h4>
         </div>
 

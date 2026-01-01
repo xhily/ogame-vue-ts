@@ -5,11 +5,11 @@
       <div class="hidden sm:flex items-center gap-3">
         <!-- 状态指示器 -->
         <div
-          class="w-2 h-2 rounded-full flex-shrink-0"
+          class="w-2 h-2 rounded-full shrink-0"
           :class="{
-            'bg-green-500': status === RelationStatus.Friendly,
-            'bg-red-500': status === RelationStatus.Hostile,
-            'bg-gray-400': status === RelationStatus.Neutral
+            'bg-green-500 dark:bg-green-400': status === RelationStatus.Friendly,
+            'bg-red-500 dark:bg-red-400': status === RelationStatus.Hostile,
+            'bg-gray-400 dark:bg-gray-500': status === RelationStatus.Neutral
           }"
         />
 
@@ -35,17 +35,17 @@
         </div>
 
         <!-- 好感度 -->
-        <div class="flex items-center gap-2 flex-shrink-0">
+        <div class="flex items-center gap-2 shrink-0">
           <div class="w-16 h-1.5 bg-muted rounded-full overflow-hidden relative">
-            <div v-if="reputation < 0" class="h-full bg-red-500 absolute right-1/2" :style="{ width: `${Math.abs(reputation) / 2}%` }" />
-            <div v-if="reputation > 0" class="h-full bg-green-500 absolute left-1/2" :style="{ width: `${reputation / 2}%` }" />
+            <div v-if="reputation < 0" class="h-full bg-red-500 dark:bg-red-400 absolute right-1/2" :style="{ width: `${Math.abs(reputation) / 2}%` }" />
+            <div v-if="reputation > 0" class="h-full bg-green-500 dark:bg-green-400 absolute left-1/2" :style="{ width: `${reputation / 2}%` }" />
             <div class="absolute left-1/2 top-0 bottom-0 w-px bg-border" />
           </div>
           <span class="text-sm font-medium w-10 text-right" :class="reputationColor">{{ reputation > 0 ? '+' : '' }}{{ reputation }}</span>
         </div>
 
         <!-- 操作按钮 -->
-        <div class="flex items-center gap-1 flex-shrink-0">
+        <div class="flex items-center gap-1 shrink-0">
           <Button variant="ghost" size="icon" class="h-8 w-8" @click.stop="handleGiftResources" :title="t('diplomacy.actions.gift')">
             <Gift class="h-4 w-4" />
           </Button>
@@ -70,11 +70,11 @@
         <!-- 第一行：状态、名称、展开箭头 -->
         <div class="flex items-center gap-2">
           <div
-            class="w-2 h-2 rounded-full flex-shrink-0"
+            class="w-2 h-2 rounded-full shrink-0"
             :class="{
-              'bg-green-500': status === RelationStatus.Friendly,
-              'bg-red-500': status === RelationStatus.Hostile,
-              'bg-gray-400': status === RelationStatus.Neutral
+              'bg-green-500 dark:bg-green-400': status === RelationStatus.Friendly,
+              'bg-red-500 dark:bg-red-400': status === RelationStatus.Hostile,
+              'bg-gray-400 dark:bg-gray-500': status === RelationStatus.Neutral
             }"
           />
           <div class="flex-1 min-w-0 flex items-center gap-1 flex-wrap">
@@ -90,7 +90,7 @@
               Lv.{{ npc.difficultyLevel }}
             </Badge>
           </div>
-          <ChevronDown class="h-4 w-4 text-muted-foreground transition-transform flex-shrink-0" :class="{ 'rotate-180': isExpanded }" />
+          <ChevronDown class="h-4 w-4 text-muted-foreground transition-transform shrink-0" :class="{ 'rotate-180': isExpanded }" />
         </div>
 
         <!-- 第二行：星球数、好感度、操作按钮 -->

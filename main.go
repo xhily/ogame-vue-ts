@@ -28,7 +28,7 @@ func main() {
 	// 获取 docs 子目录的文件系统句柄
 	distFS, err := fs.Sub(content, "docs")
 	if err != nil {
-		fmt.Printf("❌ 错误: 无法访问嵌入的 docs 目录: %v\n", err)
+		fmt.Printf("错误: 无法访问嵌入的 docs 目录: %v\n", err)
 		return
 	}
 
@@ -63,7 +63,7 @@ func main() {
 	addr := fmt.Sprintf("0.0.0.0:%d", *portPtr)
 	listener, err := net.Listen("tcp", addr)
 	if err != nil {
-		fmt.Printf("❌ 错误: 端口 %d 已被占用或监听失败: %v\n", *portPtr, err)
+		fmt.Printf("错误: 端口 %d 已被占用或监听失败: %v\n", *portPtr, err)
 		// 停留 5 秒让用户看到错误信息
 		time.Sleep(5 * time.Second)
 		os.Exit(1)
@@ -75,17 +75,17 @@ func main() {
 
 	// --- 4. 控制台信息展示 ---
 	fmt.Println("=======================================")
-	fmt.Printf("🚀 OGame 服务启动成功！\n")
-	fmt.Printf("📅 启动时间: %s\n", time.Now().Format("2006-01-02 15:04:05"))
-	fmt.Printf("🔗 本地访问: %s\n", localUrl)
-	fmt.Printf("🌐 局域网访问: %s\n", lanUrl)
+	fmt.Printf("OGame Vue Ts 服务启动成功！\n")
+	fmt.Printf("启动时间: %s\n", time.Now().Format("2006-01-02 15:04:05"))
+	fmt.Printf("本地访问: %s\n", localUrl)
+	fmt.Printf("局域网访问: %s\n", lanUrl)
 	if *portPtr != 0 {
-		fmt.Printf("📌 运行模式: 固定端口 (%d)\n", *portPtr)
+		fmt.Printf("运行模式: 固定端口 (%d)\n", *portPtr)
 	} else {
-		fmt.Printf("🎲 运行模式: 自动分配端口\n")
+		fmt.Printf("运行模式: 自动分配端口\n")
 	}
 	fmt.Println("=======================================")
-	fmt.Println("💡 提示: 请勿关闭此控制台窗口，否则服务将停止。")
+	fmt.Println("提示: 请勿关闭此控制台窗口，否则服务将停止。")
 	fmt.Println("--- 实时访问日志 ---")
 
 	// --- 5. 自动打开浏览器并启动服务 ---
@@ -93,7 +93,7 @@ func main() {
 
 	err = http.Serve(listener, nil)
 	if err != nil {
-		fmt.Printf("❌ 服务运行异常: %v\n", err)
+		fmt.Printf("服务运行异常: %v\n", err)
 	}
 }
 

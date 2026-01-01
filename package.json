@@ -8,14 +8,15 @@
     "email": "1962257451@qq.com"
   },
   "private": true,
-  "version": "1.4.0",
-  "buildDate": "2025/12/20 04:05:08",
+  "version": "1.5.6",
+  "buildDate": "2025/12/27 03:58:44",
   "main": "dist-electron/main.js",
   "type": "module",
   "scripts": {
     "dev": "vite --port 25121",
     "build": "vue-tsc -b && vite build && node update-build-date.js",
     "preview": "vite preview",
+    "build:check": "pnpm run build",
     "build:server": "pnpm run build && go build",
     "build:electron": "cross-env ELECTRON_BUILD=1 pnpm run build && electron-builder",
     "build:android": "pnpm run build && npx cap sync android",
@@ -43,7 +44,8 @@
     "tailwindcss": "^4.1.17",
     "vue": "^3.5.24",
     "vue-router": "4",
-    "vue-sonner": "^2.0.9"
+    "vue-sonner": "^2.0.9",
+    "lightningcss": "^1.30.2"
   },
   "devDependencies": {
     "@types/crypto-js": "^4.2.2",
@@ -82,7 +84,7 @@
   "packageManager": "pnpm@10.13.1+sha512.37ebf1a5c7a30d5fabe0c5df44ee8da4c965ca0c5af3dbab28c3a1681b70a256218d05c81c9c0dcf767ef6b8551eb5b960042b9ed4300c59242336377e01cfad",
   "build": {
     "appId": "games.wenzi.ogame",
-    "productName": "OGame",
+    "productName": "OGame-Vue-Ts",
     "directories": {
       "output": "pkg"
     },
@@ -91,6 +93,16 @@
       "icon": "public/favicon.ico",
       "verifyUpdateCodeSignature": false,
       "artifactName": "${productName}-Setup.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "allowElevation": true,
+      "installerIcon": "public/favicon.ico",
+      "uninstallerIcon": "public/favicon.ico",
+      "installerHeaderIcon": "public/favicon.ico",
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
     },
     "mac": {
       "target": [

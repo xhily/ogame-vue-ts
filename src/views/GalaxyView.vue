@@ -86,7 +86,7 @@
                     size="sm"
                   >
                     <div class="flex items-start gap-2 w-full min-w-0">
-                      <Globe class="h-4 w-4 flex-shrink-0 mt-0.5" />
+                      <Globe class="h-4 w-4 shrink-0 mt-0.5" />
                       <div class="flex-1 min-w-0">
                         <div class="flex items-center gap-1.5 mb-0.5">
                           <span class="truncate font-medium text-sm">{{ p.name }}</span>
@@ -134,7 +134,7 @@
                     size="sm"
                   >
                     <div class="flex items-start gap-2 w-full min-w-0">
-                      <Globe class="h-4 w-4 flex-shrink-0 mt-0.5" />
+                      <Globe class="h-4 w-4 shrink-0 mt-0.5" />
                       <div class="flex-1 min-w-0">
                         <div class="truncate font-medium text-sm mb-0.5">{{ p.name }}</div>
                         <div class="text-[11px] text-muted-foreground">
@@ -197,7 +197,7 @@
               <!-- 第一行：位置编号 + 星球信息（名称、坐标、状态、残骸） -->
               <div class="flex items-start gap-2 w-full">
                 <!-- 位置编号 -->
-                <div class="w-8 text-center flex-shrink-0">
+                <div class="w-8 text-center shrink-0">
                   <Badge variant="outline" class="text-xs">{{ slot.position }}</Badge>
                 </div>
                 <!-- 星球信息 -->
@@ -208,15 +208,15 @@
                       <h3 class="font-semibold text-sm truncate">
                         {{ isMyPlanet(slot.planet) ? slot.planet.name : getNpcPlanetDisplayName(slot.planet) }}
                       </h3>
-                      <span class="text-xs text-muted-foreground whitespace-nowrap flex-shrink-0">
+                      <span class="text-xs text-muted-foreground whitespace-nowrap shrink-0">
                         [{{ slot.planet.position.galaxy }}:{{ slot.planet.position.system }}:{{ slot.planet.position.position }}]
                       </span>
-                      <Badge v-if="isMyPlanet(slot.planet)" variant="default" class="text-xs flex-shrink-0">
+                      <Badge v-if="isMyPlanet(slot.planet)" variant="default" class="text-xs shrink-0">
                         {{ t('galaxyView.mine') }}
                       </Badge>
                       <Popover v-else>
                         <PopoverTrigger as-child>
-                          <Badge :variant="getRelationBadgeVariant(slot.planet)" class="text-xs flex-shrink-0 cursor-pointer">
+                          <Badge :variant="getRelationBadgeVariant(slot.planet)" class="text-xs shrink-0 cursor-pointer">
                             {{ getRelationStatusText(slot.planet) }}
                           </Badge>
                         </PopoverTrigger>
@@ -233,7 +233,7 @@
                       <Badge
                         v-if="getNpcDifficultyLevel(slot.planet) !== null"
                         :variant="getDifficultyBadgeVariant(getNpcDifficultyLevel(slot.planet))"
-                        class="text-xs flex-shrink-0"
+                        class="text-xs shrink-0"
                         :class="getDifficultyLevelColor(getNpcDifficultyLevel(slot.planet))"
                       >
                         Lv.{{ getNpcDifficultyLevel(slot.planet) }}
@@ -263,6 +263,54 @@
                                 <span class="text-muted-foreground">{{ t('resources.crystal') }}:</span>
                                 <span class="font-medium">
                                   {{ formatNumber(getDebrisFieldAt(currentGalaxy, currentSystem, slot.position)!.resources.crystal) }}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </PopoverContent>
+                      </Popover>
+                      <!-- 矿脉储量徽章 -->
+                      <Popover v-if="getOreDeposits(slot.planet)">
+                        <PopoverTrigger as-child>
+                          <Badge
+                            variant="outline"
+                            class="text-xs cursor-pointer hover:bg-emerald-50 dark:hover:bg-emerald-950/30 border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-400 gap-1"
+                          >
+                            <Mountain class="h-3 w-3" />
+                          </Badge>
+                        </PopoverTrigger>
+                        <PopoverContent class="w-auto p-3" side="top" align="center">
+                          <div class="space-y-2">
+                            <p class="text-xs font-semibold text-emerald-700 dark:text-emerald-400">{{ t('galaxyView.oreDeposits') }}</p>
+                            <div class="space-y-1 text-xs">
+                              <div class="flex items-center gap-2">
+                                <ResourceIcon type="metal" size="sm" />
+                                <span class="text-muted-foreground">{{ t('resources.metal') }}:</span>
+                                <span
+                                  class="font-medium"
+                                  :class="getDepositStatus(getOreDeposits(slot.planet)!, 'metal') === 'depleted' ? 'text-destructive' : getDepositStatus(getOreDeposits(slot.planet)!, 'metal') === 'warning' ? 'text-yellow-600' : ''"
+                                >
+                                  {{ formatDepositShort(getOreDeposits(slot.planet)!.metal) }}
+                                </span>
+                              </div>
+                              <div class="flex items-center gap-2">
+                                <ResourceIcon type="crystal" size="sm" />
+                                <span class="text-muted-foreground">{{ t('resources.crystal') }}:</span>
+                                <span
+                                  class="font-medium"
+                                  :class="getDepositStatus(getOreDeposits(slot.planet)!, 'crystal') === 'depleted' ? 'text-destructive' : getDepositStatus(getOreDeposits(slot.planet)!, 'crystal') === 'warning' ? 'text-yellow-600' : ''"
+                                >
+                                  {{ formatDepositShort(getOreDeposits(slot.planet)!.crystal) }}
+                                </span>
+                              </div>
+                              <div class="flex items-center gap-2">
+                                <ResourceIcon type="deuterium" size="sm" />
+                                <span class="text-muted-foreground">{{ t('resources.deuterium') }}:</span>
+                                <span
+                                  class="font-medium"
+                                  :class="getDepositStatus(getOreDeposits(slot.planet)!, 'deuterium') === 'depleted' ? 'text-destructive' : getDepositStatus(getOreDeposits(slot.planet)!, 'deuterium') === 'warning' ? 'text-yellow-600' : ''"
+                                >
+                                  {{ formatDepositShort(getOreDeposits(slot.planet)!.deuterium) }}
                                 </span>
                               </div>
                             </div>
@@ -416,7 +464,7 @@
             <!-- PC端布局：位置编号 + 星球信息（水平） -->
             <div class="hidden sm:flex items-center gap-4 flex-1 min-w-0">
               <!-- 位置编号 -->
-              <div class="w-12 text-center flex-shrink-0">
+              <div class="w-12 text-center shrink-0">
                 <Badge variant="outline" class="text-sm">{{ slot.position }}</Badge>
               </div>
 
@@ -488,6 +536,55 @@
                         </div>
                       </PopoverContent>
                     </Popover>
+                    <!-- 矿脉储量徽章 -->
+                    <Popover v-if="getOreDeposits(slot.planet)">
+                      <PopoverTrigger as-child>
+                        <Badge
+                          variant="outline"
+                          class="text-xs cursor-pointer hover:bg-emerald-50 dark:hover:bg-emerald-950/30 border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-400 gap-1"
+                        >
+                          <Mountain class="h-3 w-3" />
+                          <span>{{ t('galaxyView.deposits') }}</span>
+                        </Badge>
+                      </PopoverTrigger>
+                      <PopoverContent class="w-auto p-3" side="top" align="start">
+                        <div class="space-y-2">
+                          <p class="text-xs font-semibold text-emerald-700 dark:text-emerald-400">{{ t('galaxyView.oreDeposits') }}</p>
+                          <div class="space-y-1 text-xs">
+                            <div class="flex items-center gap-2">
+                              <ResourceIcon type="metal" size="sm" />
+                              <span class="text-muted-foreground">{{ t('resources.metal') }}:</span>
+                              <span
+                                class="font-medium"
+                                :class="getDepositStatus(getOreDeposits(slot.planet)!, 'metal') === 'depleted' ? 'text-destructive' : getDepositStatus(getOreDeposits(slot.planet)!, 'metal') === 'warning' ? 'text-yellow-600' : ''"
+                              >
+                                {{ formatDepositShort(getOreDeposits(slot.planet)!.metal) }}
+                              </span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                              <ResourceIcon type="crystal" size="sm" />
+                              <span class="text-muted-foreground">{{ t('resources.crystal') }}:</span>
+                              <span
+                                class="font-medium"
+                                :class="getDepositStatus(getOreDeposits(slot.planet)!, 'crystal') === 'depleted' ? 'text-destructive' : getDepositStatus(getOreDeposits(slot.planet)!, 'crystal') === 'warning' ? 'text-yellow-600' : ''"
+                              >
+                                {{ formatDepositShort(getOreDeposits(slot.planet)!.crystal) }}
+                              </span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                              <ResourceIcon type="deuterium" size="sm" />
+                              <span class="text-muted-foreground">{{ t('resources.deuterium') }}:</span>
+                              <span
+                                class="font-medium"
+                                :class="getDepositStatus(getOreDeposits(slot.planet)!, 'deuterium') === 'depleted' ? 'text-destructive' : getDepositStatus(getOreDeposits(slot.planet)!, 'deuterium') === 'warning' ? 'text-yellow-600' : ''"
+                              >
+                                {{ formatDepositShort(getOreDeposits(slot.planet)!.deuterium) }}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </PopoverContent>
+                    </Popover>
                     <!-- 月球徽章 -->
                     <Badge
                       v-if="slot.moon"
@@ -545,7 +642,7 @@
             </div>
 
             <!-- 操作按钮 (PC端) -->
-            <div class="hidden sm:flex gap-1 sm:gap-2 flex-shrink-0">
+            <div class="hidden sm:flex gap-1 sm:gap-2 shrink-0">
               <TooltipProvider :delay-duration="300">
                 <Tooltip v-if="slot.planet && !isMyPlanet(slot.planet)">
                   <TooltipTrigger as-child>
@@ -641,10 +738,16 @@
 
     <!-- 导弹攻击对话框 -->
     <Dialog :open="missileDialogOpen" @update:open="missileDialogOpen = $event">
-      <DialogContent>
+      <DialogContent class="max-w-md">
         <DialogHeader>
-          <DialogTitle>{{ t('galaxyView.missileAttackTitle') }}</DialogTitle>
-          <DialogDescription v-if="missileTargetPlanet">
+          <DialogTitle class="flex items-center gap-2">
+            <div class="p-2 rounded-lg bg-destructive/10">
+              <Rocket class="h-5 w-5 text-destructive" />
+            </div>
+            {{ t('galaxyView.missileAttackTitle') }}
+          </DialogTitle>
+          <DialogDescription v-if="missileTargetPlanet" class="flex items-center gap-2 pt-1">
+            <MapPin class="h-4 w-4 text-muted-foreground" />
             {{
               t('galaxyView.missileAttackMessage').replace(
                 '{coordinates}',
@@ -654,41 +757,78 @@
           </DialogDescription>
         </DialogHeader>
 
-        <div v-if="gameStore.currentPlanet && missileTargetPlanet" class="space-y-4">
+        <div v-if="gameStore.currentPlanet && missileTargetPlanet" class="space-y-5 py-2">
           <!-- 导弹数量输入 -->
-          <div class="space-y-2">
-            <Label>{{ t('galaxyView.missileCount') }}</Label>
-            <Input
-              v-model.number="missileCount"
-              type="number"
-              min="1"
-              :max="gameStore.currentPlanet.defense['interplanetaryMissile'] || 0"
-            />
-            <p class="text-sm text-muted-foreground">
-              {{ t('galaxyView.availableMissiles') }}: {{ gameStore.currentPlanet.defense['interplanetaryMissile'] || 0 }}
-            </p>
+          <div class="space-y-3">
+            <Label class="text-sm font-medium">{{ t('galaxyView.missileCount') }}</Label>
+            <div class="flex items-center gap-3">
+              <Input
+                v-model.number="missileCount"
+                type="number"
+                min="1"
+                :max="gameStore.currentPlanet.defense['interplanetaryMissile'] || 0"
+                class="flex-1"
+              />
+              <Button variant="outline" size="sm" @click="missileCount = gameStore.currentPlanet?.defense['interplanetaryMissile'] || 0">
+                {{ t('fleetView.all') }}
+              </Button>
+            </div>
+            <div class="flex items-center gap-2 text-sm text-muted-foreground">
+              <Crosshair class="h-4 w-4" />
+              <span>{{ t('galaxyView.availableMissiles') }}:</span>
+              <span class="font-medium text-foreground">{{ gameStore.currentPlanet.defense['interplanetaryMissile'] || 0 }}</span>
+            </div>
           </div>
 
-          <!-- 射程和距离信息 -->
-          <div class="space-y-2 text-sm">
-            <div class="flex justify-between">
-              <span class="text-muted-foreground">{{ t('galaxyView.missileRange') }}:</span>
-              <span>{{ calculateMissileRange() }} {{ t('galaxyView.systems') }}</span>
+          <!-- 任务信息卡片 -->
+          <div class="rounded-lg border bg-muted/30 p-4 space-y-3">
+            <div class="flex items-center justify-between text-sm">
+              <div class="flex items-center gap-2 text-muted-foreground">
+                <Target class="h-4 w-4" />
+                <span>{{ t('galaxyView.missileRange') }}</span>
+              </div>
+              <span class="font-medium">{{ calculateMissileRange() }} {{ t('galaxyView.systems') }}</span>
             </div>
-            <div class="flex justify-between">
-              <span class="text-muted-foreground">{{ t('galaxyView.distance') }}:</span>
-              <span>{{ calculateDistance(missileTargetPlanet) }} {{ t('galaxyView.systems') }}</span>
+            <Separator />
+            <div class="flex items-center justify-between text-sm">
+              <div class="flex items-center gap-2 text-muted-foreground">
+                <Navigation class="h-4 w-4" />
+                <span>{{ t('galaxyView.distance') }}</span>
+              </div>
+              <span class="font-medium">{{ formatDistance(calculateDistance(missileTargetPlanet)) }}</span>
             </div>
-            <div class="flex justify-between">
-              <span class="text-muted-foreground">{{ t('galaxyView.flightTime') }}:</span>
-              <span>{{ formatFlightTime(calculateDistance(missileTargetPlanet)) }}</span>
+            <Separator />
+            <div class="flex items-center justify-between text-sm">
+              <div class="flex items-center gap-2 text-muted-foreground">
+                <Clock class="h-4 w-4" />
+                <span>{{ t('galaxyView.flightTime') }}</span>
+              </div>
+              <span class="font-medium">{{ formatFlightTime(calculateDistance(missileTargetPlanet)) }}</span>
             </div>
+          </div>
+
+          <!-- 超出射程警告 -->
+          <div
+            v-if="calculateDistance(missileTargetPlanet) > calculateMissileRange()"
+            class="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 text-destructive text-sm"
+          >
+            <AlertTriangle class="h-4 w-4 shrink-0" />
+            <span>{{ t('galaxyView.outOfRange') }}</span>
           </div>
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" @click="missileDialogOpen = false">{{ t('galaxyView.cancel') }}</Button>
-          <Button @click="launchMissileAttack">{{ t('galaxyView.launchMissile') }}</Button>
+        <DialogFooter class="gap-3">
+          <Button variant="outline" @click="missileDialogOpen = false">
+            {{ t('galaxyView.cancel') }}
+          </Button>
+          <Button
+            variant="destructive"
+            @click="launchMissileAttack"
+            :disabled="!missileCount || missileCount < 1 || calculateDistance(missileTargetPlanet!) > calculateMissileRange()"
+          >
+            <Rocket class="h-4 w-4 mr-2" />
+            {{ t('galaxyView.launchMissile') }}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -818,6 +958,7 @@
   import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select'
   import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
   import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
+  import { Separator } from '@/components/ui/separator'
   import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
   import {
     AlertDialog,
@@ -829,14 +970,33 @@
     AlertDialogHeader,
     AlertDialogTitle
   } from '@/components/ui/alert-dialog'
-  import ResourceIcon from '@/components/ResourceIcon.vue'
-  import { Home, Eye, Sword, Rocket, Recycle, Gift, Globe, Bomb, Moon, Radar } from 'lucide-vue-next'
+  import ResourceIcon from '@/components/common/ResourceIcon.vue'
+  import {
+    Home,
+    Eye,
+    Sword,
+    Rocket,
+    Recycle,
+    Gift,
+    Globe,
+    Bomb,
+    Moon,
+    Radar,
+    Mountain,
+    MapPin,
+    Crosshair,
+    Target,
+    Navigation,
+    Clock,
+    AlertTriangle
+  } from 'lucide-vue-next'
   import { useRouter, useRoute } from 'vue-router'
   import * as gameLogic from '@/logic/gameLogic'
   import * as moonLogic from '@/logic/moonLogic'
+  import * as oreDepositLogic from '@/logic/oreDepositLogic'
   import { formatNumber, formatTime } from '@/utils/format'
   import { BuildingType, MissionType } from '@/types/game'
-  import type { FleetMission } from '@/types/game'
+  import type { FleetMission, OreDeposits } from '@/types/game'
 
   const gameStore = useGameStore()
   const universeStore = useUniverseStore()
@@ -955,6 +1115,27 @@
   const getDebrisFieldAt = (galaxy: number, system: number, position: number): DebrisField | null => {
     const debrisId = `debris_${galaxy}_${system}_${position}`
     return universeStore.debrisFields[debrisId] || null
+  }
+
+  // 获取星球的矿脉储量信息
+  const getOreDeposits = (planet: Planet | null): OreDeposits | null => {
+    if (!planet || planet.isMoon) return null
+    return planet.oreDeposits || null
+  }
+
+  // 格式化矿脉储量（短格式）
+  const formatDepositShort = (value: number): string => {
+    if (value >= 1_000_000_000) return `${(value / 1_000_000_000).toFixed(1)}B`
+    if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`
+    if (value >= 1_000) return `${(value / 1_000).toFixed(0)}K`
+    return String(Math.floor(value))
+  }
+
+  // 获取矿脉储量百分比对应的颜色状态
+  const getDepositStatus = (deposits: OreDeposits, resourceType: 'metal' | 'crystal' | 'deuterium'): 'normal' | 'warning' | 'depleted' => {
+    if (oreDepositLogic.isDepositDepleted(deposits, resourceType)) return 'depleted'
+    if (oreDepositLogic.isDepositWarning(deposits, resourceType)) return 'warning'
+    return 'normal'
   }
 
   // 加载星系
@@ -1207,16 +1388,23 @@
   }
 
   // 计算到目标的距离
-  const calculateDistance = (target: Planet) => {
-    if (!gameStore.currentPlanet) return 0
+  const calculateDistance = (target: Planet | null): number => {
+    if (!gameStore.currentPlanet || !target) return 0
     const from = gameStore.currentPlanet.position
     const to = target.position
     if (from.galaxy !== to.galaxy) return Infinity
     return Math.abs(from.system - to.system)
   }
 
+  // 格式化距离显示
+  const formatDistance = (distance: number): string => {
+    if (!isFinite(distance)) return t('galaxyView.outOfRange')
+    return `${distance} ${t('galaxyView.systems')}`
+  }
+
   // 格式化飞行时间
-  const formatFlightTime = (distance: number) => {
+  const formatFlightTime = (distance: number): string => {
+    if (!isFinite(distance)) return t('galaxyView.outOfRange')
     const seconds = 30 + distance * 60
     const minutes = Math.floor(seconds / 60)
     const secs = seconds % 60

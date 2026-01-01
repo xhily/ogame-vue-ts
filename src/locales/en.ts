@@ -11,28 +11,10 @@ export default {
   common: {
     confirm: 'Confirm',
     cancel: 'Cancel',
-    delete: 'Delete',
-    edit: 'Edit',
     save: 'Save',
     close: 'Close',
-    back: 'Back',
-    next: 'Next',
-    previous: 'Previous',
-    submit: 'Submit',
-    reset: 'Reset',
-    search: 'Search',
-    filter: 'Filter',
-    loading: 'Loading...',
-    noData: 'No Data',
-    error: 'Error',
-    success: 'Success',
-    warning: 'Warning',
-    info: 'Info',
     resourceType: 'Resource Type',
     playerName: 'Commander',
-    timeHour: 'h',
-    timeMinute: 'm',
-    timeSecond: 's',
     featureLocked: 'Feature Locked',
     unlockRequired: 'Building Required',
     requiredBuilding: 'Required Building',
@@ -40,14 +22,17 @@ export default {
     goToBuildings: 'Go to Buildings',
     locked: 'Locked',
     viewRequirements: 'View Requirements',
-    requirements: 'Requirements',
     requirementsNotMet: 'Requirements Not Met',
     current: 'Current',
     level: 'Level',
+    to: 'to',
     gmModeActivated: 'GM Mode Activated! Check the navigation menu.',
     view: 'View',
+    viewDetails: 'View Details',
     exitConfirmTitle: 'Exit Game',
-    exitConfirmMessage: 'Are you sure you want to exit? Your progress is saved automatically.'
+    exitConfirmMessage: 'Are you sure you want to exit? Your progress is saved automatically.',
+    points: 'Points',
+    retry: 'Retry'
   },
   errors: {
     requirementsNotMet: 'Requirements not met',
@@ -84,12 +69,13 @@ export default {
     galaxy: 'Galaxy',
     diplomacy: 'Diplomacy',
     achievements: 'Achievements',
+    campaign: 'Campaign',
+    ranking: 'Ranking',
     messages: 'Messages',
     settings: 'Settings',
     gm: 'GM'
   },
   sidebar: {
-    language: 'Language',
     lightMode: 'Light Mode',
     darkMode: 'Dark Mode',
     collapse: 'Collapse',
@@ -109,38 +95,35 @@ export default {
     perHour: 'hour',
     perMinute: 'min',
     hour: 'hour',
-    noEnergy: 'No Energy'
+    noEnergy: 'No Energy',
+    temperatureBonus: 'Temperature Bonus'
   },
   energy: {
     lowWarning: 'Energy deficit! Resource production stopped!',
-    severeWarning: 'Energy deficit! Resource production stopped!',
-    criticalWarning: 'Energy deficit! Resource production stopped!',
-    noProduction: 'Energy deficit! Resource production stopped!',
     deficitDetail: 'Energy deficit: {deficit}, build more power plants',
     buildSolarPlant: 'Build Power Plant'
   },
+  oreDeposit: {
+    lowWarning: 'Ore deposits running low!',
+    depletedWarning: 'Ore deposits depleted!',
+    depletedResources: 'Depleted: {resources}',
+    lowResources: 'Running low: {resources}'
+  },
   planet: {
-    planet: 'Planet',
     moon: 'Moon',
-    colony: 'Colony',
     position: 'Position',
-    coordinates: 'Coordinates',
     switchToMoon: 'View Moon',
     backToPlanet: 'Back to Planet',
     switchPlanet: 'Switch Planet',
     currentPlanet: 'Current Planet',
-    fields: 'Fields',
     temperature: 'Temperature',
     homePlanet: 'Home Planet',
     planetPrefix: 'Planet',
-    moonSuffix: "'s Moon",
     colonyPrefix: 'Colony',
     renamePlanet: 'Rename Planet',
     renamePlanetTitle: 'Rename Planet',
-    newPlanetName: 'New Name',
     planetNamePlaceholder: 'Enter new planet name',
-    rename: 'Rename',
-    renameSuccess: 'Planet renamed to {name}'
+    rename: 'Rename'
   },
   player: {
     points: 'Total Points'
@@ -167,12 +150,15 @@ export default {
     sensorPhalanx: 'Sensor Phalanx',
     jumpGate: 'Jump Gate',
     planetDestroyerFactory: 'Planet Destroyer Factory',
+    geoResearchStation: 'Geological Research Station',
+    deepDrillingFacility: 'Deep Drilling Facility',
     buildTime: 'Build Time',
     production: 'Production',
     consumption: 'Consumption',
+    levelRange: 'Level Range',
     totalCost: 'Total Cost',
     totalPoints: 'Total Points',
-    levelRange: 'Level Range',
+    researchSpeedBonus: 'Research Speed Bonus',
 
     storageCapacity: 'Capacity',
     energyProduction: 'Energy Production',
@@ -180,14 +166,21 @@ export default {
     buildQueueBonus: 'Build Queue',
     spaceBonus: 'Space Bonus',
     buildSpeedBonus: 'Build Speed Bonus',
-    researchSpeedBonus: 'Research Speed Bonus',
 
-    missileCapacity: 'Missile Capacity'
+    missileCapacity: 'Missile Capacity',
+
+    // Ore deposits
+    oreDeposit: 'Ore Deposit',
+    remainingDeposit: 'Remaining',
+    depletionTime: 'Est. Depletion',
+    depositDepleted: 'Depleted',
+    depositWarning: 'Warning: Ore deposits are running low (below 10%)!',
+    depositDepletedMessage: 'Ore deposits have been exhausted. Production has stopped.'
   },
   buildingDescriptions: {
     metalMine: 'Extracts metal resources',
     crystalMine: 'Extracts crystal resources',
-    deuteriumSynthesizer: 'Synthesizes deuterium resources',
+    deuteriumSynthesizer: 'Synthesizes deuterium (higher output in cold temperatures)',
     solarPlant: 'Provides energy',
     fusionReactor: 'Uses deuterium to generate large amounts of energy',
     roboticsFactory: 'Accelerates construction speed',
@@ -205,7 +198,9 @@ export default {
     lunarBase: 'Increases available space on the moon, +30 space per level',
     sensorPhalanx: 'Detects fleet activities in surrounding systems',
     jumpGate: 'Instantly transfers fleets to other moons',
-    planetDestroyerFactory: 'Constructs ultimate weapons capable of destroying planets'
+    planetDestroyerFactory: 'Constructs ultimate weapons capable of destroying planets',
+    geoResearchStation: 'Researches geological structures and increases ore deposit regeneration rate. +50% regeneration per level',
+    deepDrillingFacility: 'Drills deep into the crust to access deeper ore veins. +20% ore deposit capacity per level'
   },
   ships: {
     lightFighter: 'Light Fighter',
@@ -237,7 +232,7 @@ export default {
     colonyShip: 'Used to colonize new planets',
     recycler: 'Collects debris field resources',
     espionageProbe: 'Scouts enemy planets',
-    solarSatellite: 'Provides extra energy, generates 50 energy per satellite',
+    solarSatellite: 'Provides extra energy, output based on planet temperature (higher in hot climates)',
     darkMatterHarvester: 'Special ship for harvesting dark matter',
     deathstar: 'Ultimate weapon capable of destroying entire planets'
   },
@@ -269,9 +264,9 @@ export default {
   },
   research: {
     researchTime: 'Research Time',
+    levelRange: 'Level Range',
     totalCost: 'Total Cost',
     totalPoints: 'Total Points',
-    levelRange: 'Level Range',
 
     attackBonus: 'Attack Bonus',
     shieldBonus: 'Shield Bonus',
@@ -280,8 +275,7 @@ export default {
     researchQueueBonus: 'Research Queue',
     colonySlots: 'Colony Slots',
     forAllPlanets: '(Global)',
-    speedBonus: 'Speed Bonus',
-    researchSpeedBonus: 'Research Speed Bonus'
+    speedBonus: 'Speed Bonus'
   },
   technologies: {
     energyTechnology: 'Energy Technology',
@@ -301,7 +295,8 @@ export default {
     hyperspaceDrive: 'Hyperspace Drive',
     darkMatterTechnology: 'Dark Matter Technology',
     terraformingTechnology: 'Terraforming Technology',
-    planetDestructionTech: 'Planet Destruction Technology'
+    planetDestructionTech: 'Planet Destruction Technology',
+    miningTechnology: 'Mining Technology'
   },
   technologyDescriptions: {
     energyTechnology: 'Improves energy efficiency',
@@ -322,7 +317,8 @@ export default {
     hyperspaceDrive: 'Advanced propulsion technology',
     darkMatterTechnology: 'Research into dark matter properties and applications',
     terraformingTechnology: 'Research planet terraforming technology, adds 30 available space to all planets per level',
-    planetDestructionTech: 'Terrifying technology for destroying entire planets'
+    planetDestructionTech: 'Terrifying technology for destroying entire planets',
+    miningTechnology: 'Improves mining methods and equipment, increases ore deposit capacity on all planets. +15% capacity per level'
   },
   officers: {
     commander: 'Commander',
@@ -367,29 +363,32 @@ export default {
       buildings: 'Buildings',
       research: 'Research',
       ships: 'Ships',
-      defense: 'Defense'
-    }
+      defense: 'Defense',
+      waiting: 'Waiting'
+    },
+    waitingEmpty: 'No waiting tasks',
+    addToWaiting: 'Add to Waiting Queue',
+    remove: 'Remove',
+    resourcesReady: 'Ready',
+    waitingResources: 'Waiting',
+    waitingQueueFull: 'Waiting queue is full',
+    movedToQueue: 'Task moved to queue'
   },
   overview: {
-    title: 'Planet Overview',
     resourceOverview: 'Resources',
     fleetInfo: 'Fleet',
     currentShips: 'Ships on this planet',
-    productionSources: 'Production Sources',
-    productionSourcesDesc: 'Detailed resource production and bonus information',
-    consumptionSources: 'Consumption Sources',
-    consumptionSourcesDesc: 'Energy consumption details for buildings',
     totalProduction: 'Total Production',
     totalConsumption: 'Total Consumption',
-    noConsumption: 'No energy consumption'
+    noConsumption: 'No energy consumption',
+    tabOverview: 'Overview',
+    tabProduction: 'Production Details',
+    tabConsumption: 'Consumption Details'
   },
   buildingsView: {
     title: 'Buildings',
-    usedSpace: 'Used Space',
     spaceUsage: 'Space Usage',
-    level: 'Level',
     upgradeCost: 'Upgrade Cost',
-    buildTime: 'Build Time',
     build: 'Build',
     upgrade: 'Upgrade',
     maxLevelReached: 'Max Level Reached',
@@ -400,8 +399,7 @@ export default {
     demolishRefund: 'Demolish Refund',
     demolishFailed: 'Demolish Failed',
     demolishFailedMessage: 'Unable to demolish this building. Please check if the build queue is full or the building level is 0.',
-    confirmDemolish: 'Confirm Demolish',
-    confirmDemolishMessage: 'Are you sure you want to demolish'
+    confirmDemolish: 'Confirm Demolish'
   },
   researchView: {
     title: 'Research',
@@ -413,9 +411,9 @@ export default {
   },
   shipyard: {
     attack: 'Attack',
-    missileAttack: 'Missile Attack',
     shield: 'Shield',
     armor: 'Armor',
+    missileAttack: 'Missile Attack',
     speed: 'Speed',
     cargoCapacity: 'Cargo Capacity',
     fuelConsumption: 'Fuel Consumption',
@@ -430,7 +428,6 @@ export default {
   shipyardView: {
     title: 'Shipyard',
     fleetStorage: 'Fleet Storage',
-    owned: 'Owned',
     attack: 'Attack',
     missileAttack: 'Missile Attack',
     shield: 'Shield',
@@ -447,9 +444,9 @@ export default {
   },
   defense: {
     attack: 'Attack',
-    missileAttack: 'Missile Attack',
     shield: 'Shield',
     armor: 'Armor',
+    missileAttack: 'Missile Attack',
     buildCost: 'Build Cost',
     buildTime: 'Build Time',
     perUnit: 'Per Unit',
@@ -510,8 +507,33 @@ export default {
     spy: 'Spy',
     deploy: 'Deploy',
     expedition: 'Expedition',
+    expeditionZone: 'Expedition Zone',
+    expeditionZoneDesc: 'Select destination zone. Different zones have different risks and rewards',
+    requiresAstro: 'Requires Astrophysics level {level}',
+    reward: 'Reward',
+    danger: 'Danger',
+    zones: {
+      nearSpace: {
+        name: 'Near Space',
+        desc: 'Safe near-space area, low risk but fewer rewards'
+      },
+      deepSpace: {
+        name: 'Deep Space',
+        desc: 'Far from stars, more resources may be found'
+      },
+      unchartedSpace: {
+        name: 'Uncharted Space',
+        desc: 'Unexplored area, high risk high reward'
+      },
+      dangerousNebula: {
+        name: 'Dangerous Nebula',
+        desc: 'Nebula full of unknown dangers, but contains extremely rich treasures'
+      }
+    },
     recycle: 'Recycle',
     destroy: 'Planet Destruction',
+    harvestDarkMatter: 'Harvest Dark Matter',
+    station: 'Station',
     transportResources: 'Transport Resources',
     totalCargoCapacity: 'Total Cargo Capacity',
     used: 'Used',
@@ -597,14 +619,13 @@ export default {
     benefitsBonus: 'Benefits Bonus',
     resourceProduction: 'Resource Production',
     darkMatterProduction: 'Dark Matter Production',
-    energyProduction: 'Energy Production',
     buildingSpeed: 'Building Speed',
     researchSpeed: 'Research Speed',
     fleetSpeed: 'Fleet Speed',
     fuelConsumption: 'Fuel Consumption',
     defense: 'Defense',
     storageCapacity: 'Storage Capacity',
-    buildQueueBonus: 'Build Queue',
+    buildQueue: 'Build Queue',
     spaceBonus: 'Space Bonus',
     buildSpeedBonus: 'Build Speed Bonus',
     researchSpeedBonus: 'Research Speed Bonus',
@@ -629,14 +650,11 @@ export default {
     selectGalaxy: 'Select Galaxy',
     system: 'System',
     selectSystem: 'Select System',
-    view: 'View',
-    myPlanet: 'My Planet',
     myPlanets: 'View My Systems',
     npcPlanets: 'NPC Planets',
     selectPlanetToView: 'Select planet to view its system',
     totalPositions: '10 planet positions total',
     mine: 'Mine',
-    hostile: 'Hostile',
     emptySlot: 'Empty - Colonizable',
     scout: 'Scout',
     attack: 'Attack',
@@ -645,6 +663,8 @@ export default {
     switch: 'Switch',
     recycle: 'Recycle',
     debrisField: 'Debris Field',
+    oreDeposits: 'Ore Deposits',
+    deposits: 'Deposits',
     scoutPlanetTitle: 'Scout Planet',
     attackPlanetTitle: 'Attack Planet',
     missileAttackTitle: 'Missile Attack',
@@ -660,7 +680,9 @@ export default {
     systems: 'systems',
     distance: 'Distance',
     flightTime: 'Flight Time',
+    outOfRange: 'Out of Range',
     launchMissile: 'Launch',
+    missileLaunched: 'Missile Launched',
     cancel: 'Cancel',
     colonizePlanetMessage:
       'Are you sure you want to colonize position [{coordinates}]?\n\nPlease go to the fleet page to send a colony ship.',
@@ -677,20 +699,18 @@ export default {
     phalanxScanTitle: 'Sensor Phalanx Scan',
     phalanxScanDescription: 'Scanning fleet activity at planet [{coordinates}]',
     phalanxNoMoon: 'Requires a moon with Sensor Phalanx to scan',
-    phalanxOutOfRange: 'Target is out of scan range',
-    phalanxRange: 'Scan Range',
     phalanxCost: 'Scan Cost',
     phalanxNoFleets: 'No fleet activity detected',
     phalanxFleetDetected: '{count} fleet(s) detected',
-    phalanxMission: 'Mission',
     phalanxOrigin: 'Origin',
     phalanxDestination: 'Destination',
     phalanxArrival: 'Arrival',
     phalanxReturn: 'Return',
-    phalanxStatus: 'Status',
     phalanxStatusOutbound: 'Outbound',
     phalanxStatusReturning: 'Returning',
-    phalanxInsufficientDeuterium: 'Insufficient Deuterium'
+    phalanxInsufficientDeuterium: 'Insufficient Deuterium',
+    intercepted: 'Intercepted',
+    defenseLosses: 'Defense Losses'
   },
   messagesView: {
     title: 'Messages',
@@ -714,6 +734,8 @@ export default {
     attackerLosses: 'Attacker Losses',
     defenderLosses: 'Defender Losses',
     noLosses: 'No losses',
+    losses: 'Losses',
+    remainingUnits: 'Remaining Units',
     plunder: 'Plunder',
     debrisField: 'Debris Field',
     resources: 'Resources',
@@ -721,10 +743,29 @@ export default {
     defense: 'Defense',
     buildings: 'Buildings',
     unread: 'Unread',
+    pending: 'Pending',
+    invalidData: 'Invalid Data',
     targetPlanet: 'Target Planet',
     attackerRemaining: 'Attacker Remaining',
     defenderRemaining: 'Defender Remaining',
     allDestroyed: 'All destroyed',
+    moonChance: 'Moon Chance',
+    showRoundDetails: 'Show Round Details',
+    hideRoundDetails: 'Hide Round Details',
+    round: 'Round {round}',
+    attackerRemainingPower: 'Attacker Remaining Power',
+    defenderRemainingPower: 'Defender Remaining Power',
+    playAnimation: 'Play Animation',
+    showDetails: 'Show Details',
+    speed: 'Speed',
+    power: 'Power',
+    battleLogEmpty: 'Battle log is empty',
+    roundStarted: 'Round {round} started',
+    shipDestroyed: '{count} {ship} destroyed',
+    defenseDestroyed: '{count} {defense} destroyed',
+    attackerWins: 'Attacker Wins',
+    defenderWins: 'Defender Wins',
+    roundsPlayed: 'rounds played',
     spied: 'Spied',
     spiedNotification: 'Spied Notification',
     noSpiedNotifications: 'No spied notifications',
@@ -795,7 +836,11 @@ export default {
     clearNPCActivity: 'NPC Activity',
     clearGiftNotifications: 'Gift Notifications',
     clearGiftRejected: 'Rejected Gifts',
-    clearNow: 'Clear Now'
+    clearTradeOffers: 'Trade Offers',
+    clearIntelReports: 'Intel Reports',
+    clearJointAttackInvites: 'Joint Attack Invitations',
+    clearNow: 'Clear Now',
+    clearSuccess: 'Messages cleared'
   },
   missionReports: {
     transportSuccess: 'Transport mission completed successfully',
@@ -872,6 +917,18 @@ export default {
     round: 'Round {round}',
     attackerRemainingPower: 'Attacker remaining power',
     defenderRemainingPower: 'Defender remaining power',
+    // Battle animation
+    playAnimation: 'Play Animation',
+    showDetails: 'Show Details',
+    speed: 'Speed',
+    power: 'Power',
+    battleLogEmpty: 'Battle log is empty',
+    roundStarted: 'Round {round} started',
+    shipDestroyed: '{count} {ship} destroyed',
+    defenseDestroyed: '{count} {defense} destroyed',
+    attackerWins: 'Attacker Wins',
+    defenderWins: 'Defender Wins',
+    roundsPlayed: 'rounds played',
     spied: 'Spied',
     spiedNotification: 'Spied Notification',
     noSpiedNotifications: 'No spied notifications',
@@ -908,7 +965,6 @@ export default {
     resume: 'Resume',
     gamePaused: 'Game paused',
     gameResumed: 'Game resumed',
-    playerName: 'Player Name',
     gameSpeed: 'Resource Production Speed',
     gameSpeedDesc: 'Current resource production speed multiplier',
     speedChanged: 'Resource production speed changed to {speed}x',
@@ -916,17 +972,14 @@ export default {
     reset: 'Reset',
     about: 'About',
     version: 'Version',
-    latestVersion: 'Latest Version',
     checkUpdate: 'Check Update',
     checking: 'Checking...',
     newVersionAvailable: 'New version {version} available',
     upToDate: 'Already up to date',
-    checkUpdateCooldown: 'Please try again later (5 minute cooldown)',
     checkUpdateFailed: 'Failed to check for updates, please check your network connection',
     viewUpdate: 'View Update',
     updateAvailable: 'A new version is available. Click to view release notes.',
     download: 'Download',
-    goToDownload: 'Go to Download',
     buildDate: 'Build Date',
     community: 'Community',
     github: 'GitHub Repository',
@@ -943,6 +996,7 @@ export default {
     inAppNotifications: 'In-App Notifications',
     constructionComplete: 'Construction Complete',
     researchComplete: 'Research Complete',
+    unlockNotification: 'Unlock Notification',
     browserPermission: 'Enable Browser Notifications',
     permissionGranted: 'Permission Granted',
     permissionDenied: 'Permission Denied/Not Granted',
@@ -950,11 +1004,62 @@ export default {
     notificationsDisabled: 'Enable any switch above to configure specific notifications',
     suppressInFocus: 'Suppress browser notifications when page is focused',
     expandTypes: 'Expand Details',
-    collapseTypes: 'Collapse Details'
+    collapseTypes: 'Collapse Details',
+    // NPC name update
+    npcNameUpdateTitle: 'Old NPC Names Detected',
+    npcNameUpdateMessage: 'Found {count} NPCs using old name format. Would you like to update them to new localized names?',
+    npcNameUpdateConfirm: 'Update Names',
+    npcNameUpdateCancel: 'Keep Current',
+    npcNameUpdateSuccess: 'Successfully updated {count} NPC names',
+    npcNameUpdateSkipped: 'NPC name update skipped',
+    // WebDAV
+    webdav: {
+      title: 'Cloud Sync',
+      desc: 'Sync game saves via WebDAV',
+      config: 'Configure',
+      configTitle: 'WebDAV Configuration',
+      configDesc: 'Configure your WebDAV server for cloud sync',
+      notConfigured: 'Please configure WebDAV server first',
+      serverUrl: 'Server URL',
+      serverUrlPlaceholder: 'e.g. https://dav.example.com',
+      serverUrlHint: 'Enter your WebDAV server address',
+      username: 'Username',
+      usernamePlaceholder: 'Enter username',
+      password: 'Password',
+      passwordPlaceholder: 'Enter password',
+      passwordHint: 'Password is stored locally only',
+      basePath: 'Save Path',
+      basePathPlaceholder: 'e.g. /ogame-saves/',
+      testConnection: 'Test Connection',
+      testing: 'Testing...',
+      testSuccess: 'Connection successful',
+      testFailed: 'Connection failed',
+      save: 'Save',
+      clearConfig: 'Clear',
+      configSaved: 'Configuration saved',
+      configCleared: 'Configuration cleared',
+      upload: 'Upload',
+      uploading: 'Uploading...',
+      uploadSuccess: 'Upload successful',
+      uploadFailed: 'Upload failed',
+      download: 'Download',
+      downloadSuccess: 'Download successful',
+      downloadFailed: 'Download failed',
+      selectFile: 'Select Save File',
+      selectFileDesc: 'Choose a save file to restore',
+      noFiles: 'No save files found',
+      loadFailed: 'Failed to load file list',
+      confirmDelete: 'Are you sure you want to delete "{name}"?',
+      deleteSuccess: 'File deleted',
+      deleteFailed: 'Delete failed'
+    }
   },
   notifications: {
     constructionComplete: 'Construction Complete',
-    researchComplete: 'Research Complete'
+    researchComplete: 'Research Complete',
+    newUnlock: 'New Content Unlocked',
+    building: 'Building',
+    technology: 'Technology'
   },
   gmView: {
     title: 'GM Control Panel',
@@ -1070,8 +1175,6 @@ export default {
     noFriendlyNpcs: 'No friendly NPCs',
     noNeutralNpcs: 'No neutral NPCs',
     noHostileNpcs: 'No hostile NPCs',
-    recentEvents: 'Recent Events',
-    recentEventsDescription: 'Recent diplomatic activity log',
     ago: 'ago',
     notifications: 'Diplomatic Notifications',
     markAllRead: 'Mark All Read',
@@ -1095,7 +1198,6 @@ export default {
     },
     note: 'Note',
     notePlaceholder: 'Enter note...',
-    noteEmpty: 'No note',
     lastEvent: 'Last Event',
     reportDetails: 'Diplomatic Report Details',
     eventDescription: 'Event Description',
@@ -1151,6 +1253,22 @@ export default {
       npcEliminatedMessage: "You destroyed all of {npcName}'s planets! This faction has been completely wiped out."
     },
     searchPlaceholder: 'Search NPC name...',
+    // Notification types
+    notificationType: {
+      tradeOffer: 'Trade Offer',
+      intelReport: 'Intel Report',
+      jointAttack: 'Joint Attack Invitation'
+    },
+    // Notification badges
+    notificationBadge: {
+      trade: 'Trade',
+      intel: 'Intel',
+      jointAttack: 'Invite'
+    },
+    // Notification extra info
+    notificationExtra: {
+      pending: 'Pending'
+    },
     viewMode: {
       card: 'Card',
       list: 'List'
@@ -1166,6 +1284,21 @@ export default {
         easy: 'Easy',
         medium: 'Medium',
         hard: 'Hard'
+      },
+      aiType: 'AI Type',
+      aiTypes: {
+        aggressive: 'Aggressive',
+        defensive: 'Defensive',
+        trader: 'Trader',
+        expansionist: 'Expansionist',
+        balanced: 'Balanced'
+      },
+      aiTypeDescriptions: {
+        aggressive: 'Actively scouts and attacks, retaliates fiercely',
+        defensive: 'Rarely attacks first, retaliates strongly when attacked',
+        trader: 'Rarely attacks, prefers trading and gifting',
+        expansionist: 'Focuses on development, attacks less',
+        balanced: 'Dynamically adjusts strategy based on situation'
       },
       reputation: 'Reputation',
       spyProbes: 'Spy Probes',
@@ -1193,6 +1326,21 @@ export default {
         attackCooldown: 'Attack on cooldown ({min}m {sec}s)',
         notSpiedYet: 'Not yet spied, need to spy first'
       }
+    },
+    aiType: 'AI Type',
+    aiTypes: {
+      aggressive: 'Aggressive',
+      defensive: 'Defensive',
+      trader: 'Trader',
+      expansionist: 'Expansionist',
+      balanced: 'Balanced'
+    },
+    aiTypeDescriptions: {
+      aggressive: 'Actively spies and attacks, strong retaliation',
+      defensive: 'Rarely attacks, strong retaliation when attacked',
+      trader: 'Almost never attacks, prefers trading and gifts',
+      expansionist: 'Focuses on development, less aggressive',
+      balanced: 'Dynamically adjusts strategy based on situation'
     }
   },
   pagination: {
@@ -1468,9 +1616,20 @@ export default {
       title: 'Battle Simulator',
       message: 'Simulate battle outcomes before attacking. Enter both fleets and tech levels to predict victory, losses, and loot.'
     },
+    campaign: {
+      title: 'Campaign Mode',
+      message:
+        'Explore the galaxy story campaign! Complete missions to earn resource rewards and unlock new challenges. Each node has unique objectives and enemies.'
+    },
     achievements: {
       title: 'Achievement System',
-      message: 'Complete game objectives to unlock achievements and earn Dark Matter rewards! Achievements have multiple tiers - aim for higher challenges to get better rewards.'
+      message:
+        'Complete game objectives to unlock achievements and earn Dark Matter rewards! Achievements have multiple tiers - aim for higher challenges to get better rewards.'
+    },
+    ranking: {
+      title: 'Ranking',
+      message:
+        'Compare your progress with other players and NPCs. See rankings based on points from buildings, research, fleet and defense. Strive to climb the leaderboard!'
     },
     settings: {
       title: 'Settings',
@@ -1578,5 +1737,505 @@ export default {
       robbed: 'Times debris recycled by NPC',
       lostToNPC: 'Total debris resources lost to NPC'
     }
+  },
+  ranking: {
+    title: 'Ranking',
+    totalPlayers: '{count} Players',
+    yourRanking: 'Your Ranking',
+    categories: {
+      total: 'Total',
+      building: 'Building',
+      research: 'Research',
+      fleet: 'Fleet',
+      defense: 'Defense'
+    },
+    points: 'pts',
+    name: 'Name',
+    planets: 'Planets',
+    details: 'Details',
+    you: 'You',
+    scoreBreakdown: 'Score Breakdown',
+    noData: 'No ranking data'
+  },
+  campaign: {
+    name: 'Campaign',
+    description: 'Explore the mysterious galaxy and uncover ancient secrets',
+    totalProgress: 'Total Progress',
+    questsCompleted: 'Quests Completed',
+    chapter: 'Chapter',
+    branch: 'Branch',
+    startQuest: 'Start Quest',
+    claimRewards: 'Claim Rewards',
+    objectives: 'Objectives',
+    rewards: 'Rewards',
+    completed: 'Completed',
+    inProgress: 'In Progress',
+    available: 'Available',
+    locked: 'Locked',
+    notifications: {
+      questStarted: 'Quest started',
+      questCompleted: 'Quest completed!',
+      rewardsClaimed: 'Rewards claimed',
+      objectiveCompleted: 'Objective completed',
+      chapterUnlocked: 'New chapter unlocked',
+      reputationUp: 'Reputation with {npcName} increased by {value}',
+      reputationDown: 'Reputation with {npcName} decreased by {value}',
+      branchUnlocked: 'New story branch unlocked!'
+    },
+    dialogue: {
+      title: 'Story Dialogue',
+      description: 'Campaign story dialogue content',
+      skip: 'Skip',
+      continue: 'Continue',
+      finish: 'Finish',
+      player: 'Commander',
+      npc: 'NPC',
+      narrator: 'Narrator',
+      mysterious: 'Mysterious Signal',
+      unknownSource: 'Unknown source',
+      choiceEffect: 'Dialogue choice effect'
+    },
+    chapters: {
+      '1': {
+        title: 'Origin',
+        description: 'Build your home and take the first step into space',
+        backgroundStory:
+          'You are a young space commander who has just acquired your first planet. In this vast universe, you will build your home, develop technology, and explore the depths of the galaxy...'
+      },
+      '2': {
+        title: 'Exploration',
+        description: 'Explore the universe and discover ancient ruins',
+        backgroundStory:
+          'As your power grows, mysterious signals from deep space catch your attention. These signals seem to point to an ancient secret, waiting for brave explorers to uncover...'
+      },
+      '3': {
+        title: 'Diplomacy',
+        description: 'Establish connections with other factions',
+        backgroundStory:
+          'You are not alone in the galaxy. Other civilizations are rising. You must decide whether to be their enemy or ally. Diplomatic wisdom will determine how far your empire can go...'
+      },
+      '4': {
+        title: 'Shadow Rising',
+        description: 'Face powerful enemies and defend your territory',
+        backgroundStory:
+          'Danger lurks in the shadows. A powerful hostile force has targeted your territory. War is inevitable. You must prepare to face the coming storm...'
+      },
+      '5': {
+        title: 'Ancient Secrets',
+        description: 'Uncover the deepest secrets of the galaxy',
+        backgroundStory:
+          'All clues point to the most mysterious region of the galaxy. There, the ultimate secrets left by ancient civilizations await. Are you ready to uncover everything?'
+      }
+    },
+    quests: {
+      '1_1': {
+        title: 'Home Building',
+        description: 'Build infrastructure to lay the foundation for your planet'
+      },
+      '1_2': {
+        title: 'Tech Enlightenment',
+        description: 'Research basic technology to begin your tech journey'
+      },
+      '1_3': {
+        title: 'First Ship',
+        description: 'Build your first warship'
+      },
+      '1_4': {
+        title: 'Strange Neighbors',
+        description: 'Scout other factions in nearby systems'
+      },
+      '1_5': {
+        title: 'First Contact',
+        description: 'Establish initial contact with nearby NPC factions'
+      },
+      '2_1': {
+        title: 'Pioneer Colony',
+        description: 'Colonize your first new planet'
+      },
+      '2_2': {
+        title: 'Deep Space Expedition',
+        description: 'Send fleet on expedition missions'
+      },
+      '2_3': {
+        title: 'Mysterious Signal',
+        description: 'Investigate mysterious signals from deep space'
+      },
+      '2_4': {
+        title: 'Ruin Investigation',
+        description: 'Explore discovered ancient ruins'
+      },
+      '2_5': {
+        title: 'Decrypt Archives',
+        description: 'Research data obtained from ruins'
+      },
+      '3_1': {
+        title: 'Peacemaker',
+        description: 'Improve relations with NPCs through diplomacy'
+      },
+      '3_2': {
+        title: 'Trade Relations',
+        description: 'Establish stable relations with friendly factions'
+      },
+      '3_3': {
+        title: 'Common Threat',
+        description: 'Discover potential hostile forces'
+      },
+      '3_4': {
+        title: 'Alliance Negotiations',
+        description: 'Form a formal alliance with friendly NPCs'
+      },
+      '3_5': {
+        title: 'Storm Preparation',
+        description: 'Build defenses to prepare for challenges'
+      },
+      '4_1': {
+        title: 'Outpost Attack',
+        description: 'Repel the first attack from hostile forces'
+      },
+      '4_2': {
+        title: 'Intelligence Gathering',
+        description: 'Scout enemy military deployments'
+      },
+      '4_3': {
+        title: 'Counterattack',
+        description: 'Launch a counterattack against the enemy'
+      },
+      '4_4': {
+        title: 'Resource Contest',
+        description: 'Recycle battlefield debris for resources'
+      },
+      '4_5': {
+        title: 'Eve of Battle',
+        description: 'Build a powerful fleet for the final battle'
+      },
+      '5_1': {
+        title: 'Depths of Ruins',
+        description: 'Explore the deepest parts of the ruins'
+      },
+      '5_2': {
+        title: 'Ancient Technology',
+        description: 'Unlock ancient civilization technology'
+      },
+      '5_3': {
+        title: 'Final Confrontation',
+        description: 'Face the final battle against the mysterious enemy'
+      },
+      '5_4': {
+        title: 'New Era',
+        description: 'Establish new colonies and begin a new age'
+      },
+      '5_5': {
+        title: 'Legacy Continues',
+        description: 'Continue to develop and conquer more systems'
+      }
+    },
+    objectiveTypes: {
+      buildBuilding: 'Build {building} to level {level}',
+      researchTech: 'Research {tech} to level {level}',
+      produceShips: 'Produce {count} {ship}',
+      accumulateResources: 'Accumulate {amount} {resource}',
+      defeatNPC: 'Defeat {npc}',
+      winBattles: 'Win {count} battles',
+      recycleDebris: 'Recycle {amount} debris',
+      reachRelation: 'Reach {level} relation with {npc}',
+      sendGift: 'Send {count} gifts to {npc}',
+      formAlliance: 'Form alliance with {npc}',
+      colonize: 'Colonize {count} planets',
+      expedition: 'Complete {count} expeditions',
+      spyTarget: 'Spy on {target}'
+    },
+    errors: {
+      questNotFound: 'Quest not found',
+      questNotAvailable: 'Quest not available',
+      questNotActive: 'Quest not active',
+      questNotCompleted: 'Quest not completed',
+      rewardsAlreadyClaimed: 'Rewards already claimed',
+      prerequisiteNotMet: 'Prerequisite quest not completed'
+    },
+    speakers: {
+      ancientVoice: 'Ancient Voice',
+      neighborNPC: 'Neighbor Faction',
+      mysteriousSignal: 'Mysterious Signal',
+      enemyCommander: 'Enemy Commander'
+    },
+    objectiveDescriptions: {
+      buildMetalMine: 'Build Metal Mine to level 2',
+      buildCrystalMine: 'Build Crystal Mine to level 2',
+      buildSolarPlant: 'Build Solar Plant to level 2',
+      buildResearchLab: 'Build Research Lab to level 1',
+      researchEnergy: 'Research Energy Technology to level 1',
+      buildShipyard: 'Build Shipyard to level 2',
+      researchCombustion: 'Research Combustion Drive to level 1',
+      buildLightFighters: 'Build 5 Light Fighters',
+      researchEspionage: 'Research Espionage Technology to level 2',
+      buildSpyProbes: 'Build 3 Espionage Probes',
+      spyAnyNPC: 'Spy on any NPC planet',
+      sendGiftToNPC: 'Send a gift to any NPC',
+      researchAstrophysics: 'Research Astrophysics to level 1',
+      researchAstrophysicsHigher: 'Research Astrophysics to level 3',
+      buildColonyShip: 'Build a Colony Ship',
+      colonizeNewPlanet: 'Colonize a new planet',
+      colonizeMultiple: 'Colonize 5 planets',
+      completeExpedition: 'Complete 3 expedition missions',
+      expeditionDeepSpace: 'Complete 2 deep space expeditions',
+      expeditionUncharted: 'Explore 1 uncharted region',
+      expeditionDangerous: 'Complete 3 dangerous nebula expeditions',
+      discoverRuins: 'Discover ancient ruins',
+      researchComputer: 'Research Computer Technology to level 4',
+      researchImpulse: 'Research Impulse Drive to level 3',
+      researchLaser: 'Research Laser Technology to level 5',
+      researchIntergalactic: 'Research Computer Technology to level 10',
+      researchGraviton: 'Research Graviton Technology to level 1',
+      improveRelation: 'Improve relations with an NPC',
+      reachFriendly: 'Reach friendly status with an NPC',
+      reachFriendlyRelation: 'Reach friendly status with any NPC',
+      sendMultipleGifts: 'Send 3 gifts to NPCs',
+      spyHostileNPC: 'Spy on 2 hostile NPCs',
+      formAlliance: 'Form alliance with a friendly NPC',
+      buildDefenses: 'Build defense facilities',
+      buildMissileSilo: 'Build Missile Silo to level 2',
+      buildCruisers: 'Build 10 Cruisers',
+      winDefenseBattle: 'Win a defensive battle',
+      defendAgainstAttack: 'Successfully defend against 1 attack',
+      spyEnemyPlanet: 'Spy on enemy planet',
+      spyEnemyPlanets: 'Spy on 5 enemy planets',
+      winAttackBattles: 'Win 3 attack battles',
+      attackEnemy: 'Attack the enemy',
+      recycleDebris: 'Recycle debris 5 times',
+      buildBattleships: 'Build 20 Battleships',
+      exploreDeepRuins: 'Explore deep ruins',
+      researchHyperspace: 'Research Hyperspace Drive to level 3',
+      defeatBoss: 'Defeat the Ancient Guardian',
+      colonizeSpecial: 'Colonize special location',
+      accumulateWealth: 'Accumulate 1 million total resources',
+      continueDevelopment: 'Continue development'
+    },
+    dialogues: {
+      '1_1': {
+        prologue_1:
+          'Welcome to the galaxy, young commander. This vast universe awaits your exploration. First, let us build up your home planet.',
+        prologue_2: 'I sense a new consciousness awakening... Interesting... Let us see how far you can go...'
+      },
+      '1_2': {
+        prologue_1:
+          'Basic infrastructure is complete. Now it is time to develop technology. Build a Research Lab and begin your tech journey.'
+      },
+      '1_3': {
+        prologue_1: 'With technology support, you can start building your fleet. Build a Shipyard and produce your first warship.'
+      },
+      '1_4': {
+        prologue_1: 'Your fleet is taking shape. Now let us learn about your surroundings. Send out spy probes to scout nearby factions.',
+        prologue_2: 'You are not alone... Other civilizations exist in this galaxy...'
+      },
+      '1_5': {
+        prologue_1: 'You have discovered nearby factions. Diplomacy is an art. Try to establish contact with them.',
+        epilogue_1: 'Thank you for your gift, commander. I hope we can become friends.',
+        epilogue_2: 'Good... Establishing connections is the first step to uncovering deeper secrets...'
+      },
+      '2_1': {
+        prologue_1:
+          'Your power is established. It is time to expand your territory. Research Astrophysics, build a colony ship, and explore new planets.',
+        prologue_2: 'The universe is infinite... More planets mean more possibilities...'
+      },
+      '2_2': {
+        prologue_1: 'Colonization successful! But deeper secrets await in the universe. Send your fleet on expedition missions.',
+        prologue_2: 'Faint signals from afar... Something awaits you there...'
+      },
+      '2_3': {
+        prologue_1:
+          'Your expedition discovered anomalous signals. These signals seem to come from an ancient civilization... Investigate their source.',
+        epilogue_1: 'These symbols... They are ruins of an ancient civilization! Continue investigating to uncover their secrets.'
+      },
+      '2_4': {
+        prologue_1: 'You have found the location of ancient ruins. Send your fleet to explore and see what you can discover.'
+      },
+      '2_5': {
+        prologue_1: 'Data archives were found in the ruins. Study this data, perhaps you can unlock new technology.'
+      },
+      '3_1': {
+        prologue_1: 'While exploring, do not forget about diplomacy. Maintaining good relations with surrounding factions benefits you.'
+      },
+      '3_2': {
+        prologue_1: 'Some factions have shown friendliness. Continue deepening relations, perhaps you can gain more support.'
+      },
+      '3_3': {
+        prologue_1: 'Intelligence indicates hostile forces are watching you from the shadows. Stay vigilant and scout their movements.'
+      },
+      '3_4': {
+        prologue_1: 'Establish a formal alliance with friendly factions to support each other against threats.'
+      },
+      '3_5': {
+        prologue_1: 'Threats are approaching. Build defense facilities and prepare for possible conflict.'
+      },
+      '4_1': {
+        prologue_1: 'The enemy has launched an attack! Defend your planet!',
+        epilogue_1: "You successfully repelled the enemy's first wave. But this is just the beginning..."
+      },
+      '4_2': {
+        prologue_1: 'The enemy has retreated, but they will return. Scout their planets to understand their strength.'
+      },
+      '4_3': {
+        prologue_1: 'It is time to strike back. Attack the enemy planets and weaken their forces.'
+      },
+      '4_4': {
+        prologue_1: 'Much debris remains on the battlefield. Recycle these resources to prepare for the next battle.'
+      },
+      '4_5': {
+        prologue_1: 'The final battle approaches. Build a powerful fleet and prepare for the ultimate challenge.'
+      },
+      '5_1': {
+        prologue_1: 'All clues point to the deepest part of the ruins. The core secrets of the ancient civilization lie there.',
+        prologue_2: 'You have finally arrived... The truth will soon be revealed...'
+      },
+      '5_2': {
+        prologue_1: 'In the depths of the ruins, you discovered lost ancient technology. Research and unlock their power.'
+      },
+      '5_3': {
+        prologue_1: 'A mysterious enemy has appeared. This is the final challenge. Defeat it!',
+        epilogue_1: 'You did it! The ancient guardian has been defeated. The secrets of the galaxy are now open to you.'
+      },
+      '5_4': {
+        prologue_1: 'Peace has finally arrived. In this new era, establish new colonies and expand your empire.'
+      },
+      '5_5': {
+        prologue_1: 'Your legend has just begun. Continue exploring and conquering more star systems!',
+        epilogue_1: 'The galaxy is vast and boundless, with countless secrets waiting for you to discover...'
+      }
+    }
+  },
+  // NPC Enhanced Behavior Notifications
+  npcBehavior: {
+    // Neutral NPC behavior
+    tradeOfferReceived: 'Trade Offer Received',
+    tradeOfferDesc: '{npcName} has sent you a trade offer',
+    attitudeChanged: 'NPC Attitude Changed',
+    becameFriendly: '{npcName} has become friendly towards you',
+    becameHostile: '{npcName} has become hostile towards you',
+    // Friendly NPC behavior
+    intelReceived: 'Intel Received',
+    intelReceivedDesc: '{npcName} has shared enemy intelligence with you',
+    jointAttackInvite: 'Joint Attack Invitation',
+    jointAttackInviteDesc: '{npcName} invites you to attack an enemy together',
+    aidReceived: 'Aid Received',
+    aidReceivedDesc: '{npcName} has sent you {amount} resources',
+    allyDefense: 'Ally Defense',
+    allyDefenseDesc: '{npcName} is sending a fleet to help defend your planet',
+    // Trade related
+    trade: {
+      title: 'Trade Offers',
+      from: 'From',
+      offers: 'Offers',
+      requests: 'Requests',
+      expiresIn: 'Expires In',
+      expired: 'Expired',
+      accept: 'Accept',
+      decline: 'Decline',
+      noOffers: 'No trade offers',
+      acceptSuccess: 'Trade completed!',
+      acceptFailed: 'Insufficient resources to complete trade',
+      declined: 'Trade declined',
+      ratio: 'Exchange Ratio'
+    },
+    // Intel related
+    intel: {
+      title: 'Intel Reports',
+      from: 'Source',
+      target: 'Target NPC',
+      type: 'Intel Type',
+      types: {
+        enemyFleet: 'Fleet Intel',
+        enemyResources: 'Resource Intel',
+        enemyMovement: 'Movement Intel'
+      },
+      fleetInfo: 'Fleet Information',
+      resourceInfo: 'Resource Information',
+      movementInfo: 'Movement Information',
+      noReports: 'No intel reports',
+      markAsRead: 'Mark as Read',
+      content: 'Intel Content',
+      noFleet: 'No fleet detected',
+      noData: 'No data available',
+      targetPosition: 'Target Position',
+      missionType: 'Mission Type'
+    },
+    // Joint attack related
+    jointAttack: {
+      title: 'Joint Attack Invitations',
+      from: 'Initiator',
+      target: 'Target NPC',
+      targetPlanet: 'Target Planet',
+      npcFleet: 'NPC Fleet',
+      lootShare: 'Loot Share',
+      expiresIn: 'Expires In',
+      expired: 'Expired',
+      accept: 'Join Attack',
+      decline: 'Decline',
+      noInvites: 'No joint attack invitations',
+      acceptSuccess: 'Joined joint attack!',
+      declined: 'Invitation declined',
+      targetInfo: 'Attack Target',
+      expectedShare: 'Expected Share',
+      remaining: 'Time Remaining'
+    },
+    // Aid related
+    aid: {
+      title: 'Resource Aid',
+      from: 'Source',
+      resources: 'Aid Resources',
+      noAid: 'No aid records'
+    },
+    // Attitude change related
+    attitudeChange: {
+      title: 'Attitude Changes',
+      npc: 'NPC',
+      previous: 'Previous',
+      current: 'Current',
+      reason: 'Reason',
+      reasons: {
+        attitude_swing: 'Attitude swing',
+        gift: 'Received gift',
+        attack: 'Attacked',
+        naturalSwing: 'Natural shift',
+        giftReceived: 'Received gift',
+        attacked: 'Was attacked',
+        reputationThreshold: 'Reputation threshold'
+      }
+    },
+    // Ally actions related
+    allyAction: {
+      title: 'Ally Actions',
+      defense: 'Defensive Support',
+      defenseDesc: '{npcName} is sending fleet to help defend {targetPlanet}',
+      jointAttackStarted: 'Joint Attack Started',
+      jointAttackStartedDesc: 'Joint attack on {targetNpc} has begun',
+      reputationBonus: 'Reputation Bonus',
+      reputationBonusDesc: 'Your ally {npcName} speaks well of you to {targetNpc}'
+    }
+  },
+  webdav: {
+    // Connection
+    connectionSuccess: 'WebDAV connection successful',
+    connectionSuccessDirectoryCreated: 'WebDAV connection successful, save directory created',
+    authFailed: 'Authentication failed, please check username and password',
+    directoryNotExist: 'Directory does not exist and cannot be created',
+    connectionFailedHttp: 'Connection failed: HTTP {status}',
+    networkError: 'Network error, possibly CORS restriction. Try using a CORS-enabled WebDAV service or proxy.',
+    connectionError: 'Connection error: {error}',
+    // Upload
+    uploadSuccess: 'Upload successful',
+    noWritePermission: 'No write permission',
+    insufficientStorage: 'Insufficient storage space',
+    uploadFailedHttp: 'Upload failed: HTTP {status}',
+    uploadError: 'Upload error: {error}',
+    // Download
+    fileNotExist: 'File does not exist',
+    downloadFailedHttp: 'Download failed: HTTP {status}',
+    downloadError: 'Download error: {error}',
+    // List
+    listFailedHttp: 'Failed to get file list: HTTP {status}',
+    listError: 'Error getting file list: {error}',
+    // Delete
+    deleteFailedHttp: 'Delete failed: HTTP {status}',
+    deleteError: 'Delete error: {error}'
   }
 }

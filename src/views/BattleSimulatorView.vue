@@ -162,8 +162,8 @@
   import { ShipType, DefenseType } from '@/types/game'
   import type { Fleet, BattleResult } from '@/types/game'
   import { workerManager } from '@/workers/workerManager'
-  import ResourceIcon from '@/components/ResourceIcon.vue'
-  import BattleReportDialog from '@/components/BattleReportDialog.vue'
+  import ResourceIcon from '@/components/common/ResourceIcon.vue'
+  import BattleReportDialog from '@/components/dialogs/BattleReportDialog.vue'
   import { Sword, Shield, Zap, RotateCcw } from 'lucide-vue-next'
   import * as planetLogic from '@/logic/planetLogic'
 

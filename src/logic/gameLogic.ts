@@ -7,6 +7,9 @@ import * as pointsLogic from './pointsLogic'
 import * as planetLogic from './planetLogic'
 import * as resourceLogic from './resourceLogic'
 import * as achievementLogic from './achievementLogic'
+import * as unlockLogic from './unlockLogic'
+import * as waitingQueueLogic from './waitingQueueLogic'
+import type { UnlockedItem } from './unlockLogic'
 
 /**
  * 初始化玩家数据
@@ -19,6 +22,7 @@ export const initializePlayer = (playerId: string, playerName: string = 'Command
     technologies: {} as Record<TechnologyType, number>,
     officers: {} as Record<OfficerType, Officer>,
     researchQueue: [],
+    waitingResearchQueue: [], // 研究等待队列
     fleetMissions: [],
     missileAttacks: [],
     battleReports: [],
@@ -102,7 +106,8 @@ export const processGameUpdate = (
   player: Player,
   now: number,
   gameSpeed: number = 1,
-  onNotification?: (type: string, itemType: string, level?: number) => void
+  onNotification?: (type: string, itemType: string, level?: number) => void,
+  onUnlock?: (unlockedItems: UnlockedItem[]) => void
 ): {
   updatedResearchQueue: BuildQueueItem[]
 } => {
@@ -121,6 +126,9 @@ export const processGameUpdate = (
   const onPointsEarned = (points: number, _type: string, _itemType: string, _level?: number, _quantity?: number) => {
     pointsLogic.addPoints(player, points)
   }
+
+  // 保存完成前的状态（用于解锁检查）
+  const previousTechnologies = { ...player.technologies }
 
   // 通知回调 + 成就统计更新
   const onCompleted = (type: string, itemType: string, level?: number, quantity?: number) => {
@@ -166,10 +174,22 @@ export const processGameUpdate = (
     }
   })
 
+  // 收集所有新解锁的内容
+  const allUnlockedItems: UnlockedItem[] = []
+
   // 更新所有星球其他状态
   player.planets.forEach(planet => {
+    // 保存完成前的建筑状态
+    const previousBuildings = { ...planet.buildings }
+
     // 检查建造队列
     buildingLogic.completeBuildQueue(planet, now, onPointsEarned, onCompleted)
+
+    // 检查新解锁（只在主星球上检查，避免重复通知）
+    if (!planet.isMoon && onUnlock) {
+      const unlockedItems = unlockLogic.checkAllNewlyUnlocked(planet, player.technologies, previousBuildings, previousTechnologies)
+      allUnlockedItems.push(...unlockedItems)
+    }
 
     // 更新星球最大空间
     if (planet.isMoon) {
@@ -188,6 +208,41 @@ export const processGameUpdate = (
     onPointsEarned,
     onCompleted
   )
+
+  // 处理等待队列自动执行
+  const waitingResult = waitingQueueLogic.processAllWaitingQueues(player, now)
+  // 如果有等待队列项被执行，可以在这里添加通知（可选）
+  if (waitingResult.executed.length > 0 && onNotification) {
+    waitingResult.executed.forEach(item => {
+      // 通知等待队列项已移至正式队列
+      onNotification('waitingQueueMoved', item.itemType as string, item.targetLevel || item.quantity)
+    })
+  }
+
+  // 如果科技完成，再次检查解锁（使用第一个非月球星球）
+  if (onUnlock && player.technologies !== previousTechnologies) {
+    const mainPlanet = player.planets.find(p => !p.isMoon)
+    if (mainPlanet) {
+      // 这里使用完成后的建筑状态，因为我们只关心科技完成带来的解锁
+      const techUnlockedItems = unlockLogic.checkAllNewlyUnlocked(
+        mainPlanet,
+        player.technologies,
+        mainPlanet.buildings,
+        previousTechnologies
+      )
+      // 去重（避免与建筑完成时的解锁重复）
+      techUnlockedItems.forEach(item => {
+        if (!allUnlockedItems.some(existing => existing.type === item.type && existing.id === item.id)) {
+          allUnlockedItems.push(item)
+        }
+      })
+    }
+  }
+
+  // 触发解锁通知
+  if (onUnlock && allUnlockedItems.length > 0) {
+    onUnlock(allUnlockedItems)
+  }
 
   return {
     updatedResearchQueue

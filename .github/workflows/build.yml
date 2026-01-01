@@ -15,13 +15,13 @@ jobs:
         include:
           - goos: windows
             goarch: amd64
-            executable: ogame-server-win.exe
+            executable: OGame-Vue-Ts-server-win.exe
           - goos: linux
             goarch: amd64
-            executable: ogame-server-linux
+            executable: OGame-Vue-Ts-server-linux
           - goos: linux
             goarch: arm64
-            executable: ogame-server-linux-arm64
+            executable: OGame-Vue-Ts-server-linux-arm64
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v3
@@ -35,6 +35,7 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: '1.23'
+          cache: true
 
       - name: Build Frontend & Server
         run: |
@@ -71,15 +72,22 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
+      # 使用官方 Gradle Action（内置智能缓存）
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-read-only: false
+
       - name: Build Frontend
         run: |
           pnpm install
           pnpm run build
 
+      - name: Install ImageMagick
+        run: sudo apt-get update && sudo apt-get install -y imagemagick
+
       - name: Generate Android Icons
         run: |
-          # 安装 ImageMagick
-          sudo apt-get update && sudo apt-get install -y imagemagick
           # 使用 ImageMagick 生成各尺寸图标
           convert logo.png -resize 48x48 android/app/src/main/res/mipmap-mdpi/ic_launcher.png
           convert logo.png -resize 48x48 android/app/src/main/res/mipmap-mdpi/ic_launcher_round.png
@@ -105,13 +113,13 @@ jobs:
         working-directory: android
         run: |
           chmod +x ./gradlew
-          ./gradlew assembleRelease
+          ./gradlew assembleRelease --build-cache
 
       - name: Upload APK Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: android-apk
-          path: android/app/build/outputs/apk/release/*.APK
+          path: android/app/build/outputs/apk/release/*.apk
 
   # 3. 构建 Electron 客户端
   build-electron:
@@ -138,6 +146,16 @@ jobs:
           node-version: 20
           cache: 'pnpm'
 
+      - name: Cache Electron Builder
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/electron
+            ~/.cache/electron-builder
+          key: electron-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            electron-${{ runner.os }}-
+
       - name: Build Electron
         run: |
           pnpm install
@@ -157,7 +175,7 @@ jobs:
 
   # 4. 发布 Release
   release:
-    needs: [ build-server, build-android, build-electron ]
+    needs: [build-server, build-android, build-electron]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -178,19 +196,18 @@ jobs:
       - name: Flatten and Rename Assets
         run: |
           mkdir -p ./final-release
-          
+
           # 移动 Server 文件并确保名字唯一
-          # 注意：根据你之前的附件，Artifact 名字是 server-windows-amd64
-          cp ./raw-assets/server-windows-amd64/ogame-server-win.exe ./final-release/ogame-server-win.exe || cp ./raw-assets/server-windows-amd64/server-windows-amd64.exe ./final-release/ogame-server-win.exe || true
-          cp ./raw-assets/server-linux-amd64/ogame-server-linux ./final-release/ogame-server-linux || true
-          cp ./raw-assets/server-linux-arm64/ogame-server-linux-arm64 ./final-release/ogame-server-linux-arm64 || true
-          
+          cp ./raw-assets/server-windows-amd64/OGame-Vue-Ts-server-win.exe ./final-release/OGame-Vue-Ts-server-win.exe || cp ./raw-assets/server-windows-amd64/server-windows-amd64.exe ./final-release/OGame-Vue-Ts-server-win.exe || true
+          cp ./raw-assets/server-linux-amd64/OGame-Vue-Ts-server-linux ./final-release/OGame-Vue-Ts-server-linux || true
+          cp ./raw-assets/server-linux-arm64/OGame-Vue-Ts-server-linux-arm64 ./final-release/OGame-Vue-Ts-server-linux-arm64 || true
+
           # 移动 Electron 安装包 (排除 unpacked 目录)
           find ./raw-assets/electron-* -type f \( -name "*.exe" -o -name "*.dmg" -o -name "*.AppImage" -o -name "*.zip" \) -exec cp {} ./final-release/ \;
 
           # 移动 Android APK
-          find ./raw-assets/android-apk -type f -name "*.APK" -exec cp {} ./final-release/ \; || true
-          
+          find ./raw-assets/android-apk -type f -name "*.apk" -exec cp {} ./final-release/ \; || true
+
           # 检查结果
           echo "Final assets to upload:"
           ls -R ./final-release
@@ -200,7 +217,7 @@ jobs:
         run: |
           VERSION=${{ steps.get_version.outputs.VERSION }}
           # 获取 release 中的现有 assets 并删除 APK 文件
-          gh release view "$VERSION" --json assets -q '.assets[].name' 2>/dev/null | grep -i '\.APK$' | while read asset; do
+          gh release view "$VERSION" --json assets -q '.assets[].name' 2>/dev/null | grep -i '\.apk$' | while read asset; do
             echo "Deleting existing asset: $asset"
             gh release delete-asset "$VERSION" "$asset" -y || true
           done

@@ -1,5 +1,15 @@
 apply plugin: 'com.android.application'
 
+// 从 package.json 读取版本号
+def packageJsonFile = file('../../package.json')
+def packageJsonText = packageJsonFile.text
+// 使用正则提取版本号
+def versionMatcher = packageJsonText =~ /"version"\s*:\s*"([^"]+)"/
+def appVersionName = versionMatcher ? versionMatcher[0][1] : "1.0.0"
+// 将版本号转换为 versionCode，例如 "1.5.5" -> 1*10000 + 5*100 + 5 = 10505
+def versionParts = appVersionName.split('\\.')
+def appVersionCode = versionParts[0].toInteger() * 10000 + versionParts[1].toInteger() * 100 + versionParts[2].toInteger()
+
 android {
     namespace = "games.wenzi.ogame"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -7,8 +17,8 @@ android {
         applicationId "games.wenzi.ogame"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 14
-        versionName "1.4.0"
+        versionCode appVersionCode
+        versionName appVersionName
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -56,7 +66,7 @@ android {
             def abi = output.getFilter(com.android.build.OutputFile.ABI)
             if (abi != null) {
                 output.versionCodeOverride = abiVersionCode[abi] * 1000 + defaultConfig.versionCode
-                output.outputFileName = "OGame-${defaultConfig.versionName}-${abi}.APK"
+                output.outputFileName = "OGame-Vue-Ts-${abi}.apk"
             }
         }
     }

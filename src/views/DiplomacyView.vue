@@ -6,7 +6,7 @@
         <p class="text-sm text-muted-foreground mt-1">{{ t('diplomacy.description') }}</p>
       </div>
       <!-- 视图切换和诊断按钮 -->
-      <div class="flex items-center gap-2 flex-shrink-0">
+      <div class="flex items-center gap-2 shrink-0">
         <!-- 视图模式切换 -->
         <div class="flex items-center border rounded-md">
           <Button
@@ -78,6 +78,15 @@
               <div class="flex items-center gap-2">
                 <span class="text-muted-foreground">{{ t('diplomacy.diagnostic.difficulty') }}:</span>
                 <span class="font-medium">{{ t(`diplomacy.diagnostic.difficultyLevels.${diagnostic.difficulty}`) }}</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="text-muted-foreground">{{ t('diplomacy.diagnostic.aiType') }}:</span>
+                <span
+                  class="font-medium"
+                  :title="diagnostic.aiType ? t(`diplomacy.diagnostic.aiTypeDescriptions.${diagnostic.aiType}`) : ''"
+                >
+                  {{ diagnostic.aiType ? t(`diplomacy.diagnostic.aiTypes.${diagnostic.aiType}`) : '-' }}
+                </span>
               </div>
               <div class="flex items-center gap-2">
                 <span class="text-muted-foreground">{{ t('diplomacy.diagnostic.reputation') }}:</span>
@@ -381,12 +390,21 @@
     PaginationPrevious
   } from '@/components/ui/pagination'
   import { Input } from '@/components/ui/input'
-  import NpcRelationCard from '@/components/NpcRelationCard.vue'
-  import NpcRelationRow from '@/components/NpcRelationRow.vue'
+  import NpcRelationCard from '@/components/npc/NpcRelationCard.vue'
+  import NpcRelationRow from '@/components/npc/NpcRelationRow.vue'
   import { RelationStatus } from '@/types/game'
   import type { DiplomaticRelation } from '@/types/game'
   import * as npcBehaviorLogic from '@/logic/npcBehaviorLogic'
-  import { Search, Users, Heart, Minus, Swords, Activity, LayoutGrid, List } from 'lucide-vue-next'
+  import {
+    Search,
+    Users,
+    Heart,
+    Minus,
+    Swords,
+    Activity,
+    LayoutGrid,
+    List
+  } from 'lucide-vue-next'
   import { Empty, EmptyContent, EmptyDescription } from '@/components/ui/empty'
 
   const route = useRoute()

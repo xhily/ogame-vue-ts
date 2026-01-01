@@ -116,6 +116,7 @@ export const tryGenerateMoon = (
       [DefenseType.PlanetaryShield]: 0
     },
     buildQueue: [],
+    waitingBuildQueue: [], // 等待队列
     lastUpdate: Date.now(),
     maxSpace: MOON_CONFIG.baseFields, // OGame规则：月球初始只有1格空间
     maxFleetStorage: FLEET_STORAGE_CONFIG.baseStorage,
