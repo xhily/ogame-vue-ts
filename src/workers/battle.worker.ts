@@ -304,8 +304,24 @@ const simulateBattle = (attacker: BattleSideData, defender: BattleSideData, maxR
   } else if (defenderUnits.length === 0) {
     winner = 'attacker'
   } else {
-    // OGame原版规则：6回合后双方都有剩余单位时判定为平局
-    winner = 'draw'
+    // 达到最大回合数后双方都有剩余单位
+    // 如果是战斗到底模式(maxRounds > 6)，根据剩余战力判定胜负
+    if (maxRounds > 6) {
+      // 计算剩余战力
+      const attackerPower = attackerUnits.reduce((sum, u) => sum + u.count * u.armor, 0)
+      const defenderPower = defenderUnits.reduce((sum, u) => sum + u.count * u.armor, 0)
+      // 战力差距超过20%判定胜负，否则平局
+      if (attackerPower > defenderPower * 1.2) {
+        winner = 'attacker'
+      } else if (defenderPower > attackerPower * 1.2) {
+        winner = 'defender'
+      } else {
+        winner = 'draw'
+      }
+    } else {
+      // OGame原版规则：6回合后双方都有剩余单位时判定为平局
+      winner = 'draw'
+    }
   }
 
   return {

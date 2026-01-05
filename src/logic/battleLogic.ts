@@ -15,7 +15,8 @@ export const simulateBattle = async (
   _attackerOfficers: Record<OfficerType, Officer>,
   _defenderOfficers: Record<OfficerType, Officer>,
   attackerTechnologies: Record<TechnologyType, number>,
-  defenderTechnologies: Record<TechnologyType, number>
+  defenderTechnologies: Record<TechnologyType, number>,
+  battleToFinish: boolean = false // 战斗到底模式
 ): Promise<BattleResult> => {
   // 从科技系统读取实际科技等级
   const attackerWeaponTech = attackerTechnologies['weaponsTechnology'] || 0
@@ -41,7 +42,7 @@ export const simulateBattle = async (
       shieldTech: defenderShieldTech,
       armorTech: defenderArmorTech
     },
-    maxRounds: 6 // 最多6回合
+    maxRounds: battleToFinish ? 100 : 6 // 战斗到底模式最多100回合，经典模式6回合
   })
 
   // 计算掠夺（仅攻击方胜利时）

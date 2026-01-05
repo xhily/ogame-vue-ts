@@ -491,15 +491,32 @@
     return currentPlanet.value.buildings['naniteFactory'] || 0
   })
 
-  // 获取研究所等级（用于研究时间计算）
+  // 获取有效研究所等级（考虑星际研究网络）
   const researchLabLevel = computed(() => {
     if (!currentPlanet.value) return 0
+    const intergalacticResearchNetworkLevel = gameStore.player.technologies[TechnologyType.IntergalacticResearchNetwork] || 0
+
+    // 如果有星际研究网络，计算有效实验室等级
+    if (intergalacticResearchNetworkLevel > 0) {
+      return researchLogic.calculateEffectiveLabLevel(
+        gameStore.player.planets,
+        currentPlanet.value.id,
+        intergalacticResearchNetworkLevel
+      )
+    }
+
     return currentPlanet.value.buildings['researchLab'] || 0
   })
 
   // 获取能量科技等级（用于研究时间计算）
   const energyTechLevel = computed(() => {
     return gameStore.player.technologies['energyTechnology'] || 0
+  })
+
+  // 获取大学等级（用于研究时间计算）
+  const universityLevel = computed(() => {
+    if (!currentPlanet.value) return 0
+    return currentPlanet.value.buildings['university'] || 0
   })
 
   // 翻译键（转换为复数形式）
@@ -931,7 +948,9 @@
         level - 1,
         activeBonuses.value.researchSpeedBonus,
         researchLabLevel.value,
-        energyTechLevel.value
+        energyTechLevel.value,
+        1,
+        universityLevel.value
       )
 
       let researchSpeedBonus = 0

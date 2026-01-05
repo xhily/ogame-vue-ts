@@ -7,7 +7,7 @@
     <ProgressIndicator
       data-slot="progress-indicator"
       class="bg-primary h-full w-full flex-1 transition-all"
-      :style="`transform: translateX(-${100 - (props.modelValue ?? 0)}%);`"
+      :style="`transform: translate3d(-${100 - (props.modelValue ?? 0)}%, 0, 0);`"
     />
   </ProgressRoot>
 </template>

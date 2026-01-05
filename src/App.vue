@@ -45,7 +45,7 @@
                   <ChevronsUpDown class="h-4 w-4 shrink-0 text-muted-foreground ml-2" />
                 </Button>
               </PopoverTrigger>
-              <PopoverContent class="w-72 p-0" side="bottom" align="start">
+              <PopoverContent class="w-70 p-0" side="bottom" align="start">
                 <div class="p-2">
                   <div class="px-2 py-1.5 mb-1 text-xs font-semibold text-muted-foreground">
                     {{ t('planet.switchPlanet') }}
@@ -378,7 +378,7 @@
     </SidebarInset>
 
     <!-- 右下角固定通知按钮 -->
-    <div class="fixed bottom-4 right-4 z-50 flex flex-col gap-2">
+    <div class="fixed bottom-4 right-4 z-50 flex flex-col gap-2" :class="{ 'bottom-15': Capacitor.isNativePlatform() }">
       <!-- 返回顶部 -->
       <BackToTop />
       <!-- 队列通知 -->
@@ -518,7 +518,7 @@
   import HintToast from '@/components/notifications/HintToast.vue'
   import BackToTop from '@/components/common/BackToTop.vue'
   import Sonner from '@/components/ui/sonner/Sonner.vue'
-  import { MissionType, BuildingType, TechnologyType, DiplomaticEventType } from '@/types/game'
+  import { MissionType, BuildingType, TechnologyType, DiplomaticEventType, ShipType } from '@/types/game'
   import type { FleetMission, NPC, MissileAttack } from '@/types/game'
   import { DIPLOMATIC_CONFIG } from '@/config/gameConfig'
   import type { VersionInfo } from '@/utils/versionCheck'
@@ -838,8 +838,14 @@
 
       // 计算离线收益（直接同步计算，应用游戏速度）
       const bonuses = officerLogic.calculateActiveBonuses(gameStore.player.officers, now)
+      const miningTechLevel = gameStore.player.technologies[TechnologyType.MiningTechnology] || 0
+      const techBonuses = {
+        mineralResearchLevel: gameStore.player.technologies[TechnologyType.MineralResearch] || 0,
+        crystalResearchLevel: gameStore.player.technologies[TechnologyType.CrystalResearch] || 0,
+        fuelResearchLevel: gameStore.player.technologies[TechnologyType.FuelResearch] || 0
+      }
       gameStore.player.planets.forEach(planet => {
-        resourceLogic.updatePlanetResources(planet, now, bonuses, gameStore.gameSpeed)
+        resourceLogic.updatePlanetResources(planet, now, bonuses, gameStore.gameSpeed, miningTechLevel, techBonuses)
       })
 
       // 只在没有NPC星球时才生成（首次加载已有玩家数据时）
@@ -1065,6 +1071,19 @@
           const targetNpc = npcStore.npcs.find(npc => npc.planets.some(p => p.id === targetPlanet.id))
           if (targetNpc) {
             diplomaticLogic.handleAttackReputation(gameStore.player, targetNpc, attackResult.battleResult, npcStore.npcs, gameStore.locale)
+
+            // 同步战斗损失到NPC的实际星球数据
+            const npcPlanet = targetNpc.planets.find(p => p.id === targetPlanet.id)
+            if (npcPlanet) {
+              // 同步舰队损失
+              Object.entries(attackResult.battleResult.defenderLosses.fleet).forEach(([shipType, lost]) => {
+                npcPlanet.fleet[shipType as ShipType] = Math.max(0, (npcPlanet.fleet[shipType as ShipType] || 0) - lost)
+              })
+              // 同步防御损失（修复后的数据已在targetPlanet中）
+              npcPlanet.defense = { ...targetPlanet.defense }
+              // 同步资源（被掠夺后的）
+              npcPlanet.resources = { ...targetPlanet.resources }
+            }
           }
         }
 
@@ -1262,8 +1281,41 @@
         }
       }
     } else if (mission.missionType === MissionType.Destroy) {
-      // 处理行星毁灭任务
-      const destroyResult = fleetLogic.processDestroyArrival(mission, targetPlanet, gameStore.player)
+      // 处理行星毁灭任务（需要先战斗，再计算毁灭概率）
+      const destroyResult = await fleetLogic.processDestroyArrival(mission, targetPlanet, gameStore.player, null, gameStore.player.planets)
+
+      // 处理战斗报告（如果发生了战斗）
+      if (destroyResult.battleResult) {
+        gameStore.player.battleReports.push(destroyResult.battleResult)
+
+        // 处理战斗对NPC的影响
+        if (targetPlanet) {
+          const targetNpc = npcStore.npcs.find(npc => npc.planets.some(p => p.id === targetPlanet.id))
+          if (targetNpc) {
+            diplomaticLogic.handleAttackReputation(gameStore.player, targetNpc, destroyResult.battleResult, npcStore.npcs, gameStore.locale)
+
+            // 同步战斗损失到NPC的实际星球数据
+            const npcPlanet = targetNpc.planets.find(p => p.id === targetPlanet.id)
+            if (npcPlanet) {
+              Object.entries(destroyResult.battleResult.defenderLosses.fleet).forEach(([shipType, lost]) => {
+                npcPlanet.fleet[shipType as ShipType] = Math.max(0, (npcPlanet.fleet[shipType as ShipType] || 0) - lost)
+              })
+              npcPlanet.defense = { ...targetPlanet.defense }
+              npcPlanet.resources = { ...targetPlanet.resources }
+            }
+          }
+        }
+      }
+
+      // 处理新生成的月球
+      if (destroyResult.moon) {
+        gameStore.player.planets.push(destroyResult.moon)
+      }
+
+      // 处理残骸场
+      if (destroyResult.debrisField) {
+        universeStore.debrisFields[destroyResult.debrisField.id] = destroyResult.debrisField
+      }
 
       // 更新成就统计 - 行星毁灭
       if (destroyResult.success) {
@@ -1303,12 +1355,14 @@
           ? {
               destroyedPlanetName:
                 targetPlanet?.name ||
-                `[${mission.targetPosition.galaxy}:${mission.targetPosition.system}:${mission.targetPosition.position}]`
+                `[${mission.targetPosition.galaxy}:${mission.targetPosition.system}:${mission.targetPosition.position}]`,
+              hadBattle: !!destroyResult.battleResult
             }
           : {
               failReason: destroyResult.failReason,
               destructionChance: destroyResult.destructionChance,
-              deathstarsLost: destroyResult.deathstarsLost
+              deathstarsLost: destroyResult.deathstarsLost,
+              hadBattle: !!destroyResult.battleResult
             },
         read: false
       })
@@ -1387,7 +1441,7 @@
         delete universeStore.debrisFields[destroyedDebrisId]
       }
     } else if (mission.missionType === MissionType.Expedition) {
-      // 处理远征任务
+      // 处理探险任务
       const expeditionResult = fleetLogic.processExpeditionArrival(mission)
 
       // 确保返回时间正确设置（兼容旧版本任务数据）
@@ -1399,12 +1453,12 @@
         mission.returnTime = now + flightDuration
       }
 
-      // 更新成就统计 - 远征
+      // 更新成就统计 - 探险
       const isSuccessful =
         expeditionResult.eventType === 'resources' || expeditionResult.eventType === 'darkMatter' || expeditionResult.eventType === 'fleet'
       gameLogic.trackMissionStats(gameStore.player, 'expedition', { successful: isSuccessful })
 
-      // 生成远征任务报告
+      // 生成探险任务报告
       if (!gameStore.player.missionReports) {
         gameStore.player.missionReports = []
       }
@@ -1676,10 +1730,16 @@
     // 应用损失到目标星球
     missileLogic.applyMissileAttackResult(targetPlanet, impactResult.defenseLosses)
 
-    // 如果目标是NPC的星球，扣除外交好感度
+    // 如果目标是NPC的星球，同步损失到NPC实际数据并扣除外交好感度
     if (targetPlanet.ownerId && targetPlanet.ownerId !== gameStore.player.id) {
       const targetNpc = npcStore.npcs.find(npc => npc.id === targetPlanet.ownerId)
       if (targetNpc) {
+        // 同步防御损失到NPC的实际星球数据
+        const npcPlanet = targetNpc.planets.find(p => p.id === targetPlanet.id)
+        if (npcPlanet) {
+          missileLogic.applyMissileAttackResult(npcPlanet, impactResult.defenseLosses)
+        }
+
         // 导弹攻击扣除好感度
         const { REPUTATION_CHANGES } = DIPLOMATIC_CONFIG
         const reputationLoss = REPUTATION_CHANGES.ATTACK / 2 // 导弹攻击的好感度惩罚是普通攻击的一半
@@ -2220,6 +2280,7 @@
   const switchToMoon = () => {
     if (moon.value) {
       gameStore.currentPlanetId = moon.value.id
+      router.push('/')
     }
   }
 
@@ -2227,12 +2288,14 @@
   const switchToParentPlanet = () => {
     if (planet.value?.parentPlanetId) {
       gameStore.currentPlanetId = planet.value.parentPlanetId
+      router.push('/')
     }
   }
 
   // 切换到指定星球
   const switchToPlanet = (planetId: string) => {
     gameStore.currentPlanetId = planetId
+    router.push('/')
   }
 
   // 切换侧边栏

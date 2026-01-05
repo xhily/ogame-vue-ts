@@ -22,7 +22,46 @@
       <div v-if="planet.isMoon" class="mt-2">
         <Button @click="switchToParentPlanet" variant="outline" size="sm">{{ t('planet.backToPlanet') }}</Button>
       </div>
+      <!-- 放弃殖民地按钮 -->
+      <div v-if="canShowAbandonButton" class="mt-4">
+        <Button @click="showAbandonDialog = true" variant="destructive" size="sm">
+          {{ t('planet.abandonColony') }}
+        </Button>
+      </div>
     </div>
+
+    <!-- 放弃殖民地确认对话框 -->
+    <AlertDialog :open="showAbandonDialog" @update:open="showAbandonDialog = $event">
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{{ t('planet.confirmAbandon') }}</AlertDialogTitle>
+          <AlertDialogDescription class="whitespace-pre-line">
+            {{ t('planet.abandonWarning', { name: planet.name }) }}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>{{ t('common.cancel') }}</AlertDialogCancel>
+          <AlertDialogAction @click="handleAbandonColony" class="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            {{ t('planet.confirmAbandonButton') }}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+
+    <!-- 错误提示对话框 -->
+    <AlertDialog :open="showErrorDialog" @update:open="showErrorDialog = $event">
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{{ t('planet.abandonFailed') }}</AlertDialogTitle>
+          <AlertDialogDescription>
+            {{ errorMessage }}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogAction>{{ t('common.confirm') }}</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
 
     <!-- 资源管理 -->
     <Card>
@@ -195,25 +234,45 @@
   import { useGameStore } from '@/stores/gameStore'
   import { useI18n } from '@/composables/useI18n'
   import { useGameConfig } from '@/composables/useGameConfig'
-  import { computed } from 'vue'
+  import { computed, ref } from 'vue'
   import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
   import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
   import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
   import { Button } from '@/components/ui/button'
   import { Badge } from '@/components/ui/badge'
+  import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle
+  } from '@/components/ui/alert-dialog'
   import ResourceIcon from '@/components/common/ResourceIcon.vue'
   import { formatNumber, getResourceColor } from '@/utils/format'
   import { scaleNumber } from '@/utils/speed'
   import type { Planet } from '@/types/game'
+  import { TechnologyType } from '@/types/game'
   import * as publicLogic from '@/logic/publicLogic'
   import * as resourceLogic from '@/logic/resourceLogic'
+  import * as planetLogic from '@/logic/planetLogic'
 
   const gameStore = useGameStore()
   const { t } = useI18n()
   const { SHIPS } = useGameConfig()
   const planet = computed(() => gameStore.currentPlanet)
+
+  // 获取科技加成
+  const techBonuses = computed(() => ({
+    mineralResearchLevel: gameStore.player.technologies[TechnologyType.MineralResearch] || 0,
+    crystalResearchLevel: gameStore.player.technologies[TechnologyType.CrystalResearch] || 0,
+    fuelResearchLevel: gameStore.player.technologies[TechnologyType.FuelResearch] || 0
+  }))
+
   const production = computed(() =>
-    planet.value ? publicLogic.getResourceProduction(planet.value, gameStore.player.officers, gameStore.gameSpeed) : null
+    planet.value ? publicLogic.getResourceProduction(planet.value, gameStore.player.officers, gameStore.gameSpeed, techBonuses.value) : null
   )
   const capacity = computed(() => (planet.value ? publicLogic.getResourceCapacity(planet.value, gameStore.player.officers) : null))
 
@@ -226,7 +285,7 @@
   // 资源产量详细breakdown
   const productionBreakdown = computed(() => {
     if (!planet.value) return null
-    return resourceLogic.calculateProductionBreakdown(planet.value, gameStore.player.officers, Date.now(), gameStore.gameSpeed)
+    return resourceLogic.calculateProductionBreakdown(planet.value, gameStore.player.officers, Date.now(), gameStore.gameSpeed, techBonuses.value)
   })
 
   // 资源消耗详细breakdown
@@ -285,5 +344,46 @@
     if (planet.value?.parentPlanetId) {
       gameStore.currentPlanetId = planet.value.parentPlanetId
     }
+  }
+
+  // 放弃殖民地相关
+  const showAbandonDialog = ref(false)
+  const showErrorDialog = ref(false)
+  const errorMessage = ref('')
+
+  // 是否显示放弃按钮（非主星才显示）
+  const canShowAbandonButton = computed(() => {
+    if (!planet.value) return false
+    // 找到主星（第一个非月球星球）
+    const mainPlanet = gameStore.player.planets.find(p => !p.isMoon)
+    // 当前星球不是主星时才显示放弃按钮
+    return mainPlanet && mainPlanet.id !== planet.value.id
+  })
+
+  // 处理放弃殖民地
+  const handleAbandonColony = () => {
+    if (!planet.value) return
+
+    const check = planetLogic.canAbandonColony(gameStore.player.planets, planet.value.id)
+    if (!check.canAbandon) {
+      showAbandonDialog.value = false
+      errorMessage.value = check.reason ? t(check.reason) : t('planet.abandonFailed')
+      showErrorDialog.value = true
+      return
+    }
+
+    // 记录当前星球ID用于后续切换
+    const abandonedPlanetId = planet.value.id
+
+    // 执行放弃
+    gameStore.player.planets = planetLogic.abandonColony(gameStore.player.planets, abandonedPlanetId)
+
+    // 切换到主星
+    const mainPlanet = gameStore.player.planets.find(p => !p.isMoon)
+    if (mainPlanet) {
+      gameStore.currentPlanetId = mainPlanet.id
+    }
+
+    showAbandonDialog.value = false
   }
 </script>

@@ -266,12 +266,12 @@ export const formatDepletionTime = (hours: number): string => {
 /**
  * 计算地质研究站带来的恢复速率加成
  * @param geoStationLevel 地质研究站等级
- * @returns 恢复速率倍数（1 + 等级 * 0.5）
+ * @returns 恢复速率倍数（1 + 等级 * 0.1）
  */
 export const calculateGeoStationBonus = (geoStationLevel: number): number => {
   // 每级地质研究站增加50%恢复速度
   // 0级 = 1倍, 1级 = 1.5倍, 2级 = 2倍, ..., 10级 = 6倍
-  return 1 + geoStationLevel * 0.5
+  return 1 + geoStationLevel * 0.1
 }
 
 /**
@@ -280,8 +280,16 @@ export const calculateGeoStationBonus = (geoStationLevel: number): number => {
  * @param deposits 矿脉储量对象
  * @param hoursElapsed 经过的小时数
  * @param geoStationLevel 地质研究站等级（可选，影响恢复速度）
+ * @param deepDrillingLevel 深层钻探设施等级（可选，影响恢复上限）
+ * @param miningTechLevel 采矿技术等级（可选，影响恢复上限）
  */
-export const regenerateDeposits = (deposits: OreDeposits, hoursElapsed: number, geoStationLevel: number = 0): void => {
+export const regenerateDeposits = (
+  deposits: OreDeposits,
+  hoursElapsed: number,
+  geoStationLevel: number = 0,
+  deepDrillingLevel: number = 0,
+  miningTechLevel: number = 0
+): void => {
   const { REGENERATION } = ORE_DEPOSIT_CONFIG
 
   if (!REGENERATION.ENABLED || hoursElapsed <= 0) return
@@ -289,32 +297,36 @@ export const regenerateDeposits = (deposits: OreDeposits, hoursElapsed: number, 
   // 计算地质研究站加成
   const geoBonus = calculateGeoStationBonus(geoStationLevel)
 
-  // 动态计算初始储量上限
-  const initialDeposits = calculateInitialDeposits(deposits.position)
+  // 计算带有建筑和科技加成的储量上限
+  const enhancedDeposits = calculateEnhancedDeposits(deposits.position, deepDrillingLevel, miningTechLevel)
 
-  // 计算恢复量（基于初始储量的百分比，乘以地质研究站加成）
+  // 计算恢复量（基于增强后储量的百分比，乘以地质研究站加成）
   const regenRate = REGENERATION.RATE_PER_HOUR * hoursElapsed * geoBonus
   const maxPercentage = REGENERATION.MAX_PERCENTAGE
 
   // 恢复每种资源
-  const metalRegen = initialDeposits.metal * regenRate
-  const crystalRegen = initialDeposits.crystal * regenRate
-  const deuteriumRegen = initialDeposits.deuterium * regenRate
+  const metalRegen = enhancedDeposits.metal * regenRate
+  const crystalRegen = enhancedDeposits.crystal * regenRate
+  const deuteriumRegen = enhancedDeposits.deuterium * regenRate
 
-  // 添加恢复量，但不超过初始储量的最大百分比
-  deposits.metal = Math.min(initialDeposits.metal * maxPercentage, deposits.metal + metalRegen)
-  deposits.crystal = Math.min(initialDeposits.crystal * maxPercentage, deposits.crystal + crystalRegen)
-  deposits.deuterium = Math.min(initialDeposits.deuterium * maxPercentage, deposits.deuterium + deuteriumRegen)
+  // 添加恢复量，但不超过增强后储量的最大百分比
+  deposits.metal = Math.min(enhancedDeposits.metal * maxPercentage, deposits.metal + metalRegen)
+  deposits.crystal = Math.min(enhancedDeposits.crystal * maxPercentage, deposits.crystal + crystalRegen)
+  deposits.deuterium = Math.min(enhancedDeposits.deuterium * maxPercentage, deposits.deuterium + deuteriumRegen)
 }
 
 /**
  * 获取矿脉恢复状态信息
  * @param deposits 矿脉储量
  * @param geoStationLevel 地质研究站等级（可选，影响恢复时间计算）
+ * @param deepDrillingLevel 深层钻探设施等级（可选，影响恢复上限）
+ * @param miningTechLevel 采矿技术等级（可选，影响恢复上限）
  */
 export const getRegenerationInfo = (
   deposits: OreDeposits | undefined,
-  geoStationLevel: number = 0
+  geoStationLevel: number = 0,
+  deepDrillingLevel: number = 0,
+  miningTechLevel: number = 0
 ): {
   metalRecovering: boolean
   crystalRecovering: boolean
@@ -338,26 +350,26 @@ export const getRegenerationInfo = (
     }
   }
 
-  // 动态计算初始储量上限
-  const initialDeposits = calculateInitialDeposits(deposits.position)
+  // 计算带有建筑和科技加成的储量上限
+  const enhancedDeposits = calculateEnhancedDeposits(deposits.position, deepDrillingLevel, miningTechLevel)
 
   const { REGENERATION } = ORE_DEPOSIT_CONFIG
   const maxPercentage = REGENERATION.MAX_PERCENTAGE
   // 实际恢复速率 = 基础速率 * 地质研究站加成
   const ratePerHour = REGENERATION.RATE_PER_HOUR * geoBonus
 
-  const metalMax = initialDeposits.metal * maxPercentage
-  const crystalMax = initialDeposits.crystal * maxPercentage
-  const deuteriumMax = initialDeposits.deuterium * maxPercentage
+  const metalMax = enhancedDeposits.metal * maxPercentage
+  const crystalMax = enhancedDeposits.crystal * maxPercentage
+  const deuteriumMax = enhancedDeposits.deuterium * maxPercentage
 
   const metalRecovering = deposits.metal < metalMax
   const crystalRecovering = deposits.crystal < crystalMax
   const deuteriumRecovering = deposits.deuterium < deuteriumMax
 
   // 计算恢复到满需要的小时数（考虑地质研究站加成）
-  const hoursToFullMetal = metalRecovering ? (metalMax - deposits.metal) / (initialDeposits.metal * ratePerHour) : 0
-  const hoursToFullCrystal = crystalRecovering ? (crystalMax - deposits.crystal) / (initialDeposits.crystal * ratePerHour) : 0
-  const hoursToFullDeuterium = deuteriumRecovering ? (deuteriumMax - deposits.deuterium) / (initialDeposits.deuterium * ratePerHour) : 0
+  const hoursToFullMetal = metalRecovering ? (metalMax - deposits.metal) / (enhancedDeposits.metal * ratePerHour) : 0
+  const hoursToFullCrystal = crystalRecovering ? (crystalMax - deposits.crystal) / (enhancedDeposits.crystal * ratePerHour) : 0
+  const hoursToFullDeuterium = deuteriumRecovering ? (deuteriumMax - deposits.deuterium) / (enhancedDeposits.deuterium * ratePerHour) : 0
 
   return {
     metalRecovering,

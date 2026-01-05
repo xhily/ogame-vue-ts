@@ -6,6 +6,24 @@ import * as oreDepositLogic from './oreDepositLogic'
 import * as planetLogic from './planetLogic'
 
 /**
+ * 计算资源研究科技加成
+ * @param mineralResearchLevel 矿物研究等级（每级+2%金属产量）
+ * @param crystalResearchLevel 晶体研究等级（每级+2%晶体产量）
+ * @param fuelResearchLevel 燃料研究等级（每级+2%重氢产量）
+ */
+export const calculateResearchProductionBonus = (
+  mineralResearchLevel: number = 0,
+  crystalResearchLevel: number = 0,
+  fuelResearchLevel: number = 0
+): { metalBonus: number; crystalBonus: number; deuteriumBonus: number } => {
+  return {
+    metalBonus: mineralResearchLevel * 2, // 每级2%
+    crystalBonus: crystalResearchLevel * 2,
+    deuteriumBonus: fuelResearchLevel * 2
+  }
+}
+
+/**
  * 计算电量产出
  */
 export const calculateEnergyProduction = (
@@ -93,6 +111,9 @@ export const calculateEnergyConsumption = (planet: Planet): number => {
 
 /**
  * 计算资源产量（每小时）
+ * @param planet 星球
+ * @param bonuses 军官等加成
+ * @param techBonuses 科技加成（可选，矿物研究/晶体研究/燃料研究）
  */
 export const calculateResourceProduction = (
   planet: Planet,
@@ -100,6 +121,11 @@ export const calculateResourceProduction = (
     resourceProductionBonus: number
     darkMatterProductionBonus: number
     energyProductionBonus: number
+  },
+  techBonuses?: {
+    mineralResearchLevel?: number
+    crystalResearchLevel?: number
+    fuelResearchLevel?: number
   }
 ): Resources => {
   const metalMineLevel = planet.buildings[BuildingType.MetalMine] || 0
@@ -109,6 +135,16 @@ export const calculateResourceProduction = (
 
   const resourceBonus = 1 + (bonuses.resourceProductionBonus || 0) / 100
   const darkMatterBonus = 1 + (bonuses.darkMatterProductionBonus || 0) / 100
+
+  // 计算科技加成
+  const researchBonus = calculateResearchProductionBonus(
+    techBonuses?.mineralResearchLevel || 0,
+    techBonuses?.crystalResearchLevel || 0,
+    techBonuses?.fuelResearchLevel || 0
+  )
+  const metalTechBonus = 1 + researchBonus.metalBonus / 100
+  const crystalTechBonus = 1 + researchBonus.crystalBonus / 100
+  const deuteriumTechBonus = 1 + researchBonus.deuteriumBonus / 100
 
   // 计算能量产出（每小时）
   const energyProduction = calculateEnergyProduction(planet, { energyProductionBonus: bonuses.energyProductionBonus })
@@ -131,13 +167,28 @@ export const calculateResourceProduction = (
   const deuteriumTempBonus = planetLogic.calculateDeuteriumTemperatureBonus(planet.temperature?.max ?? 0)
 
   return {
-    metal: metalMineLevel * 1500 * Math.pow(1.5, metalMineLevel) * resourceBonus * productionEfficiency * metalDepositEfficiency,
-    crystal: crystalMineLevel * 1000 * Math.pow(1.5, crystalMineLevel) * resourceBonus * productionEfficiency * crystalDepositEfficiency,
+    metal:
+      metalMineLevel *
+      1500 *
+      Math.pow(1.5, metalMineLevel) *
+      resourceBonus *
+      metalTechBonus *
+      productionEfficiency *
+      metalDepositEfficiency,
+    crystal:
+      crystalMineLevel *
+      1000 *
+      Math.pow(1.5, crystalMineLevel) *
+      resourceBonus *
+      crystalTechBonus *
+      productionEfficiency *
+      crystalDepositEfficiency,
     deuterium:
       deuteriumSynthesizerLevel *
       500 *
       Math.pow(1.5, deuteriumSynthesizerLevel) *
       resourceBonus *
+      deuteriumTechBonus *
       productionEfficiency *
       deuteriumDepositEfficiency *
       deuteriumTempBonus,
@@ -183,7 +234,13 @@ export const updatePlanetResources = (
     energyProductionBonus: number
     storageCapacityBonus: number
   },
-  gameSpeed: number = 1
+  gameSpeed: number = 1,
+  miningTechLevel: number = 0,
+  techBonuses?: {
+    mineralResearchLevel?: number
+    crystalResearchLevel?: number
+    fuelResearchLevel?: number
+  }
 ): void => {
   const timeDiff = (now - planet.lastUpdate) / 1000 // 转换为秒
 
@@ -214,11 +271,15 @@ export const updatePlanetResources = (
   planet.resources.energy = Math.max(0, planet.resources.energy)
 
   // 计算资源产量（会检查能量是否充足，以及矿脉储量效率）
-  const production = calculateResourceProduction(planet, {
-    resourceProductionBonus: bonuses.resourceProductionBonus,
-    darkMatterProductionBonus: bonuses.darkMatterProductionBonus,
-    energyProductionBonus: bonuses.energyProductionBonus
-  })
+  const production = calculateResourceProduction(
+    planet,
+    {
+      resourceProductionBonus: bonuses.resourceProductionBonus,
+      darkMatterProductionBonus: bonuses.darkMatterProductionBonus,
+      energyProductionBonus: bonuses.energyProductionBonus
+    },
+    techBonuses
+  )
 
   // 计算实际产出量（用于消耗矿脉储量）
   const metalProduced = (production.metal * effectiveTimeDiff) / 3600
@@ -232,10 +293,11 @@ export const updatePlanetResources = (
     oreDepositLogic.consumeDeposit(planet.oreDeposits, 'deuterium', deuteriumProduced)
 
     // 矿脉缓慢恢复（每次更新时恢复一小部分）
-    // 地质研究站等级影响恢复速度
+    // 地质研究站等级影响恢复速度，深层钻探设施和采矿技术影响恢复上限
     const hoursElapsed = effectiveTimeDiff / 3600
     const geoStationLevel = planet.buildings[BuildingType.GeoResearchStation] || 0
-    oreDepositLogic.regenerateDeposits(planet.oreDeposits, hoursElapsed, geoStationLevel)
+    const deepDrillingLevel = planet.buildings[BuildingType.DeepDrillingFacility] || 0
+    oreDepositLogic.regenerateDeposits(planet.oreDeposits, hoursElapsed, geoStationLevel, deepDrillingLevel, miningTechLevel)
   }
 
   // 更新资源（转换为每秒产量，应用游戏速度）
@@ -386,12 +448,22 @@ export interface ConsumptionDetail {
 
 /**
  * 计算资源产量详细breakdown
+ * @param planet 星球
+ * @param officers 军官
+ * @param currentTime 当前时间
+ * @param resourceSpeed 游戏速度
+ * @param techBonuses 科技加成（可选，矿物研究/晶体研究/燃料研究）
  */
 export const calculateProductionBreakdown = (
   planet: Planet,
   officers: Record<OfficerType, Officer>,
   currentTime: number,
-  resourceSpeed: number = 1
+  resourceSpeed: number = 1,
+  techBonuses?: {
+    mineralResearchLevel?: number
+    crystalResearchLevel?: number
+    fuelResearchLevel?: number
+  }
 ): ProductionBreakdown => {
   const metalMineLevel = planet.buildings[BuildingType.MetalMine] || 0
   const crystalMineLevel = planet.buildings[BuildingType.CrystalMine] || 0
@@ -432,6 +504,13 @@ export const calculateProductionBreakdown = (
   const totalDarkMatterBonus = activeOfficerBonuses.reduce((sum, officer) => sum + officer.darkMatterBonus, 0)
   const totalEnergyBonus = activeOfficerBonuses.reduce((sum, officer) => sum + officer.energyBonus, 0)
 
+  // 计算科技加成
+  const researchBonus = calculateResearchProductionBonus(
+    techBonuses?.mineralResearchLevel || 0,
+    techBonuses?.crystalResearchLevel || 0,
+    techBonuses?.fuelResearchLevel || 0
+  )
+
   // 金属矿产量
   const metalBase = metalMineLevel * 1500 * Math.pow(1.5, metalMineLevel)
   const metalBonuses: ProductionBonus[] = []
@@ -449,16 +528,27 @@ export const calculateProductionBreakdown = (
     }
   })
 
+  // 添加矿物研究科技加成
+  if (researchBonus.metalBonus > 0) {
+    const techBonusValue = metalBase * (1 + totalResourceBonus / 100) * (researchBonus.metalBonus / 100)
+    metalBonuses.push({
+      name: 'research.mineralResearch',
+      percentage: researchBonus.metalBonus,
+      value: techBonusValue,
+      source: 'technology'
+    })
+  }
+
   if (!hasPositiveEnergyBalance) {
     metalBonuses.push({
       name: 'resources.noEnergy',
       percentage: -100,
-      value: -metalBase * (1 + totalResourceBonus / 100),
+      value: -metalBase * (1 + totalResourceBonus / 100) * (1 + researchBonus.metalBonus / 100),
       source: 'other'
     })
   }
 
-  const metalFinal = metalBase * (1 + totalResourceBonus / 100) * productionEfficiency
+  const metalFinal = metalBase * (1 + totalResourceBonus / 100) * (1 + researchBonus.metalBonus / 100) * productionEfficiency
 
   // 晶体矿产量
   const crystalBase = crystalMineLevel * 1000 * Math.pow(1.5, crystalMineLevel)
@@ -476,16 +566,27 @@ export const calculateProductionBreakdown = (
     }
   })
 
+  // 添加晶体研究科技加成
+  if (researchBonus.crystalBonus > 0) {
+    const techBonusValue = crystalBase * (1 + totalResourceBonus / 100) * (researchBonus.crystalBonus / 100)
+    crystalBonuses.push({
+      name: 'research.crystalResearch',
+      percentage: researchBonus.crystalBonus,
+      value: techBonusValue,
+      source: 'technology'
+    })
+  }
+
   if (!hasPositiveEnergyBalance) {
     crystalBonuses.push({
       name: 'resources.noEnergy',
       percentage: -100,
-      value: -crystalBase * (1 + totalResourceBonus / 100),
+      value: -crystalBase * (1 + totalResourceBonus / 100) * (1 + researchBonus.crystalBonus / 100),
       source: 'other'
     })
   }
 
-  const crystalFinal = crystalBase * (1 + totalResourceBonus / 100) * productionEfficiency
+  const crystalFinal = crystalBase * (1 + totalResourceBonus / 100) * (1 + researchBonus.crystalBonus / 100) * productionEfficiency
 
   // 重氢合成器产量（受温度影响）
   // OGame 原版规则：温度越低，重氢产量越高
@@ -518,16 +619,27 @@ export const calculateProductionBreakdown = (
     }
   })
 
+  // 添加燃料研究科技加成
+  if (researchBonus.deuteriumBonus > 0) {
+    const techBonusValue = deuteriumBase * (1 + totalResourceBonus / 100) * (researchBonus.deuteriumBonus / 100)
+    deuteriumBonuses.push({
+      name: 'research.fuelResearch',
+      percentage: researchBonus.deuteriumBonus,
+      value: techBonusValue,
+      source: 'technology'
+    })
+  }
+
   if (!hasPositiveEnergyBalance) {
     deuteriumBonuses.push({
       name: 'resources.noEnergy',
       percentage: -100,
-      value: -deuteriumBase * (1 + totalResourceBonus / 100),
+      value: -deuteriumBase * (1 + totalResourceBonus / 100) * (1 + researchBonus.deuteriumBonus / 100),
       source: 'other'
     })
   }
 
-  const deuteriumFinal = deuteriumBase * (1 + totalResourceBonus / 100) * productionEfficiency
+  const deuteriumFinal = deuteriumBase * (1 + totalResourceBonus / 100) * (1 + researchBonus.deuteriumBonus / 100) * productionEfficiency
 
   // 暗物质收集器产量
   const darkMatterBase = darkMatterCollectorLevel * 25 * Math.pow(1.5, darkMatterCollectorLevel)

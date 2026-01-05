@@ -66,7 +66,7 @@
                   {{ t('galaxyView.myPlanets') }}
                 </Button>
               </PopoverTrigger>
-              <PopoverContent class="w-72 p-2" align="start">
+              <PopoverContent class="w-87 p-2 max-h-80 overflow-y-auto" align="start">
                 <div class="space-y-1">
                   <div class="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
                     {{ t('galaxyView.selectPlanetToView') }}
@@ -114,7 +114,7 @@
                   {{ highlightedNpc.name }} ({{ highlightedNpc.planets.length }})
                 </Button>
               </PopoverTrigger>
-              <PopoverContent class="w-72 p-2" align="start">
+              <PopoverContent class="w-72 p-2 max-h-96 overflow-y-auto" align="start">
                 <div class="space-y-1">
                   <div class="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
                     {{ t('galaxyView.selectPlanetToView') }}

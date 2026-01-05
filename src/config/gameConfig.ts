@@ -284,7 +284,7 @@ export const BUILDINGS: Record<BuildingType, BuildingConfig> = {
     id: BuildingType.LunarBase,
     name: '月球基地',
     description: '增加月球可用空间',
-    baseCost: { metal: 20000, crystal: 40000, deuterium: 20000, darkMatter: 0, energy: 0 },
+    baseCost: { metal: 8000, crystal: 8000, deuterium: 4000, darkMatter: 0, energy: 0 },
     baseTime: 45, // 减少建造时间：60→45秒
     costMultiplier: 2,
     spaceUsage: 0, // 月球基地本身不占用空间,反而增加空间
@@ -357,7 +357,7 @@ export const BUILDINGS: Record<BuildingType, BuildingConfig> = {
   [BuildingType.GeoResearchStation]: {
     id: BuildingType.GeoResearchStation,
     name: '地质研究站',
-    description: '研究地质结构，提高矿脉自然恢复速度。每级增加50%恢复速率',
+    description: '研究地质结构，提高矿脉自然恢复速度。每级增加10%恢复速率',
     baseCost: { metal: 50000, crystal: 30000, deuterium: 20000, darkMatter: 0, energy: 0 },
     baseTime: 60,
     costMultiplier: 1.8,
@@ -414,6 +414,34 @@ export const BUILDINGS: Record<BuildingType, BuildingConfig> = {
         [BuildingType.NaniteFactory]: 5,
         [TechnologyType.EnergyTechnology]: 12,
         [TechnologyType.PlasmaTechnology]: 5
+      }
+    }
+  },
+  // 2moons新增建筑
+  [BuildingType.University]: {
+    id: BuildingType.University,
+    name: '大学',
+    description: '培养科研人员，加快研究速度。每级减少研究时间8%（与星际研究网络叠加）',
+    baseCost: { metal: 200000, crystal: 100000, deuterium: 50000, darkMatter: 0, energy: 0 },
+    baseTime: 120,
+    costMultiplier: 2,
+    spaceUsage: 8,
+    planetOnly: true,
+    maxLevel: 10, // 最多10级（最高约57%研究时间减少）
+    requirements: {
+      [BuildingType.ResearchLab]: 8,
+      [BuildingType.RoboticsFactory]: 6
+    },
+    levelRequirements: {
+      5: {
+        [BuildingType.ResearchLab]: 10,
+        [BuildingType.RoboticsFactory]: 8,
+        [TechnologyType.EnergyTechnology]: 8
+      },
+      8: {
+        [BuildingType.ResearchLab]: 12,
+        [BuildingType.NaniteFactory]: 2,
+        [TechnologyType.ComputerTechnology]: 8
       }
     }
   }
@@ -726,6 +754,111 @@ export const TECHNOLOGIES: Record<TechnologyType, TechnologyConfig> = {
         [TechnologyType.PlasmaTechnology]: 3
       }
     }
+  },
+  // 2moons新增科技
+  [TechnologyType.IntergalacticResearchNetwork]: {
+    id: TechnologyType.IntergalacticResearchNetwork,
+    name: '星际研究网络',
+    description: '连接多个星球的研究实验室，共享研究资源。每级可连接1个额外的研究实验室（取等级最高的N个实验室）',
+    baseCost: { metal: 240000, crystal: 400000, deuterium: 160000, darkMatter: 0, energy: 0 },
+    baseTime: 180,
+    costMultiplier: 2,
+    maxLevel: 10,
+    requirements: {
+      [BuildingType.ResearchLab]: 10,
+      [TechnologyType.ComputerTechnology]: 8,
+      [TechnologyType.HyperspaceTechnology]: 8
+    },
+    levelRequirements: {
+      5: {
+        [BuildingType.ResearchLab]: 12,
+        [TechnologyType.ComputerTechnology]: 10,
+        [TechnologyType.HyperspaceTechnology]: 10
+      },
+      8: {
+        [BuildingType.ResearchLab]: 14,
+        [TechnologyType.ComputerTechnology]: 12,
+        [BuildingType.NaniteFactory]: 5
+      }
+    }
+  },
+  [TechnologyType.MineralResearch]: {
+    id: TechnologyType.MineralResearch,
+    name: '矿物研究',
+    description: '研究更高效的金属提取技术，提升金属矿产量。每级增加金属产量2%',
+    baseCost: { metal: 60000, crystal: 30000, deuterium: 0, darkMatter: 0, energy: 0 },
+    baseTime: 60,
+    costMultiplier: 1.75,
+    maxLevel: 20,
+    requirements: {
+      [BuildingType.ResearchLab]: 5,
+      [BuildingType.MetalMine]: 10,
+      [TechnologyType.EnergyTechnology]: 3
+    },
+    levelRequirements: {
+      10: {
+        [BuildingType.ResearchLab]: 8,
+        [BuildingType.MetalMine]: 20,
+        [TechnologyType.EnergyTechnology]: 8
+      },
+      15: {
+        [BuildingType.ResearchLab]: 12,
+        [BuildingType.NaniteFactory]: 2,
+        [TechnologyType.PlasmaTechnology]: 5
+      }
+    }
+  },
+  [TechnologyType.CrystalResearch]: {
+    id: TechnologyType.CrystalResearch,
+    name: '晶体研究',
+    description: '研究更高效的晶体提炼技术，提升晶体矿产量。每级增加晶体产量2%',
+    baseCost: { metal: 40000, crystal: 60000, deuterium: 0, darkMatter: 0, energy: 0 },
+    baseTime: 60,
+    costMultiplier: 1.75,
+    maxLevel: 20,
+    requirements: {
+      [BuildingType.ResearchLab]: 5,
+      [BuildingType.CrystalMine]: 10,
+      [TechnologyType.EnergyTechnology]: 3
+    },
+    levelRequirements: {
+      10: {
+        [BuildingType.ResearchLab]: 8,
+        [BuildingType.CrystalMine]: 20,
+        [TechnologyType.EnergyTechnology]: 8
+      },
+      15: {
+        [BuildingType.ResearchLab]: 12,
+        [BuildingType.NaniteFactory]: 2,
+        [TechnologyType.PlasmaTechnology]: 5
+      }
+    }
+  },
+  [TechnologyType.FuelResearch]: {
+    id: TechnologyType.FuelResearch,
+    name: '燃料研究',
+    description: '研究更高效的重氢合成技术，提升重氢产量。每级增加重氢产量2%',
+    baseCost: { metal: 0, crystal: 50000, deuterium: 50000, darkMatter: 0, energy: 0 },
+    baseTime: 60,
+    costMultiplier: 1.75,
+    maxLevel: 20,
+    requirements: {
+      [BuildingType.ResearchLab]: 5,
+      [BuildingType.DeuteriumSynthesizer]: 10,
+      [TechnologyType.EnergyTechnology]: 3
+    },
+    levelRequirements: {
+      10: {
+        [BuildingType.ResearchLab]: 8,
+        [BuildingType.DeuteriumSynthesizer]: 20,
+        [TechnologyType.EnergyTechnology]: 8
+      },
+      15: {
+        [BuildingType.ResearchLab]: 12,
+        [BuildingType.NaniteFactory]: 2,
+        [TechnologyType.PlasmaTechnology]: 5
+      }
+    }
   }
 }
 
@@ -1007,7 +1140,7 @@ export const SHIPS: Record<ShipType, ShipConfig> = {
     id: ShipType.Deathstar,
     name: '死星',
     description: '终极武器，能够摧毁整个行星',
-    cost: { metal: 5000000, crystal: 4000000, deuterium: 1000000, darkMatter: 20000, energy: 0 },
+    cost: { metal: 50000000, crystal: 40000000, deuterium: 10000000, darkMatter: 20000, energy: 0 },
     buildTime: 600,
     cargoCapacity: 1000000,
     attack: 200000,
@@ -1467,9 +1600,9 @@ export const DIPLOMATIC_CONFIG = {
       // 贸易检查间隔（秒）
       CHECK_INTERVAL: 1800, // 30分钟
       // 贸易概率
-      PROBABILITY: 0.1,
+      PROBABILITY: 0.05,
       // 玩家最多同时保留的贸易提议数量
-      MAX_PENDING_OFFERS: 30,
+      MAX_PENDING_OFFERS: 5,
       // 汇率配置：NPC出售资源的汇率
       EXCHANGE_RATES: {
         // 金属:晶体:重氢 基准比例 3:2:1
@@ -1658,9 +1791,9 @@ export const ORE_DEPOSIT_CONFIG = {
   // 矿脉恢复配置
   REGENERATION: {
     ENABLED: true,
-    // 每小时恢复初始储量的百分比（0.1% = 每小时恢复0.1%，约42天完全恢复）
-    RATE_PER_HOUR: 0.001,
-    // 最大恢复到初始储量的百分比（100%表示可以完全恢复）
+    // 每小时恢复初始储量的百分比（1% = 每小时恢复1%，约4.2天完全恢复）
+    RATE_PER_HOUR: 0.01,
+    // 最大恢复到初始储量的百分比（100表示可以完全恢复）%
     MAX_PERCENTAGE: 1.0
   }
 }

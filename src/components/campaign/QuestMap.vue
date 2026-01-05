@@ -9,7 +9,7 @@
       <!-- 可缩放内容包装器 -->
       <div
         class="map-content origin-top-left transition-transform duration-200"
-        :style="{ transform: `scale(${zoomLevel})`, minWidth: calculatedMapWidth + 'px', minHeight: calculatedMapHeight + 'px' }"
+        :style="{ transform: `scale3d(${zoomLevel}, ${zoomLevel}, 1)`, minWidth: calculatedMapWidth + 'px', minHeight: calculatedMapHeight + 'px' }"
       >
         <!-- SVG连接线 - 位置与节点容器对齐 -->
         <svg

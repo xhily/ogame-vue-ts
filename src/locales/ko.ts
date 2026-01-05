@@ -153,6 +153,7 @@ export default {
     planetDestroyerFactory: '행성 파괴 공장',
     geoResearchStation: '지질 연구소',
     deepDrillingFacility: '심층 시추 시설',
+    university: '대학',
     buildTime: '건설 시간',
     build: '건설',
     production: '생산량',
@@ -199,8 +200,9 @@ export default {
     sensorPhalanx: '주변 행성계의 함대 활동 감지',
     jumpGate: '다른 위성으로 함대 순간 이동',
     planetDestroyerFactory: '행성을 파괴할 수 있는 궁극 병기 건조',
-    geoResearchStation: '지질 구조를 연구하여 광맥 자연 회복 속도를 높입니다. 레벨당 회복 속도 50% 증가',
-    deepDrillingFacility: ''
+    geoResearchStation: '지질 구조를 연구하여 광맥 자연 회복 속도를 높입니다. 레벨당 회복 속도 10% 증가',
+    deepDrillingFacility: '',
+    university: '연구원을 양성하여 연구 속도를 가속합니다. 레벨당 연구 시간 -8%'
   },
   ships: {
     lightFighter: '경전투기',
@@ -276,7 +278,11 @@ export default {
     colonySlots: '식민지 슬롯',
     forAllPlanets: '(전역)',
     speedBonus: '속도 보너스',
-    researchSpeedBonus: '연구 속도 보너스'
+    researchSpeedBonus: '연구 속도 보너스',
+    // 자원 생산 보너스 표시
+    mineralResearch: '광물 연구',
+    crystalResearch: '크리스탈 연구',
+    fuelResearch: '연료 연구'
   },
   technologies: {
     energyTechnology: '에너지 기술',
@@ -297,7 +303,11 @@ export default {
     darkMatterTechnology: '암흑 물질 기술',
     terraformingTechnology: '지형 변환 기술',
     planetDestructionTech: '행성 파괴 기술',
-    miningTechnology: ''
+    miningTechnology: '',
+    intergalacticResearchNetwork: '은하간 연구 네트워크',
+    mineralResearch: '광물 연구',
+    crystalResearch: '크리스탈 연구',
+    fuelResearch: '연료 연구'
   },
   technologyDescriptions: {
     energyTechnology: '에너지 이용 효율 향상',
@@ -319,7 +329,11 @@ export default {
     darkMatterTechnology: '암흑 물질의 성질과 응용 연구',
     terraformingTechnology: '행성 지형 개조 기술 연구, 레벨당 모든 행성의 가용 공간 30 증가',
     planetDestructionTech: '행성 전체를 파괴하는 공포의 기술 연구',
-    miningTechnology: ''
+    miningTechnology: '',
+    intergalacticResearchNetwork: '여러 행성의 연구소를 연결합니다. 레벨당 1개 추가 연구소 연결',
+    mineralResearch: '더 효율적인 금속 추출 기술 연구. 레벨당 금속 생산 +2%',
+    crystalResearch: '더 효율적인 크리스탈 정제 기술 연구. 레벨당 크리스탈 생산 +2%',
+    fuelResearch: '더 효율적인 중수소 합성 기술 연구. 레벨당 중수소 생산 +2%'
   },
   officers: {
     commander: '사령관',
@@ -910,7 +924,10 @@ export default {
     hideRoundDetails: '라운드 상세 숨기기',
     round: '제 {round} 라운드',
     attackerRemainingPower: '공격자 잔여 화력',
-    defenderRemainingPower: '방어자 잔여 화력'
+    defenderRemainingPower: '방어자 잔여 화력',
+    importFromSpyReport: '정찰 보고서에서 가져오기',
+    selectSpyReport: '정찰 보고서 선택',
+    noSpyReports: '정찰 보고서가 없습니다'
   },
   settings: {
     dataManagement: '데이터 관리',
@@ -921,6 +938,7 @@ export default {
     exporting: '내보내는 중...',
     exportSuccess: '내보내기 성공',
     exportSuccessWithPath: '내보내기 성공, 파일 저장 위치: {path}',
+    storagePermissionDenied: '저장소 권한이 거부되어 파일을 내보낼 수 없습니다',
     exportFailed: '내보내기 실패, 다시 시도해주세요',
     importData: '데이터 가져오기',
     importDataDesc: 'JSON 파일에서 게임 진행 상황 복원',
@@ -938,6 +956,8 @@ export default {
     gameSettingsDesc: '게임 매개변수 및 설정 조정',
     gamePause: '게임 일시정지',
     gamePauseDesc: '게임 시간 및 자원 생산 일시정지 또는 재개',
+    battleMode: '끝까지 싸우기 모드',
+    battleModeDesc: '활성화하면 승자가 결정될 때까지 최대 100라운드까지 전투가 진행됩니다. 비활성화하면 클래식 6라운드 모드가 사용됩니다',
     pause: '일시정지',
     resume: '재개',
     gamePaused: '게임이 일시정지되었습니다',
@@ -1936,13 +1956,19 @@ export default {
       questNotActive: '퀘스트가 활성화되지 않았습니다',
       questNotCompleted: '퀘스트 미완료',
       rewardsAlreadyClaimed: '이미 보상을 받았습니다',
-      prerequisiteNotMet: '선행 퀘스트 미완료'
+      prerequisiteNotMet: '선행 퀘스트 미완료',
+      questLocked: '퀘스트가 잠겨 있습니다',
+      notInitialized: '캠페인이 초기화되지 않았습니다',
+      questAlreadyCompleted: '퀘스트가 이미 완료되었습니다'
     },
     speakers: {
       ancientVoice: '고대의 목소리',
       neighborNPC: '인접 세력',
       mysteriousSignal: '신비한 신호',
-      enemyCommander: '적 사령관'
+      enemyCommander: '적 사령관',
+      shadowVoice: '그림자의 목소리',
+      allyNPC: '동맹 세력',
+      ancientGuardian: '고대의 수호자'
     },
     objectiveDescriptions: {
       buildMetalMine: '금속 광산을 레벨 2로 건설',
@@ -2023,38 +2049,60 @@ export default {
       },
       '2_3': {
         prologue_1: '탐험에서 이상한 신호를 발견했습니다. 이 신호들은 고대 문명에서 온 것 같습니다... 출처를 조사하세요.',
+        prologue_2: '이 신호들... 잃어버린 문명의 메아리를 담고 있다. 그들의 비밀이 발견을 기다리고 있다...',
         epilogue_1: '이 기호들은... 고대 문명의 유적이다! 계속 조사하여 비밀을 밝히세요.'
       },
-      '2_4': { prologue_1: '고대 유적의 위치를 발견했습니다. 함대를 보내 무엇을 발견할 수 있는지 탐험하세요.' },
-      '2_5': { prologue_1: '유적에서 데이터 아카이브가 발견되었습니다. 이 데이터를 연구하면 새 기술을 해금할 수 있을지도 모릅니다.' },
+      '2_4': {
+        prologue_1: '고대 유적의 위치를 발견했습니다. 함대를 보내 무엇을 발견할 수 있는지 탐험하세요.',
+        prologue_2: '유적에는 많은 비밀이 있다... 현명하게 길을 선택하라...',
+        choice_1: '신중하게 탐험 - 안전 우선',
+        choice_2: '적극적으로 탐험 - 발견 우선'
+      },
+      '2_5': {
+        prologue_1: '유적에서 데이터 아카이브가 발견되었습니다. 이 데이터를 연구하면 새 기술을 해금할 수 있을지도 모릅니다.',
+        epilogue_1: '고대 데이터가 해독되었습니다! 새로운 기술적 통찰을 얻었습니다.'
+      },
       '3_1': { prologue_1: '탐험 중에도 외교를 잊지 마세요. 주변 세력과 좋은 관계를 유지하는 것이 유익합니다.' },
       '3_2': { prologue_1: '일부 세력이 우호를 보이고 있습니다. 관계를 계속 깊게 하면 더 많은 지원을 받을 수 있을지도 모릅니다.' },
       '3_3': {
-        prologue_1: '정보에 따르면 적대 세력이 그림자에서 당신을 감시하고 있습니다. 경계를 늦추지 말고 그들의 움직임을 정찰하세요.'
+        prologue_1: '정보에 따르면 적대 세력이 그림자에서 당신을 감시하고 있습니다. 경계를 늦추지 말고 그들의 움직임을 정찰하세요.',
+        prologue_2: '어둠의 힘이 허공에서 움직이고 있다... 그들은 당신의 성장하는 힘을 알아챘다...'
       },
       '3_4': { prologue_1: '우호 세력과 공식 동맹을 맺어 위협에 대해 서로를 지원하세요.' },
-      '3_5': { prologue_1: '위협이 다가오고 있습니다. 방어 시설을 건설하고 가능한 충돌에 대비하세요.' },
+      '3_5': {
+        prologue_1: '위협이 다가오고 있습니다. 방어 시설을 건설하고 가능한 충돌에 대비하세요.',
+        epilogue_1: '방어 준비가 완료되었습니다. 폭풍이 오지만, 당신은 준비가 되어 있습니다.'
+      },
       '4_1': {
         prologue_1: '적이 공격을 시작했습니다! 행성을 방어하세요!',
+        prologue_2: '그림자 함대가 다가온다... 당신의 시련의 시간이 왔다...',
         epilogue_1: '적의 첫 번째 파도를 성공적으로 격퇴했습니다. 하지만 이것은 시작에 불과합니다...'
       },
       '4_2': { prologue_1: '적이 후퇴했지만 돌아올 것입니다. 그들의 행성을 정찰하여 전력을 파악하세요.' },
       '4_3': { prologue_1: '반격할 시간입니다. 적 행성을 공격하여 그들의 전력을 약화시키세요.' },
       '4_4': { prologue_1: '전장에 많은 잔해가 남아 있습니다. 이 자원을 재활용하여 다음 전투에 대비하세요.' },
-      '4_5': { prologue_1: '최종 전투가 다가오고 있습니다. 강력한 함대를 건조하고 궁극의 도전에 대비하세요.' },
+      '4_5': {
+        prologue_1: '최종 전투가 다가오고 있습니다. 강력한 함대를 건조하고 궁극의 도전에 대비하세요.',
+        epilogue_1: '함대가 집결했습니다. 결전의 시간이 다가온다...'
+      },
       '5_1': {
         prologue_1: '모든 단서가 유적의 가장 깊은 곳을 가리킵니다. 고대 문명의 핵심 비밀이 그곳에 있습니다.',
         prologue_2: '드디어 도착했다... 진실이 곧 밝혀질 것이다...'
       },
-      '5_2': { prologue_1: '유적 깊은 곳에서 잃어버린 고대 기술을 발견했습니다. 연구하여 그 힘을 해방하세요.' },
+      '5_2': {
+        prologue_1: '유적 깊은 곳에서 잃어버린 고대 기술을 발견했습니다. 연구하여 그 힘을 해방하세요.',
+        prologue_2: '이 기술은... 알려진 모든 문명보다 오래되었다. 신중하게 다루어라...'
+      },
       '5_3': {
         prologue_1: '신비한 적이 나타났습니다. 이것이 마지막 도전입니다. 격파하세요!',
+        prologue_2: '나는 이 비밀들의 수호자다. 네 가치를 증명하라, 그렇지 않으면 멸망하라!',
         epilogue_1: '해냈습니다! 고대의 수호자가 쓰러졌습니다. 은하의 비밀이 이제 당신에게 열려 있습니다.'
       },
       '5_4': { prologue_1: '마침내 평화가 찾아왔습니다. 이 새 시대에 새 식민지를 세우고 제국을 확장하세요.' },
       '5_5': {
         prologue_1: '당신의 전설은 이제 막 시작되었습니다. 계속 탐험하고 더 많은 성계를 정복하세요!',
-        epilogue_1: '은하는 광대하고 끝이 없으며, 셀 수 없는 비밀이 당신을 기다리고 있습니다...'
+        epilogue_1: '은하는 광대하고 끝이 없으며, 셀 수 없는 비밀이 당신을 기다리고 있습니다...',
+        epilogue_2: '당신의 여정은 계속된다... 새로운 모험이 별 너머에서 기다리고 있다...'
       }
     }
   }

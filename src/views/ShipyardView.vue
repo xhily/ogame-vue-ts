@@ -101,6 +101,20 @@
               />
             </div>
 
+            <!-- 拆除数量输入 -->
+            <div v-if="(planet.fleet[shipType] || 0) > 0" class="space-y-2">
+              <Label :for="`scrap-quantity-${shipType}`" class="text-xs sm:text-sm text-destructive">{{ t('shipyardView.scrapQuantity') }}</Label>
+              <Input
+                :id="`scrap-quantity-${shipType}`"
+                v-model.number="scrapQuantities[shipType]"
+                type="number"
+                min="0"
+                :max="planet.fleet[shipType] || 0"
+                placeholder="0"
+                class="text-sm"
+              />
+            </div>
+
             <div v-if="quantities[shipType] > 0" class="text-xs sm:text-sm space-y-1.5 sm:space-y-2 p-2.5 sm:p-3 bg-muted rounded-lg">
               <p class="font-medium text-muted-foreground">{{ t('shipyardView.totalCost') }}:</p>
               <div class="space-y-1 sm:space-y-1.5">
@@ -132,6 +146,36 @@
               class="w-full"
             >
               {{ t('queue.addToWaiting') }}
+            </Button>
+
+            <!-- 拆除返还资源显示 -->
+            <div v-if="scrapQuantities[shipType] > 0" class="text-xs sm:text-sm space-y-1.5 sm:space-y-2 p-2.5 sm:p-3 bg-destructive/10 rounded-lg border border-destructive/30">
+              <p class="font-medium text-destructive">{{ t('shipyardView.scrapRefund') }}:</p>
+              <div class="space-y-1 sm:space-y-1.5">
+                <div
+                  v-for="resourceType in costResourceTypes"
+                  :key="resourceType.key"
+                  v-show="resourceType.key !== 'darkMatter' || getScrapRefund(shipType).darkMatter > 0"
+                  class="flex items-center gap-1.5 sm:gap-2"
+                >
+                  <ResourceIcon :type="resourceType.key" size="sm" />
+                  <span class="text-xs">{{ t(`resources.${resourceType.key}`) }}:</span>
+                  <span class="font-medium text-xs sm:text-sm text-green-500">
+                    +{{ formatNumber(getScrapRefund(shipType)[resourceType.key]) }}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- 拆除按钮 -->
+            <Button
+              v-if="(planet.fleet[shipType] || 0) > 0"
+              @click="handleScrap(shipType, $event)"
+              :disabled="!canScrap(shipType)"
+              variant="destructive"
+              class="w-full"
+            >
+              {{ t('shipyardView.scrap') }}
             </Button>
           </div>
         </CardContent>
@@ -226,6 +270,25 @@
 
   // 每种舰船的建造数量
   const quantities = ref<Record<ShipType, number>>({
+    [ShipType.LightFighter]: 0,
+    [ShipType.HeavyFighter]: 0,
+    [ShipType.Cruiser]: 0,
+    [ShipType.Battleship]: 0,
+    [ShipType.Battlecruiser]: 0,
+    [ShipType.Bomber]: 0,
+    [ShipType.Destroyer]: 0,
+    [ShipType.SmallCargo]: 0,
+    [ShipType.LargeCargo]: 0,
+    [ShipType.ColonyShip]: 0,
+    [ShipType.Recycler]: 0,
+    [ShipType.EspionageProbe]: 0,
+    [ShipType.SolarSatellite]: 0,
+    [ShipType.DarkMatterHarvester]: 0,
+    [ShipType.Deathstar]: 0
+  })
+
+  // 每种舰船的拆除数量
+  const scrapQuantities = ref<Record<ShipType, number>>({
     [ShipType.LightFighter]: 0,
     [ShipType.HeavyFighter]: 0,
     [ShipType.Cruiser]: 0,
@@ -379,5 +442,55 @@
 
     waitingQueueLogic.addToBuildWaitingQueue(planet.value, item)
     quantities.value[shipType] = 0
+  }
+
+  // 计算拆除返还资源
+  const getScrapRefund = (shipType: ShipType) => {
+    const quantity = scrapQuantities.value[shipType]
+    return shipLogic.calculateShipScrapRefund(shipType, quantity)
+  }
+
+  // 检查是否可以拆除
+  const canScrap = (shipType: ShipType): boolean => {
+    if (!planet.value) return false
+
+    const quantity = scrapQuantities.value[shipType]
+    if (quantity <= 0) return false
+
+    const available = planet.value.fleet[shipType] || 0
+    return available >= quantity
+  }
+
+  // 拆除舰船
+  const handleScrap = (shipType: ShipType, _event: MouseEvent) => {
+    // 防抖：防止快速点击
+    if (isProcessing.value) return
+    isProcessing.value = true
+    setTimeout(() => {
+      isProcessing.value = false
+    }, DEBOUNCE_DELAY)
+
+    const quantity = scrapQuantities.value[shipType]
+    if (quantity <= 0) {
+      alertDialogTitle.value = t('shipyardView.inputError')
+      alertDialogMessage.value = t('shipyardView.inputErrorMessage')
+      alertDialogOpen.value = true
+      return
+    }
+
+    if (!gameStore.currentPlanet) return
+
+    const validation = shipValidation.validateShipScrap(gameStore.currentPlanet, shipType, quantity)
+    if (!validation.valid) {
+      alertDialogTitle.value = t('shipyardView.scrapFailed')
+      alertDialogMessage.value = validation.reason ? t(validation.reason) : t('shipyardView.scrapFailedMessage')
+      alertDialogOpen.value = true
+      return
+    }
+
+    // 执行拆除
+    const queueItem = shipValidation.executeShipScrap(gameStore.currentPlanet, shipType, quantity, gameStore.player.officers)
+    gameStore.currentPlanet.buildQueue.push(queueItem)
+    scrapQuantities.value[shipType] = 0
   }
 </script>

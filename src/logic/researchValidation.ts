@@ -54,7 +54,8 @@ export const executeTechnologyResearch = (
   techType: TechnologyType,
   currentLevel: number,
   officers: Record<OfficerType, Officer>,
-  technologies: Partial<Record<TechnologyType, number>>
+  technologies: Partial<Record<TechnologyType, number>>,
+  allPlanets?: Planet[]
 ): { queueItem: BuildQueueItem } => {
   const targetLevel = currentLevel + 1
   const cost = researchLogic.calculateTechnologyCost(techType, targetLevel)
@@ -62,11 +63,30 @@ export const executeTechnologyResearch = (
   // 计算军官加成
   const bonuses = officerLogic.calculateActiveBonuses(officers, Date.now())
 
-  // 获取研究实验室等级和能源技术等级
-  const researchLabLevel = planet.buildings[BuildingType.ResearchLab] || 1
-  const energyTechLevel = technologies[TechnologyType.EnergyTechnology] || 0
+  // 获取星际研究网络等级
+  const intergalacticResearchNetworkLevel = technologies[TechnologyType.IntergalacticResearchNetwork] || 0
 
-  const time = researchLogic.calculateTechnologyTime(techType, currentLevel, bonuses.researchSpeedBonus, researchLabLevel, energyTechLevel)
+  // 计算有效研究实验室等级（考虑星际研究网络）
+  let researchLabLevel: number
+  if (allPlanets && intergalacticResearchNetworkLevel > 0) {
+    researchLabLevel = researchLogic.calculateEffectiveLabLevel(allPlanets, planet.id, intergalacticResearchNetworkLevel)
+  } else {
+    researchLabLevel = planet.buildings[BuildingType.ResearchLab] || 1
+  }
+
+  const energyTechLevel = technologies[TechnologyType.EnergyTechnology] || 0
+  // 获取大学等级（加速研究）
+  const universityLevel = planet.buildings[BuildingType.University] || 0
+
+  const time = researchLogic.calculateTechnologyTime(
+    techType,
+    currentLevel,
+    bonuses.researchSpeedBonus,
+    researchLabLevel,
+    energyTechLevel,
+    1,
+    universityLevel
+  )
 
   // 扣除资源
   resourceLogic.deductResources(planet.resources, cost)

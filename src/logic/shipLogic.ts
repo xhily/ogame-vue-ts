@@ -322,3 +322,49 @@ export const addFleet = (currentFleet: Fleet, fleet: Partial<Fleet>): void => {
     }
   }
 }
+
+/**
+ * 计算舰船拆除返还资源
+ * 返还50%的建造成本
+ */
+export const calculateShipScrapRefund = (shipType: ShipType, quantity: number): Resources => {
+  const cost = calculateShipCost(shipType, quantity)
+  return {
+    metal: Math.floor(cost.metal * 0.5),
+    crystal: Math.floor(cost.crystal * 0.5),
+    deuterium: Math.floor(cost.deuterium * 0.5),
+    darkMatter: Math.floor(cost.darkMatter * 0.5),
+    energy: 0
+  }
+}
+
+/**
+ * 计算舰船拆除时间
+ * 拆除时间为建造时间的50%
+ */
+export const calculateShipScrapTime = (
+  shipType: ShipType,
+  quantity: number,
+  buildingSpeedBonus: number = 0,
+  roboticsFactoryLevel: number = 0,
+  naniteFactoryLevel: number = 0
+): number => {
+  const buildTime = calculateShipBuildTime(shipType, quantity, buildingSpeedBonus, roboticsFactoryLevel, naniteFactoryLevel)
+  return Math.floor(buildTime * 0.5)
+}
+
+/**
+ * 创建舰船拆除队列项
+ */
+export const createShipScrapQueueItem = (shipType: ShipType, quantity: number, scrapTime: number): BuildQueueItem => {
+  const now = Date.now()
+  shipQueueIdCounter++
+  return {
+    id: `scrap_ship_${now}_${shipQueueIdCounter}`,
+    type: 'scrap_ship',
+    itemType: shipType,
+    quantity,
+    startTime: now,
+    endTime: now + scrapTime * 1000
+  }
+}

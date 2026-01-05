@@ -46,6 +46,8 @@ export default {
     cannotAttackOwnPlanet: 'Cannot attack your own planet',
     fleetMissionsFull: 'Fleet mission slots full',
     insufficientFleet: 'Insufficient fleet',
+    insufficientShips: 'Insufficient ships',
+    invalidQuantity: 'Invalid quantity',
     insufficientFuel: 'Insufficient fuel',
     planetOnly: 'This building can only be built on planets',
     moonOnly: 'This building can only be built on moons',
@@ -55,7 +57,12 @@ export default {
     researchQueueFull: 'Research queue full',
     moonExists: 'Moon already exists',
     insufficientDebris: 'Insufficient debris field',
-    launchFailed: 'Launch failed'
+    launchFailed: 'Launch failed',
+    planetNotFound: 'Planet not found',
+    cannotAbandonHomePlanet: 'Cannot abandon home planet',
+    hasBuildQueue: 'Please wait for build queue to complete',
+    hasFleetOnPlanet: 'Please transfer or scrap all fleet first',
+    hasDefenseOnPlanet: 'Please demolish all defense first'
   },
   nav: {
     overview: 'Overview',
@@ -123,7 +130,12 @@ export default {
     renamePlanet: 'Rename Planet',
     renamePlanetTitle: 'Rename Planet',
     planetNamePlaceholder: 'Enter new planet name',
-    rename: 'Rename'
+    rename: 'Rename',
+    abandonColony: 'Abandon Colony',
+    confirmAbandon: 'Confirm Abandon Colony',
+    abandonWarning: 'Are you sure you want to abandon "{name}"?\n\nThis action cannot be undone!\nAll buildings, resources and the moon (if any) will be lost.',
+    confirmAbandonButton: 'Abandon',
+    abandonFailed: 'Abandon Failed'
   },
   player: {
     points: 'Total Points'
@@ -152,6 +164,7 @@ export default {
     planetDestroyerFactory: 'Planet Destroyer Factory',
     geoResearchStation: 'Geological Research Station',
     deepDrillingFacility: 'Deep Drilling Facility',
+    university: 'University',
     buildTime: 'Build Time',
     production: 'Production',
     consumption: 'Consumption',
@@ -199,8 +212,9 @@ export default {
     sensorPhalanx: 'Detects fleet activities in surrounding systems',
     jumpGate: 'Instantly transfers fleets to other moons',
     planetDestroyerFactory: 'Constructs ultimate weapons capable of destroying planets',
-    geoResearchStation: 'Researches geological structures and increases ore deposit regeneration rate. +50% regeneration per level',
-    deepDrillingFacility: 'Drills deep into the crust to access deeper ore veins. +20% ore deposit capacity per level'
+    geoResearchStation: 'Researches geological structures and increases ore deposit regeneration rate. +10% regeneration per level',
+    deepDrillingFacility: 'Drills deep into the crust to access deeper ore veins. +20% ore deposit capacity per level',
+    university: 'Trains researchers to accelerate research speed. -8% research time per level (stacks with Intergalactic Research Network)'
   },
   ships: {
     lightFighter: 'Light Fighter',
@@ -275,7 +289,11 @@ export default {
     researchQueueBonus: 'Research Queue',
     colonySlots: 'Colony Slots',
     forAllPlanets: '(Global)',
-    speedBonus: 'Speed Bonus'
+    speedBonus: 'Speed Bonus',
+    // 资源产量加成显示
+    mineralResearch: 'Mineral Research',
+    crystalResearch: 'Crystal Research',
+    fuelResearch: 'Fuel Research'
   },
   technologies: {
     energyTechnology: 'Energy Technology',
@@ -296,7 +314,11 @@ export default {
     darkMatterTechnology: 'Dark Matter Technology',
     terraformingTechnology: 'Terraforming Technology',
     planetDestructionTech: 'Planet Destruction Technology',
-    miningTechnology: 'Mining Technology'
+    miningTechnology: 'Mining Technology',
+    intergalacticResearchNetwork: 'Intergalactic Research Network',
+    mineralResearch: 'Mineral Research',
+    crystalResearch: 'Crystal Research',
+    fuelResearch: 'Fuel Research'
   },
   technologyDescriptions: {
     energyTechnology: 'Improves energy efficiency',
@@ -318,7 +340,11 @@ export default {
     darkMatterTechnology: 'Research into dark matter properties and applications',
     terraformingTechnology: 'Research planet terraforming technology, adds 30 available space to all planets per level',
     planetDestructionTech: 'Terrifying technology for destroying entire planets',
-    miningTechnology: 'Improves mining methods and equipment, increases ore deposit capacity on all planets. +15% capacity per level'
+    miningTechnology: 'Improves mining methods and equipment, increases ore deposit capacity on all planets. +15% capacity per level',
+    intergalacticResearchNetwork: 'Links multiple research labs across planets. Each level connects 1 additional lab (highest level labs are used)',
+    mineralResearch: 'Research more efficient metal extraction techniques. +2% metal production per level',
+    crystalResearch: 'Research more efficient crystal refinement techniques. +2% crystal production per level',
+    fuelResearch: 'Research more efficient deuterium synthesis techniques. +2% deuterium production per level'
   },
   officers: {
     commander: 'Commander',
@@ -440,7 +466,12 @@ export default {
     inputError: 'Input Error',
     inputErrorMessage: 'Please enter build quantity!',
     buildFailed: 'Build Failed',
-    buildFailedMessage: 'Please check if you have enough resources or if prerequisites are met.'
+    buildFailedMessage: 'Please check if you have enough resources or if prerequisites are met.',
+    scrapQuantity: 'Scrap Quantity',
+    scrapRefund: 'Scrap Refund (50%)',
+    scrap: 'Scrap',
+    scrapFailed: 'Scrap Failed',
+    scrapFailedMessage: 'Please check if you have enough ships.'
   },
   defense: {
     attack: 'Attack',
@@ -917,6 +948,9 @@ export default {
     round: 'Round {round}',
     attackerRemainingPower: 'Attacker remaining power',
     defenderRemainingPower: 'Defender remaining power',
+    importFromSpyReport: 'Import from Spy Report',
+    selectSpyReport: 'Select Spy Report',
+    noSpyReports: 'No spy reports available',
     // Battle animation
     playAnimation: 'Play Animation',
     showDetails: 'Show Details',
@@ -944,6 +978,7 @@ export default {
     exporting: 'Exporting...',
     exportSuccess: 'Export successful',
     exportSuccessWithPath: 'Export successful, file saved to: {path}',
+    storagePermissionDenied: 'Storage permission denied, cannot export file',
     exportFailed: 'Export failed, please try again',
     importData: 'Import Data',
     importDataDesc: 'Restore game progress from JSON file',
@@ -961,6 +996,8 @@ export default {
     gameSettingsDesc: 'Adjust game parameters and preferences',
     gamePause: 'Game Pause',
     gamePauseDesc: 'Pause or resume game time and resource production',
+    battleMode: 'Fight to Finish Mode',
+    battleModeDesc: 'When enabled, battles last up to 100 rounds until a winner is decided. When disabled, uses classic 6-round mode',
     pause: 'Pause',
     resume: 'Resume',
     gamePaused: 'Game paused',
@@ -1950,13 +1987,19 @@ export default {
       questNotActive: 'Quest not active',
       questNotCompleted: 'Quest not completed',
       rewardsAlreadyClaimed: 'Rewards already claimed',
-      prerequisiteNotMet: 'Prerequisite quest not completed'
+      prerequisiteNotMet: 'Prerequisite quest not completed',
+      questLocked: 'Quest is locked',
+      notInitialized: 'Campaign not initialized',
+      questAlreadyCompleted: 'Quest already completed'
     },
     speakers: {
       ancientVoice: 'Ancient Voice',
       neighborNPC: 'Neighbor Faction',
       mysteriousSignal: 'Mysterious Signal',
-      enemyCommander: 'Enemy Commander'
+      enemyCommander: 'Enemy Commander',
+      shadowVoice: 'Shadow Voice',
+      allyNPC: 'Allied Faction',
+      ancientGuardian: 'Ancient Guardian'
     },
     objectiveDescriptions: {
       buildMetalMine: 'Build Metal Mine to level 2',
@@ -2044,13 +2087,18 @@ export default {
       '2_3': {
         prologue_1:
           'Your expedition discovered anomalous signals. These signals seem to come from an ancient civilization... Investigate their source.',
+        prologue_2: 'These signals... they carry echoes of a long-lost civilization. Their secrets await discovery...',
         epilogue_1: 'These symbols... They are ruins of an ancient civilization! Continue investigating to uncover their secrets.'
       },
       '2_4': {
-        prologue_1: 'You have found the location of ancient ruins. Send your fleet to explore and see what you can discover.'
+        prologue_1: 'You have found the location of ancient ruins. Send your fleet to explore and see what you can discover.',
+        prologue_2: 'The ruins hold many secrets... Choose your path wisely...',
+        choice_1: 'Explore cautiously - prioritize safety',
+        choice_2: 'Explore aggressively - prioritize discovery'
       },
       '2_5': {
-        prologue_1: 'Data archives were found in the ruins. Study this data, perhaps you can unlock new technology.'
+        prologue_1: 'Data archives were found in the ruins. Study this data, perhaps you can unlock new technology.',
+        epilogue_1: 'The ancient data has been decrypted! New technological insights have been gained.'
       },
       '3_1': {
         prologue_1: 'While exploring, do not forget about diplomacy. Maintaining good relations with surrounding factions benefits you.'
@@ -2059,16 +2107,19 @@ export default {
         prologue_1: 'Some factions have shown friendliness. Continue deepening relations, perhaps you can gain more support.'
       },
       '3_3': {
-        prologue_1: 'Intelligence indicates hostile forces are watching you from the shadows. Stay vigilant and scout their movements.'
+        prologue_1: 'Intelligence indicates hostile forces are watching you from the shadows. Stay vigilant and scout their movements.',
+        prologue_2: 'Dark forces stir in the void... They have noticed your growing power...'
       },
       '3_4': {
         prologue_1: 'Establish a formal alliance with friendly factions to support each other against threats.'
       },
       '3_5': {
-        prologue_1: 'Threats are approaching. Build defense facilities and prepare for possible conflict.'
+        prologue_1: 'Threats are approaching. Build defense facilities and prepare for possible conflict.',
+        epilogue_1: 'Your defenses are ready. The storm is coming, but you are prepared.'
       },
       '4_1': {
         prologue_1: 'The enemy has launched an attack! Defend your planet!',
+        prologue_2: 'The shadow fleet approaches... Your moment of trial has come...',
         epilogue_1: "You successfully repelled the enemy's first wave. But this is just the beginning..."
       },
       '4_2': {
@@ -2081,17 +2132,20 @@ export default {
         prologue_1: 'Much debris remains on the battlefield. Recycle these resources to prepare for the next battle.'
       },
       '4_5': {
-        prologue_1: 'The final battle approaches. Build a powerful fleet and prepare for the ultimate challenge.'
+        prologue_1: 'The final battle approaches. Build a powerful fleet and prepare for the ultimate challenge.',
+        epilogue_1: 'Your fleet is assembled. The decisive moment draws near...'
       },
       '5_1': {
         prologue_1: 'All clues point to the deepest part of the ruins. The core secrets of the ancient civilization lie there.',
         prologue_2: 'You have finally arrived... The truth will soon be revealed...'
       },
       '5_2': {
-        prologue_1: 'In the depths of the ruins, you discovered lost ancient technology. Research and unlock their power.'
+        prologue_1: 'In the depths of the ruins, you discovered lost ancient technology. Research and unlock their power.',
+        prologue_2: 'This technology... it predates all known civilizations. Handle it with care...'
       },
       '5_3': {
         prologue_1: 'A mysterious enemy has appeared. This is the final challenge. Defeat it!',
+        prologue_2: 'I am the guardian of these secrets. Prove your worth, or be destroyed!',
         epilogue_1: 'You did it! The ancient guardian has been defeated. The secrets of the galaxy are now open to you.'
       },
       '5_4': {
@@ -2099,7 +2153,8 @@ export default {
       },
       '5_5': {
         prologue_1: 'Your legend has just begun. Continue exploring and conquering more star systems!',
-        epilogue_1: 'The galaxy is vast and boundless, with countless secrets waiting for you to discover...'
+        epilogue_1: 'The galaxy is vast and boundless, with countless secrets waiting for you to discover...',
+        epilogue_2: 'Your journey continues... New adventures await beyond the stars...'
       }
     }
   },

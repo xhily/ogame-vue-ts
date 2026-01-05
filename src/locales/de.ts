@@ -153,6 +153,7 @@ export default {
     planetDestroyerFactory: 'Planetenzerstörer-Fabrik',
     geoResearchStation: 'Geologische Forschungsstation',
     deepDrillingFacility: 'Tiefbohranlage',
+    university: 'Universität',
     buildTime: 'Bauzeit',
     build: 'Bauen',
     production: 'Produktion',
@@ -204,8 +205,9 @@ export default {
     jumpGate: 'Überträgt Flotten sofort zu anderen Monden',
     planetDestroyerFactory: 'Konstruiert ultimative Waffen zur Zerstörung von Planeten',
     geoResearchStation:
-      'Erforscht geologische Strukturen und erhöht die natürliche Erzvorkommen-Regenerationsrate. +50% Regeneration pro Stufe',
-    deepDrillingFacility: ''
+      'Erforscht geologische Strukturen und erhöht die natürliche Erzvorkommen-Regenerationsrate. +10% Regeneration pro Stufe',
+    deepDrillingFacility: '',
+    university: 'Bildet Forscher aus, um die Forschungsgeschwindigkeit zu beschleunigen. -8% Forschungszeit pro Stufe'
   },
   ships: {
     lightFighter: 'Leichter Jäger',
@@ -287,7 +289,11 @@ export default {
     researchQueueBonus: 'Forschungswarteschlange',
     colonySlots: 'Kolonieplätze',
     forAllPlanets: '(Global)',
-    speedBonus: 'Geschwindigkeitsbonus'
+    speedBonus: 'Geschwindigkeitsbonus',
+    // Ressourcenproduktionsbonus-Anzeige
+    mineralResearch: 'Mineralforschung',
+    crystalResearch: 'Kristallforschung',
+    fuelResearch: 'Brennstoffforschung'
   },
   technologies: {
     energyTechnology: 'Energietechnik',
@@ -308,7 +314,11 @@ export default {
     darkMatterTechnology: 'Dunkle-Materie-Technologie',
     terraformingTechnology: 'Terraforming-Technologie',
     planetDestructionTech: 'Planetenzerstörungstechnologie',
-    miningTechnology: ''
+    miningTechnology: '',
+    intergalacticResearchNetwork: 'Intergalaktisches Forschungsnetzwerk',
+    mineralResearch: 'Mineralforschung',
+    crystalResearch: 'Kristallforschung',
+    fuelResearch: 'Treibstoffforschung'
   },
   technologyDescriptions: {
     energyTechnology: 'Verbessert Energieeffizienz',
@@ -330,7 +340,11 @@ export default {
     darkMatterTechnology: 'Forschung zu Eigenschaften und Anwendungen von Dunkler Materie',
     terraformingTechnology: 'Forschung zur Planeten-Terraforming-Technologie, erhöht verfügbaren Platz aller Planeten um 30 pro Stufe',
     planetDestructionTech: 'Schreckliche Technologie zur Zerstörung ganzer Planeten',
-    miningTechnology: ''
+    miningTechnology: '',
+    intergalacticResearchNetwork: 'Verbindet mehrere Forschungslabore über Planeten hinweg. Jede Stufe verbindet 1 zusätzliches Labor',
+    mineralResearch: 'Erforscht effizientere Metallextraktionstechniken. +2% Metallproduktion pro Stufe',
+    crystalResearch: 'Erforscht effizientere Kristallveredelungstechniken. +2% Kristallproduktion pro Stufe',
+    fuelResearch: 'Erforscht effizientere Deuterium-Synthesetechniken. +2% Deuteriumproduktion pro Stufe'
   },
   officers: {
     commander: 'Kommandant',
@@ -932,7 +946,10 @@ export default {
     hideRoundDetails: 'Rundendetails ausblenden',
     round: 'Runde {round}',
     attackerRemainingPower: 'Verbleibende Angreiferkraft',
-    defenderRemainingPower: 'Verbleibende Verteidigerkraft'
+    defenderRemainingPower: 'Verbleibende Verteidigerkraft',
+    importFromSpyReport: 'Aus Spionagebericht importieren',
+    selectSpyReport: 'Spionagebericht auswählen',
+    noSpyReports: 'Keine Spionageberichte verfügbar'
   },
   settings: {
     dataManagement: 'Datenverwaltung',
@@ -943,6 +960,7 @@ export default {
     exporting: 'Exportieren...',
     exportSuccess: 'Export erfolgreich',
     exportSuccessWithPath: 'Export erfolgreich, Datei gespeichert unter: {path}',
+    storagePermissionDenied: 'Speicherberechtigung verweigert, Datei kann nicht exportiert werden',
     exportFailed: 'Export fehlgeschlagen, bitte erneut versuchen',
     importData: 'Daten importieren',
     importDataDesc: 'Spielfortschritt aus JSON-Datei wiederherstellen',
@@ -962,6 +980,8 @@ export default {
     gameSettingsDesc: 'Spielparameter und Einstellungen anpassen',
     gamePause: 'Spielpause',
     gamePauseDesc: 'Spielzeit und Ressourcenproduktion pausieren oder fortsetzen',
+    battleMode: 'Bis zum Ende kämpfen',
+    battleModeDesc: 'Wenn aktiviert, dauern Kämpfe bis zu 100 Runden bis ein Sieger feststeht. Wenn deaktiviert, wird der klassische 6-Runden-Modus verwendet',
     pause: 'Pausieren',
     resume: 'Fortsetzen',
     gamePaused: 'Spiel pausiert',
@@ -1400,19 +1420,23 @@ export default {
     skip: 'Anleitung überspringen',
     welcome: {
       title: 'Willkommen bei OGame',
-      content: 'Willkommen, Kommandant! Diese Anleitung führt Sie durch die Grundlagen des Imperiumsaufbaus. Klicken Sie auf "Weiter", um Ihre Reise zu beginnen.'
+      content:
+        'Willkommen, Kommandant! Diese Anleitung führt Sie durch die Grundlagen des Imperiumsaufbaus. Klicken Sie auf "Weiter", um Ihre Reise zu beginnen.'
     },
     resources: {
       title: 'Ressourcenübersicht',
-      content: 'Dies sind Ihre Ressourcen: Metall, Kristall und Deuterium. Sie sind für den Bau von Gebäuden und die Erforschung von Technologien unerlässlich. Energie ist ebenfalls wichtig, um Ihre Infrastruktur zu betreiben.'
+      content:
+        'Dies sind Ihre Ressourcen: Metall, Kristall und Deuterium. Sie sind für den Bau von Gebäuden und die Erforschung von Technologien unerlässlich. Energie ist ebenfalls wichtig, um Ihre Infrastruktur zu betreiben.'
     },
     planet: {
       title: 'Ihr Planet',
-      content: 'Dies ist Ihr Heimatplanet. Hier sehen Sie den Planetennamen, die Koordinaten und können zwischen Planeten wechseln, wenn Sie Ihr Imperium erweitern.'
+      content:
+        'Dies ist Ihr Heimatplanet. Hier sehen Sie den Planetennamen, die Koordinaten und können zwischen Planeten wechseln, wenn Sie Ihr Imperium erweitern.'
     },
     navigation: {
       title: 'Navigationsmenü',
-      content: 'Verwenden Sie dieses Menü, um zwischen verschiedenen Bereichen zu navigieren: Gebäude, Forschung, Flotte, Galaxie usw. Jeder Bereich bietet einzigartige Spielfunktionen.'
+      content:
+        'Verwenden Sie dieses Menü, um zwischen verschiedenen Bereichen zu navigieren: Gebäude, Forschung, Flotte, Galaxie usw. Jeder Bereich bietet einzigartige Spielfunktionen.'
     },
     gotoBuildings: {
       title: 'Zu Gebäuden gehen',
@@ -1420,39 +1444,48 @@ export default {
     },
     buildSolarPlant: {
       title: 'Solarkraftwerk bauen',
-      content: 'Bauen Sie zuerst ein Solarkraftwerk! Es versorgt Ihren Planeten mit Energie. Ohne Energie können andere Ressourcengebäude nicht funktionieren. Dies ist der wichtigste erste Schritt.'
+      content:
+        'Bauen Sie zuerst ein Solarkraftwerk! Es versorgt Ihren Planeten mit Energie. Ohne Energie können andere Ressourcengebäude nicht funktionieren. Dies ist der wichtigste erste Schritt.'
     },
     waitBuild: {
       title: 'Bauauftrag',
-      content: 'Ihr Gebäude befindet sich jetzt im Bauauftrag. Klicken Sie auf das Warteschlangensymbol oben rechts, um alle laufenden Bau- und Forschungsaufgaben anzuzeigen. Gebäude brauchen Zeit zur Fertigstellung, aber Sie können während des Wartens weitermachen.'
+      content:
+        'Ihr Gebäude befindet sich jetzt im Bauauftrag. Klicken Sie auf das Warteschlangensymbol oben rechts, um alle laufenden Bau- und Forschungsaufgaben anzuzeigen. Gebäude brauchen Zeit zur Fertigstellung, aber Sie können während des Wartens weitermachen.'
     },
     buildMetalMine: {
       title: 'Metallmine bauen',
-      content: 'Jetzt, da Sie Energie haben, bauen Sie eine Metallmine. Die Metallmine ist Ihre Hauptmetallquelle, und Metall wird für fast jedes Gebäude und Schiff benötigt.'
+      content:
+        'Jetzt, da Sie Energie haben, bauen Sie eine Metallmine. Die Metallmine ist Ihre Hauptmetallquelle, und Metall wird für fast jedes Gebäude und Schiff benötigt.'
     },
     buildCrystalMine: {
       title: 'Kristallmine bauen',
-      content: 'Kristall ist seltener, aber für fortgeschrittene Technologien entscheidend. Bauen Sie eine Kristallmine, um diese wertvolle Ressource zu sammeln.'
+      content:
+        'Kristall ist seltener, aber für fortgeschrittene Technologien entscheidend. Bauen Sie eine Kristallmine, um diese wertvolle Ressource zu sammeln.'
     },
     buildDeuterium: {
       title: 'Deuteriumsynthesizer bauen',
-      content: 'Deuterium ist für Schiffstreibstoff und fortgeschrittene Forschung unerlässlich. Bauen Sie einen Deuteriumsynthesizer, um diese wichtige Ressource zu produzieren.'
+      content:
+        'Deuterium ist für Schiffstreibstoff und fortgeschrittene Forschung unerlässlich. Bauen Sie einen Deuteriumsynthesizer, um diese wichtige Ressource zu produzieren.'
     },
     upgradeMines: {
       title: 'Ressourcenminen upgraden',
-      content: 'Als Nächstes müssen Sie die drei Ressourcenminen (Metall, Kristall, Deuterium) auf Level 2 upgraden, um die Anforderungen für den Bau der Roboterfabrik zu erfüllen. Upgraden Sie sie weiter, wenn Sie genügend Ressourcen haben.'
+      content:
+        'Als Nächstes müssen Sie die drei Ressourcenminen (Metall, Kristall, Deuterium) auf Level 2 upgraden, um die Anforderungen für den Bau der Roboterfabrik zu erfüllen. Upgraden Sie sie weiter, wenn Sie genügend Ressourcen haben.'
     },
     buildRobotics: {
       title: 'Roboterfabrik bauen',
-      content: 'Die Roboterfabrik kann die Baugeschwindigkeit erheblich erhöhen. Sie benötigt Metallmine, Kristallmine und Deuteriumsynthesizer jeweils auf Level 2. Bauen Sie sie, um die Baueffizienz zu steigern!'
+      content:
+        'Die Roboterfabrik kann die Baugeschwindigkeit erheblich erhöhen. Sie benötigt Metallmine, Kristallmine und Deuteriumsynthesizer jeweils auf Level 2. Bauen Sie sie, um die Baueffizienz zu steigern!'
     },
     upgradeMinesForLab: {
       title: 'Ressourcenminen weiter upgraden',
-      content: 'Jetzt müssen Sie die drei Ressourcenminen auf Level 3 upgraden, um die Bauanforderungen des Forschungslabors zu erfüllen. Entwickeln Sie Ihre Ressourcenproduktion weiter.'
+      content:
+        'Jetzt müssen Sie die drei Ressourcenminen auf Level 3 upgraden, um die Bauanforderungen des Forschungslabors zu erfüllen. Entwickeln Sie Ihre Ressourcenproduktion weiter.'
     },
     buildResearchLab: {
       title: 'Forschungslabor bauen',
-      content: 'Das Forschungslabor ist die Grundlage für technologischen Fortschritt. Es benötigt alle drei Ressourcenminen auf Level 3. Bauen Sie es, um Technologieforschung freizuschalten!'
+      content:
+        'Das Forschungslabor ist die Grundlage für technologischen Fortschritt. Es benötigt alle drei Ressourcenminen auf Level 3. Bauen Sie es, um Technologieforschung freizuschalten!'
     },
     gotoResearch: {
       title: 'Zur Forschung gehen',
@@ -1460,11 +1493,13 @@ export default {
     },
     researchEnergy: {
       title: 'Energietechnik erforschen',
-      content: 'Die Energietechnik kann Ihre Energieproduktion verbessern und fortgeschrittene Gebäude freischalten. Dies ist eine der grundlegendsten und wichtigsten Technologien.'
+      content:
+        'Die Energietechnik kann Ihre Energieproduktion verbessern und fortgeschrittene Gebäude freischalten. Dies ist eine der grundlegendsten und wichtigsten Technologien.'
     },
     shipyardIntro: {
       title: 'Flotte & Werft',
-      content: 'Schiffe ermöglichen es Ihnen, die Galaxie zu erkunden, Ressourcen zu transportieren und Ihr Imperium zu verteidigen. Um Schiffe zu bauen, benötigen Sie eine Raumschiffwerft (benötigt Roboterfabrik Level 2).'
+      content:
+        'Schiffe ermöglichen es Ihnen, die Galaxie zu erkunden, Ressourcen zu transportieren und Ihr Imperium zu verteidigen. Um Schiffe zu bauen, benötigen Sie eine Raumschiffwerft (benötigt Roboterfabrik Level 2).'
     },
     gotoBuildingsForShipyard: {
       title: 'Zurück zur Gebäudeseite',
@@ -1472,32 +1507,39 @@ export default {
     },
     buildShipyard: {
       title: 'Raumschiffwerft bauen',
-      content: 'Die Raumschiffwerft ermöglicht es Ihnen, Schiffe und Verteidigungssysteme zu bauen. Dies ist für Flottenoperationen unerlässlich.'
+      content:
+        'Die Raumschiffwerft ermöglicht es Ihnen, Schiffe und Verteidigungssysteme zu bauen. Dies ist für Flottenoperationen unerlässlich.'
     },
     fleetIntro: {
       title: 'Flottenoperationen',
-      content: 'Sobald Sie Schiffe haben, können Sie sie auf Missionen schicken: Ressourcen transportieren, Planeten kolonisieren, Feinde angreifen oder Trümmerfelder erkunden.'
+      content:
+        'Sobald Sie Schiffe haben, können Sie sie auf Missionen schicken: Ressourcen transportieren, Planeten kolonisieren, Feinde angreifen oder Trümmerfelder erkunden.'
     },
     galaxyIntro: {
       title: 'Galaxie erkunden',
-      content: 'Die Galaxieansicht zeigt andere Planeten, Trümmerfelder und Expansionsmöglichkeiten. Verwenden Sie sie, um Ziele auszukundschaften und Ihre Strategie zu planen.'
+      content:
+        'Die Galaxieansicht zeigt andere Planeten, Trümmerfelder und Expansionsmöglichkeiten. Verwenden Sie sie, um Ziele auszukundschaften und Ihre Strategie zu planen.'
     },
     complete: {
       title: 'Anleitung abgeschlossen!',
-      content: 'Glückwunsch, Kommandant! Sie kennen jetzt die Grundlagen. Bauen Sie Ihr Imperium weiter auf, erforschen Sie Technologien und erkunden Sie die Galaxie. Denken Sie daran: Zuerst Energie entwickeln, dann Ressourcen, dann Fabriken und Forschung! Viel Glück!'
+      content:
+        'Glückwunsch, Kommandant! Sie kennen jetzt die Grundlagen. Bauen Sie Ihr Imperium weiter auf, erforschen Sie Technologien und erkunden Sie die Galaxie. Denken Sie daran: Zuerst Energie entwickeln, dann Ressourcen, dann Fabriken und Forschung! Viel Glück!'
     },
     mobile: {
       welcome: {
         title: 'Willkommen bei OGame (Mobil)',
-        content: 'Willkommen, Kommandant! Dies ist eine vereinfachte Anleitung für Touchscreens. Wir werden schnell die Kernfunktionen durchgehen, damit Sie mit dem Aufbau Ihres Imperiums beginnen können.'
+        content:
+          'Willkommen, Kommandant! Dies ist eine vereinfachte Anleitung für Touchscreens. Wir werden schnell die Kernfunktionen durchgehen, damit Sie mit dem Aufbau Ihres Imperiums beginnen können.'
       },
       resources: {
         title: 'Obere Ressourcenleiste',
-        content: 'Oben werden Ihre Ressourcen angezeigt: Metall, Kristall und Deuterium. Tippen Sie, um detaillierte Produktionsinformationen anzuzeigen.'
+        content:
+          'Oben werden Ihre Ressourcen angezeigt: Metall, Kristall und Deuterium. Tippen Sie, um detaillierte Produktionsinformationen anzuzeigen.'
       },
       menu: {
         title: 'Navigationsmenü öffnen',
-        content: 'Tippen Sie auf dieses Menüsymbol, um die Navigationsleiste zu öffnen. Sie können auf alle Funktionen zugreifen: Gebäude, Forschung, Flotte usw.'
+        content:
+          'Tippen Sie auf dieses Menüsymbol, um die Navigationsleiste zu öffnen. Sie können auf alle Funktionen zugreifen: Gebäude, Forschung, Flotte usw.'
       },
       gotoBuildings: {
         title: 'Zur Gebäudeseite gehen',
@@ -1505,19 +1547,23 @@ export default {
       },
       buildSolarPlant: {
         title: 'Solarkraftwerk bauen',
-        content: 'Bauen Sie zuerst ein Solarkraftwerk! Scrollen Sie nach unten, um es zu finden, und tippen Sie auf die Karte zum Bauen. Energie ist die Grundlage für alles.'
+        content:
+          'Bauen Sie zuerst ein Solarkraftwerk! Scrollen Sie nach unten, um es zu finden, und tippen Sie auf die Karte zum Bauen. Energie ist die Grundlage für alles.'
       },
       waitBuild: {
         title: 'Bauauftrag',
-        content: 'Tippen Sie auf das Warteschlangensymbol oben rechts, um den Baufortschritt anzuzeigen. Sie können weiter andere Seiten durchsuchen - der Bau läuft im Hintergrund.'
+        content:
+          'Tippen Sie auf das Warteschlangensymbol oben rechts, um den Baufortschritt anzuzeigen. Sie können weiter andere Seiten durchsuchen - der Bau läuft im Hintergrund.'
       },
       buildMetalMine: {
         title: 'Metallmine bauen',
-        content: 'Nachdem Sie Energie haben, bauen Sie eine Metallmine. Scrollen Sie nach unten, um die Metallmine zu finden, und tippen Sie zum Bauen.'
+        content:
+          'Nachdem Sie Energie haben, bauen Sie eine Metallmine. Scrollen Sie nach unten, um die Metallmine zu finden, und tippen Sie zum Bauen.'
       },
       complete: {
         title: 'Schnellanleitung abgeschlossen!',
-        content: 'Sehr gut! Sie haben die Grundlagen gemeistert. Bauen Sie weiter die Kristallmine und den Deuteriumsynthesizer und erkunden Sie andere Funktionen. Denken Sie daran: Zuerst Energie, dann Ressourcen!'
+        content:
+          'Sehr gut! Sie haben die Grundlagen gemeistert. Bauen Sie weiter die Kristallmine und den Deuteriumsynthesizer und erkunden Sie andere Funktionen. Denken Sie daran: Zuerst Energie, dann Ressourcen!'
       }
     }
   },
@@ -1586,7 +1632,8 @@ export default {
     },
     campaign: {
       title: 'Kampagnenmodus',
-      message: 'Erkunden Sie die Galaxie-Story-Kampagne! Schließen Sie Missionen ab, um Ressourcenbelohnungen zu erhalten und neue Herausforderungen freizuschalten. Jeder Knoten hat einzigartige Ziele und Feinde.'
+      message:
+        'Erkunden Sie die Galaxie-Story-Kampagne! Schließen Sie Missionen ab, um Ressourcenbelohnungen zu erhalten und neue Herausforderungen freizuschalten. Jeder Knoten hat einzigartige Ziele und Feinde.'
     },
     achievements: {
       title: 'Erfolgssystem',
@@ -1964,13 +2011,19 @@ export default {
       questNotActive: 'Quest nicht aktiv',
       questNotCompleted: 'Quest nicht abgeschlossen',
       rewardsAlreadyClaimed: 'Belohnungen bereits erhalten',
-      prerequisiteNotMet: 'Voraussetzungs-Quest nicht abgeschlossen'
+      prerequisiteNotMet: 'Voraussetzungs-Quest nicht abgeschlossen',
+      questLocked: 'Quest ist gesperrt',
+      notInitialized: 'Kampagne nicht initialisiert',
+      questAlreadyCompleted: 'Quest bereits abgeschlossen'
     },
     speakers: {
       ancientVoice: 'Antike Stimme',
       neighborNPC: 'Nachbar-Fraktion',
       mysteriousSignal: 'Mysteriöses Signal',
-      enemyCommander: 'Feindlicher Kommandant'
+      enemyCommander: 'Feindlicher Kommandant',
+      shadowVoice: 'Schattenstimme',
+      allyNPC: 'Verbündete Fraktion',
+      ancientGuardian: 'Antiker Wächter'
     },
     objectiveDescriptions: {
       buildMetalMine: 'Baue Metallmine auf Stufe 2',
@@ -2060,13 +2113,19 @@ export default {
       '2_3': {
         prologue_1:
           'Deine Expedition entdeckte anomale Signale. Diese Signale scheinen von einer antiken Zivilisation zu stammen... Untersuche ihre Quelle.',
+        prologue_2:
+          'Diese Signale... Sie tragen Echos einer längst verlorenen Zivilisation. Ihre Geheimnisse warten darauf, entdeckt zu werden...',
         epilogue_1: 'Diese Symbole... Sie sind Ruinen einer antiken Zivilisation! Untersuche weiter, um ihre Geheimnisse zu enthüllen.'
       },
       '2_4': {
-        prologue_1: 'Du hast den Standort antiker Ruinen gefunden. Sende deine Flotte zur Erkundung und sieh, was du entdecken kannst.'
+        prologue_1: 'Du hast den Standort antiker Ruinen gefunden. Sende deine Flotte zur Erkundung und sieh, was du entdecken kannst.',
+        prologue_2: 'Die Ruinen bergen viele Geheimnisse... Wähle deinen Weg weise...',
+        choice_1: 'Vorsichtig erkunden - Sicherheit priorisieren',
+        choice_2: 'Aggressiv erkunden - Entdeckung priorisieren'
       },
       '2_5': {
-        prologue_1: 'Datenarchive wurden in den Ruinen gefunden. Studiere diese Daten, vielleicht kannst du neue Technologie freischalten.'
+        prologue_1: 'Datenarchive wurden in den Ruinen gefunden. Studiere diese Daten, vielleicht kannst du neue Technologie freischalten.',
+        epilogue_1: 'Die antiken Daten wurden entschlüsselt! Neue technologische Erkenntnisse wurden gewonnen.'
       },
       '3_1': { prologue_1: 'Beim Erkunden vergiss nicht die Diplomatie. Gute Beziehungen zu umliegenden Fraktionen zu pflegen nützt dir.' },
       '3_2': {
@@ -2075,14 +2134,19 @@ export default {
       },
       '3_3': {
         prologue_1:
-          'Geheimdienstberichte deuten darauf hin, dass feindliche Kräfte dich aus den Schatten beobachten. Bleibe wachsam und erkunde ihre Bewegungen.'
+          'Geheimdienstberichte deuten darauf hin, dass feindliche Kräfte dich aus den Schatten beobachten. Bleibe wachsam und erkunde ihre Bewegungen.',
+        prologue_2: 'Dunkle Mächte regen sich in der Leere... Sie haben deine wachsende Macht bemerkt...'
       },
       '3_4': {
         prologue_1: 'Schließe eine formelle Allianz mit freundlichen Fraktionen, um euch gegenseitig gegen Bedrohungen zu unterstützen.'
       },
-      '3_5': { prologue_1: 'Bedrohungen nähern sich. Baue Verteidigungsanlagen und bereite dich auf mögliche Konflikte vor.' },
+      '3_5': {
+        prologue_1: 'Bedrohungen nähern sich. Baue Verteidigungsanlagen und bereite dich auf mögliche Konflikte vor.',
+        epilogue_1: 'Deine Verteidigung ist bereit. Der Sturm naht, aber du bist vorbereitet.'
+      },
       '4_1': {
         prologue_1: 'Der Feind hat einen Angriff gestartet! Verteidige deinen Planeten!',
+        prologue_2: 'Die Schattenflotte nähert sich... Deine Stunde der Prüfung ist gekommen...',
         epilogue_1: 'Du hast die erste Welle des Feindes erfolgreich abgewehrt. Aber das ist erst der Anfang...'
       },
       '4_2': {
@@ -2092,20 +2156,28 @@ export default {
       '4_4': {
         prologue_1: 'Viele Trümmer bleiben auf dem Schlachtfeld. Recycel diese Ressourcen, um dich auf die nächste Schlacht vorzubereiten.'
       },
-      '4_5': { prologue_1: 'Die letzte Schlacht naht. Baue eine mächtige Flotte und bereite dich auf die ultimative Herausforderung vor.' },
+      '4_5': {
+        prologue_1: 'Die letzte Schlacht naht. Baue eine mächtige Flotte und bereite dich auf die ultimative Herausforderung vor.',
+        epilogue_1: 'Deine Flotte ist versammelt. Der entscheidende Moment naht...'
+      },
       '5_1': {
         prologue_1: 'Alle Hinweise deuten auf den tiefsten Teil der Ruinen. Die Kerngeheimnisse der antiken Zivilisation liegen dort.',
         prologue_2: 'Du bist endlich angekommen... Die Wahrheit wird bald enthüllt...'
       },
-      '5_2': { prologue_1: 'In den Tiefen der Ruinen entdecktest du verlorene antike Technologie. Erforsche und schalte ihre Macht frei.' },
+      '5_2': {
+        prologue_1: 'In den Tiefen der Ruinen entdecktest du verlorene antike Technologie. Erforsche und schalte ihre Macht frei.',
+        prologue_2: 'Diese Technologie... Sie ist älter als alle bekannten Zivilisationen. Gehe vorsichtig damit um...'
+      },
       '5_3': {
         prologue_1: 'Ein mysteriöser Feind ist aufgetaucht. Dies ist die letzte Herausforderung. Besiege ihn!',
+        prologue_2: 'Ich bin der Wächter dieser Geheimnisse. Beweise deinen Wert oder werde vernichtet!',
         epilogue_1: 'Du hast es geschafft! Der antike Wächter wurde besiegt. Die Geheimnisse der Galaxie stehen dir nun offen.'
       },
       '5_4': { prologue_1: 'Frieden ist endlich eingekehrt. In dieser neuen Ära gründe neue Kolonien und erweitere dein Imperium.' },
       '5_5': {
         prologue_1: 'Deine Legende hat gerade erst begonnen. Erkunde weiter und erobere mehr Sternensysteme!',
-        epilogue_1: 'Die Galaxie ist weit und grenzenlos, mit zahllosen Geheimnissen, die auf dich warten...'
+        epilogue_1: 'Die Galaxie ist weit und grenzenlos, mit zahllosen Geheimnissen, die auf dich warten...',
+        epilogue_2: 'Deine Reise geht weiter... Neue Abenteuer warten jenseits der Sterne...'
       }
     }
   }

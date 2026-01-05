@@ -4,25 +4,15 @@ const config: CapacitorConfig = {
   appId: 'games.wenzi.ogame',
   appName: 'OGame Vue Ts',
   webDir: 'docs',
-  server: {
-    androidScheme: 'https',
-    cacheControl: 'max-age=31536000'
-  },
+  server: { androidScheme: 'https', cacheControl: 'max-age=31536000' },
   android: {
-    buildOptions: {
-      keystorePath: undefined,
-      keystoreAlias: undefined
-    },
+    buildOptions: { keystorePath: undefined, keystoreAlias: undefined },
     webContentsDebuggingEnabled: false,
     allowMixedContent: false,
     hardwareAcceleration: true
   },
-  plugins: {
-    // 禁用键盘自动调整视口
-    Keyboard: {
-      resize: 'none'
-    }
-  }
+  // 禁用键盘自动调整视口
+  plugins: { Keyboard: { resize: 'none' } }
 }
 
 export default config

@@ -178,6 +178,16 @@
     type: 'attacker-loss' | 'defender-loss' | 'info'
   }
   const battleLogs = ref<BattleLog[]>([])
+  const MAX_LOGS = 100 // 限制日志数量，防止100回合战斗导致性能问题
+
+  // 添加日志的辅助函数，自动限制数量
+  const addBattleLog = (log: BattleLog) => {
+    battleLogs.value.push(log)
+    // 如果超过最大数量，删除最旧的日志
+    if (battleLogs.value.length > MAX_LOGS) {
+      battleLogs.value = battleLogs.value.slice(-MAX_LOGS)
+    }
+  }
 
   // 计算属性
   const totalRounds = computed(() => props.report.roundDetails?.length || props.report.rounds || 1)
@@ -367,97 +377,101 @@
     if (currentRoundIndex.value >= totalRounds.value) return
 
     isPlayingRound = true
-    const speed = parseFloat(speedMultiplier.value)
-    const roundIndex = currentRoundIndex.value
-    const roundData = props.report.roundDetails?.[roundIndex]
+    try {
+      const speed = parseFloat(speedMultiplier.value) || 1
+      const roundIndex = currentRoundIndex.value
+      const roundData = props.report.roundDetails?.[roundIndex]
 
-    // 攻击动画阶段
-    attackAnimationPhase.value = 'attack'
+      // 攻击动画阶段
+      attackAnimationPhase.value = 'attack'
 
-    // 添加日志
-    battleLogs.value.push({
-      round: roundIndex + 1,
-      message: t('messagesView.roundStarted').replace('{round}', String(roundIndex + 1)),
-      type: 'info'
-    })
+      // 添加日志
+      addBattleLog({
+        round: roundIndex + 1,
+        message: t('messagesView.roundStarted').replace('{round}', String(roundIndex + 1)),
+        type: 'info'
+      })
 
-    // 等待攻击动画
-    await sleep(400 / speed)
+      // 等待攻击动画
+      await sleep(400 / speed)
 
-    // 伤害阶段
-    attackAnimationPhase.value = 'damage'
+      // 伤害阶段
+      attackAnimationPhase.value = 'damage'
 
-    // 计算当前回合的损失数字
-    if (roundData) {
-      const attackerLoss = Object.values(roundData.attackerLosses).reduce((sum, count) => sum + count, 0)
-      const defenderLoss =
-        Object.values(roundData.defenderLosses.fleet || {}).reduce((sum, count) => sum + count, 0) +
-        Object.values(roundData.defenderLosses.defense || {}).reduce((sum, count) => sum + count, 0)
-      displayedLosses.value = { attacker: attackerLoss, defender: defenderLoss }
-    } else {
-      displayedLosses.value = { attacker: 0, defender: 0 }
+      // 计算当前回合的损失数字
+      if (roundData) {
+        const attackerLoss = Object.values(roundData.attackerLosses || {}).reduce((sum, count) => sum + count, 0)
+        const defenderLoss =
+          Object.values(roundData.defenderLosses?.fleet || {}).reduce((sum, count) => sum + count, 0) +
+          Object.values(roundData.defenderLosses?.defense || {}).reduce((sum, count) => sum + count, 0)
+        displayedLosses.value = { attacker: attackerLoss, defender: defenderLoss }
+      } else {
+        displayedLosses.value = { attacker: 0, defender: 0 }
+      }
+      showDamageNumbers.value = true
+
+      if (roundData) {
+        // 记录攻击方损失
+        for (const [shipType, count] of Object.entries(roundData.attackerLosses || {})) {
+          if (count > 0) {
+            explodingShips.value.push({ side: 'attacker', type: shipType })
+            addBattleLog({
+              round: roundIndex + 1,
+              message: t('messagesView.shipDestroyed')
+                .replace('{count}', String(count))
+                .replace('{ship}', SHIPS.value[shipType as ShipType]?.name || shipType),
+              type: 'attacker-loss'
+            })
+          }
+        }
+
+        // 记录防守方损失
+        for (const [shipType, count] of Object.entries(roundData.defenderLosses?.fleet || {})) {
+          if (count > 0) {
+            explodingShips.value.push({ side: 'defender', type: shipType })
+            addBattleLog({
+              round: roundIndex + 1,
+              message: t('messagesView.shipDestroyed')
+                .replace('{count}', String(count))
+                .replace('{ship}', SHIPS.value[shipType as ShipType]?.name || shipType),
+              type: 'defender-loss'
+            })
+          }
+        }
+
+        for (const [defType, count] of Object.entries(roundData.defenderLosses?.defense || {})) {
+          if (count > 0) {
+            explodingShips.value.push({ side: 'defender', type: defType })
+            addBattleLog({
+              round: roundIndex + 1,
+              message: t('messagesView.defenseDestroyed')
+                .replace('{count}', String(count))
+                .replace('{defense}', DEFENSES.value[defType as DefenseType]?.name || defType),
+              type: 'defender-loss'
+            })
+          }
+        }
+      }
+
+      // 等待伤害显示
+      await sleep(600 / speed)
+
+      // 清理状态
+      attackAnimationPhase.value = 'idle'
+      showDamageNumbers.value = false
+      explodingShips.value = []
+
+      currentRoundIndex.value++
+    } finally {
+      // 确保锁始终被释放，即使发生错误
+      isPlayingRound = false
     }
-    showDamageNumbers.value = true
-
-    if (roundData) {
-      // 记录攻击方损失
-      for (const [shipType, count] of Object.entries(roundData.attackerLosses)) {
-        if (count > 0) {
-          explodingShips.value.push({ side: 'attacker', type: shipType })
-          battleLogs.value.push({
-            round: roundIndex + 1,
-            message: t('messagesView.shipDestroyed')
-              .replace('{count}', String(count))
-              .replace('{ship}', SHIPS.value[shipType as ShipType]?.name || shipType),
-            type: 'attacker-loss'
-          })
-        }
-      }
-
-      // 记录防守方损失
-      for (const [shipType, count] of Object.entries(roundData.defenderLosses.fleet || {})) {
-        if (count > 0) {
-          explodingShips.value.push({ side: 'defender', type: shipType })
-          battleLogs.value.push({
-            round: roundIndex + 1,
-            message: t('messagesView.shipDestroyed')
-              .replace('{count}', String(count))
-              .replace('{ship}', SHIPS.value[shipType as ShipType]?.name || shipType),
-            type: 'defender-loss'
-          })
-        }
-      }
-
-      for (const [defType, count] of Object.entries(roundData.defenderLosses.defense || {})) {
-        if (count > 0) {
-          explodingShips.value.push({ side: 'defender', type: defType })
-          battleLogs.value.push({
-            round: roundIndex + 1,
-            message: t('messagesView.defenseDestroyed')
-              .replace('{count}', String(count))
-              .replace('{defense}', DEFENSES.value[defType as DefenseType]?.name || defType),
-            type: 'defender-loss'
-          })
-        }
-      }
-    }
-
-    // 等待伤害显示
-    await sleep(600 / speed)
-
-    // 清理状态
-    attackAnimationPhase.value = 'idle'
-    showDamageNumbers.value = false
-    explodingShips.value = []
-
-    currentRoundIndex.value++
-    isPlayingRound = false
   }
 
-  const nextRound = () => {
+  const nextRound = async () => {
     if (currentRoundIndex.value < totalRounds.value) {
       pause()
-      playRound()
+      await playRound()
     }
   }
 

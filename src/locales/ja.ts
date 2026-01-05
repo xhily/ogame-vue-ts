@@ -165,6 +165,7 @@ export default {
     planetDestroyerFactory: '惑星破壊工場',
     geoResearchStation: '地質研究所',
     deepDrillingFacility: '深部掘削施設',
+    university: '大学',
     buildTime: '建設時間',
     build: '建設',
     production: '生産量',
@@ -215,8 +216,9 @@ export default {
     sensorPhalanx: '周辺星系の艦隊活動を探知',
     jumpGate: '他の月へ艦隊を瞬間移動',
     planetDestroyerFactory: '惑星を破壊できる究極兵器を建造',
-    geoResearchStation: '地質構造を研究し、鉱脈の自然回復速度を向上。レベル毎に回復速度50%増加',
-    deepDrillingFacility: ''
+    geoResearchStation: '地質構造を研究し、鉱脈の自然回復速度を向上。レベル毎に回復速度10%増加',
+    deepDrillingFacility: '',
+    university: '研究者を育成し、研究速度を加速。レベル毎に研究時間-8%'
   },
   ships: {
     lightFighter: '軽戦闘機',
@@ -299,7 +301,11 @@ export default {
     colonySlots: '植民地スロット',
     forAllPlanets: '(全惑星)',
     speedBonus: '速度ボーナス',
-    researchSpeedBonus: '研究速度ボーナス'
+    researchSpeedBonus: '研究速度ボーナス',
+    // 資源生産ボーナス表示
+    mineralResearch: '鉱物研究',
+    crystalResearch: 'クリスタル研究',
+    fuelResearch: '燃料研究'
   },
   technologies: {
     energyTechnology: 'エネルギー技術',
@@ -320,7 +326,11 @@ export default {
     darkMatterTechnology: 'ダークマター技術',
     terraformingTechnology: 'テラフォーミング技術',
     planetDestructionTech: '惑星破壊技術',
-    miningTechnology: ''
+    miningTechnology: '',
+    intergalacticResearchNetwork: '銀河間研究ネットワーク',
+    mineralResearch: '鉱物研究',
+    crystalResearch: 'クリスタル研究',
+    fuelResearch: '燃料研究'
   },
   technologyDescriptions: {
     energyTechnology: 'エネルギー利用効率を向上',
@@ -342,7 +352,11 @@ export default {
     darkMatterTechnology: 'ダークマターの性質と応用を研究',
     terraformingTechnology: '惑星地形改造技術を研究、レベル毎に全惑星の利用可能スペース30増加',
     planetDestructionTech: '惑星全体を破壊する恐怖の技術を研究',
-    miningTechnology: ''
+    miningTechnology: '',
+    intergalacticResearchNetwork: '複数の惑星の研究所を連結。レベル毎に追加1研究所を接続',
+    mineralResearch: 'より効率的な金属抽出技術を研究。レベル毎に金属生産+2%',
+    crystalResearch: 'より効率的なクリスタル精製技術を研究。レベル毎にクリスタル生産+2%',
+    fuelResearch: 'より効率的な重水素合成技術を研究。レベル毎に重水素生産+2%'
   },
   officers: {
     commander: '司令官',
@@ -955,7 +969,10 @@ export default {
     hideRoundDetails: 'ラウンド詳細非表示',
     round: '第{round}ラウンド',
     attackerRemainingPower: '攻撃側残存火力',
-    defenderRemainingPower: '防御側残存火力'
+    defenderRemainingPower: '防御側残存火力',
+    importFromSpyReport: 'スパイレポートからインポート',
+    selectSpyReport: 'スパイレポートを選択',
+    noSpyReports: 'スパイレポートがありません'
   },
   settings: {
     dataManagement: 'データ管理',
@@ -966,6 +983,7 @@ export default {
     exporting: 'エクスポート中...',
     exportSuccess: 'エクスポート成功',
     exportSuccessWithPath: 'エクスポート成功、ファイルの保存先：{path}',
+    storagePermissionDenied: 'ストレージ権限が拒否されました。ファイルをエクスポートできません',
     exportFailed: 'エクスポートに失敗しました。もう一度お試しください',
     importData: 'データインポート',
     importDataDesc: 'JSONファイルからゲームの進行状況を復元',
@@ -983,6 +1001,8 @@ export default {
     gameSettingsDesc: 'ゲームパラメータと設定を調整',
     gamePause: 'ゲーム一時停止',
     gamePauseDesc: 'ゲーム時間と資源生産を一時停止または再開',
+    battleMode: '最後まで戦うモード',
+    battleModeDesc: '有効にすると、勝者が決まるまで最大100ラウンドの戦闘が行われます。無効の場合は、クラシックな6ラウンドモードが使用されます',
     pause: '一時停止',
     resume: '再開',
     gamePaused: 'ゲームを一時停止しました',
@@ -1996,13 +2016,19 @@ export default {
       questNotActive: 'クエストはアクティブではありません',
       questNotCompleted: 'クエスト未完了',
       rewardsAlreadyClaimed: '報酬は既に受け取り済み',
-      prerequisiteNotMet: '前提クエスト未完了'
+      prerequisiteNotMet: '前提クエスト未完了',
+      questLocked: 'クエストはロックされています',
+      notInitialized: 'キャンペーンが初期化されていません',
+      questAlreadyCompleted: 'クエストは既に完了しています'
     },
     speakers: {
       ancientVoice: '古代の声',
       neighborNPC: '隣接勢力',
       mysteriousSignal: '謎の信号',
-      enemyCommander: '敵司令官'
+      enemyCommander: '敵司令官',
+      shadowVoice: '影の声',
+      allyNPC: '同盟勢力',
+      ancientGuardian: '古代の守護者'
     },
     objectiveDescriptions: {
       buildMetalMine: '金属鉱山をレベル2に建設',
@@ -2082,36 +2108,60 @@ export default {
       },
       '2_3': {
         prologue_1: '遠征で異常な信号を発見しました。これらの信号は古代文明からのようです...発信源を調査してください。',
+        prologue_2: 'これらの信号...失われた文明の残響を運んでいる。その秘密が発見を待っている...',
         epilogue_1: 'これらの記号は...古代文明の遺跡だ！さらに調査して秘密を解き明かそう。'
       },
-      '2_4': { prologue_1: '古代遺跡の場所を発見しました。艦隊を送り、何が見つかるか探索してください。' },
-      '2_5': { prologue_1: '遺跡でデータアーカイブが見つかりました。このデータを研究すれば、新しい技術が解放できるかもしれません。' },
+      '2_4': {
+        prologue_1: '古代遺跡の場所を発見しました。艦隊を送り、何が見つかるか探索してください。',
+        prologue_2: '遺跡には多くの秘密がある...賢く道を選べ...',
+        choice_1: '慎重に探索する - 安全を優先',
+        choice_2: '積極的に探索する - 発見を優先'
+      },
+      '2_5': {
+        prologue_1: '遺跡でデータアーカイブが見つかりました。このデータを研究すれば、新しい技術が解放できるかもしれません。',
+        epilogue_1: '古代のデータが解読されました！新しい技術的洞察を得ました。'
+      },
       '3_1': { prologue_1: '探索中も外交を忘れないでください。周囲の勢力と良好な関係を維持することは有益です。' },
       '3_2': { prologue_1: 'いくつかの勢力が友好を示しています。関係を深め続ければ、より多くのサポートを得られるかもしれません。' },
-      '3_3': { prologue_1: '情報によると敵対勢力が影からあなたを監視しています。警戒を怠らず、彼らの動きを偵察してください。' },
+      '3_3': {
+        prologue_1: '情報によると敵対勢力が影からあなたを監視しています。警戒を怠らず、彼らの動きを偵察してください。',
+        prologue_2: '闇の力が虚空で蠢いている...彼らはあなたの成長する力に気づいた...'
+      },
       '3_4': { prologue_1: '友好勢力と正式な同盟を結び、脅威に対してお互いをサポートしましょう。' },
-      '3_5': { prologue_1: '脅威が迫っています。防衛施設を建設し、可能な紛争に備えてください。' },
+      '3_5': {
+        prologue_1: '脅威が迫っています。防衛施設を建設し、可能な紛争に備えてください。',
+        epilogue_1: '防衛準備が整いました。嵐が来るが、あなたは準備ができている。'
+      },
       '4_1': {
         prologue_1: '敵が攻撃を開始しました！惑星を守ってください！',
+        prologue_2: '影の艦隊が迫っている...あなたの試練の時が来た...',
         epilogue_1: '敵の第一波を撃退しました。しかしこれは始まりに過ぎません...'
       },
       '4_2': { prologue_1: '敵は撤退しましたが、戻ってくるでしょう。彼らの惑星を偵察して戦力を把握してください。' },
       '4_3': { prologue_1: '反撃の時です。敵の惑星を攻撃し、彼らの戦力を弱めてください。' },
       '4_4': { prologue_1: '戦場に多くのデブリが残っています。これらの資源をリサイクルして次の戦闘に備えてください。' },
-      '4_5': { prologue_1: '最終決戦が近づいています。強力な艦隊を建造し、究極の挑戦に備えてください。' },
+      '4_5': {
+        prologue_1: '最終決戦が近づいています。強力な艦隊を建造し、究極の挑戦に備えてください。',
+        epilogue_1: '艦隊が集結しました。決戦の時が近づいている...'
+      },
       '5_1': {
         prologue_1: 'すべての手がかりは遺跡の最深部を指しています。古代文明の核心的な秘密がそこにあります。',
         prologue_2: 'ついに到着した...真実がまもなく明かされる...'
       },
-      '5_2': { prologue_1: '遺跡の深部で失われた古代技術を発見しました。研究してその力を解放してください。' },
+      '5_2': {
+        prologue_1: '遺跡の深部で失われた古代技術を発見しました。研究してその力を解放してください。',
+        prologue_2: 'この技術は...既知のすべての文明より古い。慎重に扱え...'
+      },
       '5_3': {
         prologue_1: '謎の敵が現れました。これが最後の挑戦です。撃破してください！',
+        prologue_2: '私はこれらの秘密の守護者だ。お前の価値を証明せよ、さもなくば滅びよ！',
         epilogue_1: 'やりました！古代の守護者は倒されました。銀河の秘密は今やあなたに開かれています。'
       },
       '5_4': { prologue_1: 'ついに平和が訪れました。この新時代に新しい植民地を築き、帝国を拡大してください。' },
       '5_5': {
         prologue_1: 'あなたの伝説は始まったばかりです。さらに探索を続け、より多くの星系を征服してください！',
-        epilogue_1: '銀河は広大で果てしなく、数え切れない秘密があなたを待っています...'
+        epilogue_1: '銀河は広大で果てしなく、数え切れない秘密があなたを待っています...',
+        epilogue_2: 'あなたの旅は続く...新たな冒険が星の彼方で待っている...'
       }
     }
   }

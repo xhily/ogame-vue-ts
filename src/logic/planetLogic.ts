@@ -320,3 +320,63 @@ export const calculateDeuteriumTemperatureBonus = (maxTemperature: number): numb
   // 返回乘数，例如：-40°C时返回1.52，+100°C时返回0.96
   return 1.36 - 0.004 * maxTemperature
 }
+
+/**
+ * 检查是否可以放弃殖民地
+ * @param planets 玩家所有星球
+ * @param planetId 要放弃的星球ID
+ * @returns 是否可以放弃及原因
+ */
+export const canAbandonColony = (
+  planets: Planet[],
+  planetId: string
+): { canAbandon: boolean; reason?: string } => {
+  const planet = planets.find(p => p.id === planetId)
+  if (!planet) {
+    return { canAbandon: false, reason: 'errors.planetNotFound' }
+  }
+
+  // 主星（第一个非月球星球）不能放弃
+  const mainPlanet = planets.find(p => !p.isMoon)
+  if (mainPlanet && mainPlanet.id === planetId) {
+    return { canAbandon: false, reason: 'errors.cannotAbandonHomePlanet' }
+  }
+
+  // 检查是否有正在进行的建造队列
+  if (planet.buildQueue.length > 0) {
+    return { canAbandon: false, reason: 'errors.hasBuildQueue' }
+  }
+
+  // 检查是否有舰队在该星球
+  const hasFleet = Object.values(planet.fleet).some(count => count > 0)
+  if (hasFleet) {
+    return { canAbandon: false, reason: 'errors.hasFleetOnPlanet' }
+  }
+
+  // 检查是否有防御在该星球
+  const hasDefense = Object.values(planet.defense).some(count => count > 0)
+  if (hasDefense) {
+    return { canAbandon: false, reason: 'errors.hasDefenseOnPlanet' }
+  }
+
+  return { canAbandon: true }
+}
+
+/**
+ * 放弃殖民地
+ * @param planets 玩家所有星球
+ * @param planetId 要放弃的星球ID
+ * @returns 放弃后的星球列表
+ */
+export const abandonColony = (planets: Planet[], planetId: string): Planet[] => {
+  const planet = planets.find(p => p.id === planetId)
+  if (!planet) return planets
+
+  // 如果放弃的是行星，同时删除其月球
+  if (!planet.isMoon) {
+    return planets.filter(p => p.id !== planetId && p.parentPlanetId !== planetId)
+  }
+
+  // 如果放弃的是月球，只删除月球
+  return planets.filter(p => p.id !== planetId)
+}

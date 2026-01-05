@@ -176,7 +176,7 @@
   }
 
   .quest-available .quest-node:hover {
-    transform: scale(1.05);
+    transform: scale3d(1.05, 1.05, 1);
   }
 
   @keyframes pulse-glow {

@@ -2,6 +2,7 @@ import type { FleetMission, Planet, Resources, Fleet, BattleResult, SpyReport, P
 import type { Locale } from '@/locales'
 import { ShipType, DefenseType, MissionType, BuildingType, OfficerType, TechnologyType, ExpeditionZone } from '@/types/game'
 import { FLEET_STORAGE_CONFIG, EXPEDITION_ZONES } from '@/config/gameConfig'
+import { useGameStore } from '@/stores/gameStore'
 import * as battleLogic from './battleLogic'
 import * as moonLogic from './moonLogic'
 import * as moonValidation from './moonValidation'
@@ -156,6 +157,7 @@ export const processAttackArrival = async (
   }
 
   // 执行战斗（使用 Worker 进行异步计算）
+  const gameStore = useGameStore()
   const battleResult = await battleLogic.simulateBattle(
     mission.fleet,
     targetPlanet.fleet,
@@ -164,7 +166,8 @@ export const processAttackArrival = async (
     attacker.officers,
     defender?.officers || ({} as Record<OfficerType, Officer>),
     attacker.technologies,
-    defender?.technologies || ({} as Record<TechnologyType, number>)
+    defender?.technologies || ({} as Record<TechnologyType, number>),
+    gameStore.battleToFinish
   )
 
   // 更新战斗报告ID
@@ -250,6 +253,7 @@ export const processNPCAttackArrival = async (
   allPlanets: Planet[]
 ): Promise<{ battleResult: BattleResult; moon: Planet | null; debrisField: DebrisField | null } | null> => {
   // 执行战斗（使用 Worker 进行异步计算）
+  const gameStore = useGameStore()
   const battleResult = await battleLogic.simulateBattle(
     mission.fleet, // NPC舰队
     targetPlanet.fleet, // 玩家舰队
@@ -258,7 +262,8 @@ export const processNPCAttackArrival = async (
     {} as Record<OfficerType, Officer>, // NPC没有军官系统
     defender.officers || ({} as Record<OfficerType, Officer>), // 玩家军官
     npc.technologies, // NPC科技等级
-    defender.technologies // 玩家科技等级
+    defender.technologies, // 玩家科技等级
+    gameStore.battleToFinish
   )
 
   // 更新战斗报告ID和参与者信息
@@ -721,12 +726,12 @@ export const processRecycleArrival = (
 }
 
 /**
- * 远征事件类型
+ * 探险事件类型
  */
 export type ExpeditionEventType = 'resources' | 'darkMatter' | 'fleet' | 'nothing' | 'pirates' | 'aliens'
 
 /**
- * 远征结果
+ * 探险结果
  */
 export interface ExpeditionResult {
   eventType: ExpeditionEventType
@@ -737,8 +742,8 @@ export interface ExpeditionResult {
 }
 
 /**
- * 处理远征任务到达
- * 远征任务会随机触发各种事件，基于探险区域配置
+ * 处理探险任务到达
+ * 探险任务会随机触发各种事件，基于探险区域配置
  */
 export const processExpeditionArrival = (mission: FleetMission): ExpeditionResult => {
   // 获取探险区域配置，默认为近空区域
@@ -968,9 +973,18 @@ export interface DestroyResult {
   deathstarDestructionChance: number // 死星反向销毁概率
   isMoon: boolean // 目标是否为月球
   failReason?: DestroyFailReason // 失败原因
+  battleResult?: BattleResult // 战斗结果（如果发生了战斗）
+  debrisField?: DebrisField // 战斗产生的残骸场
+  moon?: Planet // 战斗产生的月球
 }
 
-export const processDestroyArrival = (mission: FleetMission, targetPlanet: Planet | undefined, attacker: Player): DestroyResult => {
+export const processDestroyArrival = async (
+  mission: FleetMission,
+  targetPlanet: Planet | undefined,
+  attacker: Player,
+  defender: Player | null,
+  allPlanets: Planet[]
+): Promise<DestroyResult> => {
   if (!targetPlanet) {
     mission.status = 'returning'
     return {
@@ -995,8 +1009,8 @@ export const processDestroyArrival = (mission: FleetMission, targetPlanet: Plane
   }
 
   // 检查是否有死星
-  const deathstarCount = mission.fleet[ShipType.Deathstar] || 0
-  if (deathstarCount === 0) {
+  const initialDeathstarCount = mission.fleet[ShipType.Deathstar] || 0
+  if (initialDeathstarCount === 0) {
     mission.status = 'returning'
     return {
       success: false,
@@ -1008,10 +1022,113 @@ export const processDestroyArrival = (mission: FleetMission, targetPlanet: Plane
     }
   }
 
+  // 检查目标是否有防御力量（舰队或防御设施）
+  const hasDefenderFleet = Object.values(targetPlanet.fleet || {}).some(count => count > 0)
+  const hasDefense = Object.values(targetPlanet.defense || {}).some(count => count > 0)
+  const needsBattle = hasDefenderFleet || hasDefense
+
+  let battleResult: BattleResult | undefined
+  let debrisField: DebrisField | undefined
+  let newMoon: Planet | undefined
+  let survivingDeathstars = initialDeathstarCount
+
+  // 如果目标有防御力量，先进行战斗
+  if (needsBattle) {
+    const gameStore = useGameStore()
+
+    // 执行战斗
+    battleResult = await battleLogic.simulateBattle(
+      mission.fleet,
+      targetPlanet.fleet,
+      targetPlanet.defense,
+      targetPlanet.resources,
+      attacker.officers,
+      defender?.officers || ({} as Record<OfficerType, Officer>),
+      attacker.technologies,
+      defender?.technologies || ({} as Record<TechnologyType, number>),
+      gameStore.battleToFinish
+    )
+
+    // 更新战斗报告
+    battleResult.id = `battle_${Date.now()}`
+    battleResult.attackerId = attacker.id
+    battleResult.defenderId = targetPlanet.ownerId || 'unknown'
+    battleResult.attackerPlanetId = mission.originPlanetId
+    battleResult.defenderPlanetId = targetPlanet.id
+
+    // 更新舰队 - 计算幸存舰船
+    const survivingFleet: Partial<Fleet> = {}
+    Object.entries(mission.fleet).forEach(([shipType, initialCount]) => {
+      const lost = battleResult!.attackerLosses[shipType as ShipType] || 0
+      const surviving = initialCount - lost
+      if (surviving > 0) {
+        survivingFleet[shipType as ShipType] = surviving
+      }
+    })
+    mission.fleet = survivingFleet
+
+    // 计算存活的死星数量
+    survivingDeathstars = survivingFleet[ShipType.Deathstar] || 0
+
+    // 更新目标星球舰队和防御
+    Object.entries(battleResult.defenderLosses.fleet).forEach(([shipType, lost]) => {
+      const current = targetPlanet.fleet[shipType as ShipType] || 0
+      targetPlanet.fleet[shipType as ShipType] = Math.max(0, current - lost)
+    })
+    Object.entries(battleResult.defenderLosses.defense).forEach(([defenseType, lost]) => {
+      const current = targetPlanet.defense[defenseType as DefenseType] || 0
+      targetPlanet.defense[defenseType as DefenseType] = Math.max(0, current - lost)
+    })
+
+    // 计算残骸场
+    const debrisResources = battleResult.debrisField
+    if (debrisResources.metal > 0 || debrisResources.crystal > 0) {
+      debrisField = {
+        id: `debris_${targetPlanet.position.galaxy}_${targetPlanet.position.system}_${targetPlanet.position.position}`,
+        position: { ...targetPlanet.position },
+        resources: {
+          metal: debrisResources.metal,
+          crystal: debrisResources.crystal
+        },
+        createdAt: Date.now()
+      }
+    }
+
+    // 检查是否生成月球（只有非月球位置才能生成月球）
+    if (!targetPlanet.isMoon && debrisField) {
+      const moonExists = moonLogic.hasMoonAtPosition(allPlanets, targetPlanet.position)
+      if (!moonExists) {
+        newMoon =
+          moonLogic.tryGenerateMoon(
+            { ...debrisResources, deuterium: 0, darkMatter: 0, energy: 0 },
+            targetPlanet.position,
+            targetPlanet.id,
+            targetPlanet.ownerId || attacker.id
+          ) || undefined
+      }
+    }
+
+    // 如果攻击方失败或没有存活的死星，直接返回
+    if (battleResult.winner === 'defender' || survivingDeathstars === 0) {
+      mission.status = 'returning'
+      return {
+        success: false,
+        destructionChance: 0,
+        deathstarsLost: initialDeathstarCount > 0 && survivingDeathstars === 0,
+        deathstarDestructionChance: 0,
+        isMoon: targetPlanet.isMoon || false,
+        failReason: survivingDeathstars === 0 ? 'noDeathstar' : 'chanceFailed',
+        battleResult,
+        debrisField,
+        moon: newMoon
+      }
+    }
+  }
+
   // 根据目标类型使用不同的销毁逻辑
   if (targetPlanet.isMoon) {
     // 月球销毁使用 OGame 公式
-    const result = moonLogic.tryDestroyMoon(targetPlanet, deathstarCount)
+    const result = moonLogic.tryDestroyMoon(targetPlanet, survivingDeathstars)
 
     // 如果死星被反向销毁，从任务舰队中移除
     if (result.deathstarsDestroyed) {
@@ -1027,13 +1144,16 @@ export const processDestroyArrival = (mission: FleetMission, targetPlanet: Plane
       deathstarsLost: result.deathstarsDestroyed,
       deathstarDestructionChance: result.deathstarDestructionChance,
       isMoon: true,
-      failReason: result.moonDestroyed ? undefined : 'chanceFailed'
+      failReason: result.moonDestroyed ? undefined : 'chanceFailed',
+      battleResult,
+      debrisField,
+      moon: newMoon
     }
   } else {
-    // 行星销毁使用原有逻辑
+    // 行星销毁使用原有逻辑（基于存活的死星数量）
     const planetaryShieldCount = targetPlanet.defense[DefenseType.PlanetaryShield] || 0
     const defensePower = calculatePlanetDefensePower(targetPlanet.fleet, targetPlanet.defense)
-    const destructionChance = calculateDestructionChance(deathstarCount, planetaryShieldCount, defensePower)
+    const destructionChance = calculateDestructionChance(survivingDeathstars, planetaryShieldCount, defensePower)
 
     const randomValue = Math.random() * 100
     const success = randomValue < destructionChance
@@ -1047,7 +1167,10 @@ export const processDestroyArrival = (mission: FleetMission, targetPlanet: Plane
       deathstarsLost: false,
       deathstarDestructionChance: 0,
       isMoon: false,
-      failReason: success ? undefined : 'chanceFailed'
+      failReason: success ? undefined : 'chanceFailed',
+      battleResult,
+      debrisField,
+      moon: newMoon
     }
   }
 }
@@ -1200,8 +1323,40 @@ export const updateFleetMissions = async (
           }
           break
 
-        case MissionType.Destroy:
-          const destroyResult = processDestroyArrival(mission, targetPlanet, attacker)
+        case MissionType.Destroy: {
+          const destroyResult = await processDestroyArrival(mission, targetPlanet, attacker, defender, allPlanets)
+
+          // 处理战斗报告
+          if (destroyResult.battleResult) {
+            battleReports.push(destroyResult.battleResult)
+          }
+
+          // 处理新生成的月球
+          if (destroyResult.moon) {
+            newMoons.push(destroyResult.moon)
+            const moonKey = `${destroyResult.moon.position.galaxy}:${destroyResult.moon.position.system}:${destroyResult.moon.position.position}`
+            planets.set(moonKey, destroyResult.moon)
+          }
+
+          // 处理残骸场
+          if (destroyResult.debrisField) {
+            const existingDebris = debrisFields.get(destroyResult.debrisField.id)
+            if (existingDebris) {
+              const updatedDebris: DebrisField = {
+                ...existingDebris,
+                resources: {
+                  metal: existingDebris.resources.metal + destroyResult.debrisField.resources.metal,
+                  crystal: existingDebris.resources.crystal + destroyResult.debrisField.resources.crystal
+                }
+              }
+              debrisFields.set(destroyResult.debrisField.id, updatedDebris)
+              updatedDebrisFields.push(updatedDebris)
+            } else {
+              debrisFields.set(destroyResult.debrisField.id, destroyResult.debrisField)
+              newDebrisFields.push(destroyResult.debrisField)
+            }
+          }
+
           if (destroyResult.success && destroyResult.planetId) {
             // 星球被摧毁
             destroyedPlanetIds.push(destroyResult.planetId)
@@ -1217,6 +1372,7 @@ export const updateFleetMissions = async (
             planets.delete(targetKey)
           }
           break
+        }
       }
     }
 

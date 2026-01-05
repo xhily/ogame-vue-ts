@@ -43,7 +43,8 @@ export const useGameConfig = () => {
     [BuildingType.JumpGate]: 'jumpGate',
     [BuildingType.PlanetDestroyerFactory]: 'planetDestroyerFactory',
     [BuildingType.GeoResearchStation]: 'geoResearchStation',
-    [BuildingType.DeepDrillingFacility]: 'deepDrillingFacility'
+    [BuildingType.DeepDrillingFacility]: 'deepDrillingFacility',
+    [BuildingType.University]: 'university'
   }
 
   // 舰船类型枚举值到翻译键的映射
@@ -100,7 +101,11 @@ export const useGameConfig = () => {
     [TechnologyType.DarkMatterTechnology]: 'darkMatterTechnology',
     [TechnologyType.TerraformingTechnology]: 'terraformingTechnology',
     [TechnologyType.PlanetDestructionTech]: 'planetDestructionTech',
-    [TechnologyType.MiningTechnology]: 'miningTechnology'
+    [TechnologyType.MiningTechnology]: 'miningTechnology',
+    [TechnologyType.IntergalacticResearchNetwork]: 'intergalacticResearchNetwork',
+    [TechnologyType.MineralResearch]: 'mineralResearch',
+    [TechnologyType.CrystalResearch]: 'crystalResearch',
+    [TechnologyType.FuelResearch]: 'fuelResearch'
   }
 
   // 军官类型枚举值到翻译键的映射

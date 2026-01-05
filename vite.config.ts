@@ -23,14 +23,7 @@ export default defineConfig(async () => {
         background_color: '#000000',
         display: 'fullscreen',
         orientation: 'any',
-        icons: [
-          {
-            src: 'logo.svg',
-            sizes: 'any',
-            type: 'image/svg+xml',
-            purpose: 'any'
-          }
-        ]
+        icons: [{ src: 'logo.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' }]
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,mp3,wav,json}'],
@@ -39,13 +32,7 @@ export default defineConfig(async () => {
           {
             urlPattern: ({ request }) => request.destination === 'image' || request.destination === 'audio',
             handler: 'CacheFirst', // 优先使用缓存
-            options: {
-              cacheName: 'game-assets',
-              expiration: {
-                maxEntries: 100,
-                maxAgeSeconds: 30 * 24 * 60 * 60 // 缓存 30 天
-              }
-            }
+            options: { cacheName: 'game-assets', expiration: { maxEntries: 100, maxAgeSeconds: 30 * 24 * 60 * 60 } }
           }
         ]
       }
@@ -113,16 +100,14 @@ export default defineConfig(async () => {
       // 使用 lightningcss 处理 CSS，自动转换 oklch 等新语法为兼容格式
       transformer: 'lightningcss',
       lightningcss: {
-        // 目标浏览器：Android 5+, iOS 10+, Chrome 60+
+        // 目标浏览器：降低到更保守的版本以支持华为等国产手机 WebView
         targets: {
-          android: 5 << 16, // Android 5.0
-          chrome: 60 << 16, // Chrome 60
-          ios_saf: 10 << 16 // iOS Safari 10
+          android: (4 << 16) | (4 << 8), // Android 4.4
+          chrome: 49 << 16, // Chrome 49 (Android 4.4 WebView)
+          ios_saf: (9 << 16) | (3 << 8) // iOS Safari 9.3
         },
         // 禁用现代 CSS 特性，确保兼容旧版浏览器
-        drafts: {
-          customMedia: false
-        }
+        drafts: { customMedia: false }
       }
     },
     // 优化依赖预构建

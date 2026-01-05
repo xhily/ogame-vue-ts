@@ -155,6 +155,7 @@ export default {
     planetDestroyerFactory: '行星毀滅者工廠',
     geoResearchStation: '地質研究站',
     deepDrillingFacility: '深層鑽探設施',
+    university: '大學',
     buildTime: '建造時間',
     build: '建造',
     production: '產量',
@@ -206,7 +207,8 @@ export default {
     jumpGate: '瞬間傳送艦隊到其他月球',
     planetDestroyerFactory: '建造能夠摧毀行星的終極武器',
     geoResearchStation: '研究地質結構，提高礦脈自然恢復速度。每級增加50%恢復速率',
-    deepDrillingFacility: ''
+    deepDrillingFacility: '',
+    university: '培養科研人員，加快研究速度。每級減少研究時間8%'
   },
   ships: {
     lightFighter: '輕型戰鬥機',
@@ -281,7 +283,11 @@ export default {
     researchQueueBonus: '研究隊列',
     colonySlots: '殖民地槽位',
     forAllPlanets: '(全局)',
-    speedBonus: '速度加成'
+    speedBonus: '速度加成',
+    // 資源產量加成顯示
+    mineralResearch: '礦物研究',
+    crystalResearch: '晶體研究',
+    fuelResearch: '燃料研究'
   },
   technologies: {
     energyTechnology: '能源技術',
@@ -302,7 +308,11 @@ export default {
     darkMatterTechnology: '暗物質技術',
     terraformingTechnology: '地形改造技術',
     planetDestructionTech: '行星毀滅技術',
-    miningTechnology: ''
+    miningTechnology: '',
+    intergalacticResearchNetwork: '星際研究網絡',
+    mineralResearch: '礦物研究',
+    crystalResearch: '晶體研究',
+    fuelResearch: '燃料研究'
   },
   technologyDescriptions: {
     energyTechnology: '提高能源利用效率',
@@ -324,7 +334,11 @@ export default {
     darkMatterTechnology: '研究暗物質的性質和應用',
     terraformingTechnology: '研究行星地形改造技術，每級為所有行星增加30個可用空間',
     planetDestructionTech: '研究如何摧毀整個行星的恐怖技術',
-    miningTechnology: ''
+    miningTechnology: '',
+    intergalacticResearchNetwork: '連接多個星球的研究實驗室，共享研究資源。每級可連接1個額外的研究實驗室',
+    mineralResearch: '研究更高效的金屬提取技術，提升金屬礦產量。每級增加金屬產量2%',
+    crystalResearch: '研究更高效的晶體提煉技術，提升晶體礦產量。每級增加晶體產量2%',
+    fuelResearch: '研究更高效的重氫合成技術，提升重氫產量。每級增加重氫產量2%'
   },
   officers: {
     commander: '指揮官',
@@ -924,7 +938,10 @@ export default {
     hideRoundDetails: '隱藏回合詳情',
     round: '第 {round} 回合',
     attackerRemainingPower: '攻擊方剩餘火力',
-    defenderRemainingPower: '防守方剩餘火力'
+    defenderRemainingPower: '防守方剩餘火力',
+    importFromSpyReport: '從偵查報告匯入',
+    selectSpyReport: '選擇偵查報告',
+    noSpyReports: '沒有偵查報告'
   },
   settings: {
     dataManagement: '資料管理',
@@ -935,6 +952,7 @@ export default {
     exporting: '匯出中...',
     exportSuccess: '匯出成功',
     exportSuccessWithPath: '匯出成功，檔案已儲存到：{path}',
+    storagePermissionDenied: '儲存權限被拒絕，無法匯出檔案',
     exportFailed: '匯出失敗，請重試',
     importData: '匯入資料',
     importDataDesc: '從JSON檔案恢復遊戲進度',
@@ -952,6 +970,8 @@ export default {
     gameSettingsDesc: '調整遊戲參數和偏好設定',
     gamePause: '遊戲暫停',
     gamePauseDesc: '暫停或恢復遊戲時間和資源生產',
+    battleMode: '戰鬥到底模式',
+    battleModeDesc: '啟用後戰鬥最多進行100回合直到分出勝負，關閉則使用經典6回合模式',
     pause: '暫停',
     resume: '恢復',
     gamePaused: '遊戲已暫停',
@@ -2159,13 +2179,19 @@ export default {
       questNotActive: '任務未激活',
       questNotCompleted: '任務未完成',
       rewardsAlreadyClaimed: '獎勵已領取',
-      prerequisiteNotMet: '前置任務未完成'
+      prerequisiteNotMet: '前置任務未完成',
+      questLocked: '任務已鎖定',
+      notInitialized: '戰役未初始化',
+      questAlreadyCompleted: '任務已完成'
     },
     speakers: {
       ancientVoice: '古代之聲',
       neighborNPC: '鄰近勢力',
       mysteriousSignal: '神秘信號',
-      enemyCommander: '敵方指揮官'
+      enemyCommander: '敵方指揮官',
+      shadowVoice: '暗影之聲',
+      allyNPC: '盟友勢力',
+      ancientGuardian: '遠古守護者'
     },
     objectiveDescriptions: {
       buildMetalMine: '建造金屬礦到2級',
@@ -2249,13 +2275,18 @@ export default {
       },
       '2_3': {
         prologue_1: '你的探險隊發現了異常信號。這些信號似乎來自一個古老的文明...調查它們的來源。',
+        prologue_2: '這些信號...承載著失落文明的回響。它們的秘密等待被發現...',
         epilogue_1: '這些符號...是古代文明的遺跡！繼續調查，揭開它們的秘密。'
       },
       '2_4': {
-        prologue_1: '你發現了古代遺跡的位置。派遣艦隊前去探索，看看能發現什麼。'
+        prologue_1: '你發現了古代遺跡的位置。派遣艦隊前去探索，看看能發現什麼。',
+        prologue_2: '遺跡中藏有許多秘密...明智地選擇你的道路...',
+        choice_1: '謹慎探索 - 優先安全',
+        choice_2: '積極探索 - 優先發現'
       },
       '2_5': {
-        prologue_1: '遺跡中發現了大量數據檔案。研究這些數據，也許能解鎖新的科技。'
+        prologue_1: '遺跡中發現了大量數據檔案。研究這些數據，也許能解鎖新的科技。',
+        epilogue_1: '古代數據已被解密！獲得了新的技術見解。'
       },
       '3_1': {
         prologue_1: '在探索的同時，也不要忘記外交。與周圍的勢力保持良好關係對你有益。'
@@ -2264,16 +2295,19 @@ export default {
         prologue_1: '有些勢力對你表示了友好。繼續加深關係，也許能獲得更多支持。'
       },
       '3_3': {
-        prologue_1: '情報顯示，有敵對勢力正在暗中觀察你。保持警惕，偵查他們的動向。'
+        prologue_1: '情報顯示，有敵對勢力正在暗中觀察你。保持警惕，偵查他們的動向。',
+        prologue_2: '黑暗勢力在虛空中蠢蠢欲動...他們已經注意到你日益增長的力量...'
       },
       '3_4': {
         prologue_1: '與友好勢力建立正式同盟，在面對威脅時互相支持。'
       },
       '3_5': {
-        prologue_1: '威脅正在逼近。建設防禦設施，準備迎接可能的衝突。'
+        prologue_1: '威脅正在逼近。建設防禦設施，準備迎接可能的衝突。',
+        epilogue_1: '你的防禦已經就緒。風暴即將來臨，但你已準備好了。'
       },
       '4_1': {
         prologue_1: '敵人發動了進攻！保衛你的星球！',
+        prologue_2: '暗影艦隊正在逼近...你的考驗時刻已經到來...',
         epilogue_1: '你成功擊退了敵人的第一波進攻。但這只是開始...'
       },
       '4_2': {
@@ -2286,17 +2320,20 @@ export default {
         prologue_1: '戰場上留下了大量殘骸。回收這些資源，為下一場戰鬥做準備。'
       },
       '4_5': {
-        prologue_1: '最終決戰即將來臨。建造強大的艦隊，準備迎接最後的挑戰。'
+        prologue_1: '最終決戰即將來臨。建造強大的艦隊，準備迎接最後的挑戰。',
+        epilogue_1: '你的艦隊已經集結完畢。決戰時刻即將來臨...'
       },
       '5_1': {
         prologue_1: '所有線索都指向遺跡的最深處。那裡隱藏著古代文明最核心的秘密。',
         prologue_2: '你終於來到了這裡...真相即將揭曉...'
       },
       '5_2': {
-        prologue_1: '在遺跡深處，你發現了失落的古代科技。研究並解鎖它們的力量。'
+        prologue_1: '在遺跡深處，你發現了失落的古代科技。研究並解鎖它們的力量。',
+        prologue_2: '這項科技...比所有已知文明都要古老。小心處理它...'
       },
       '5_3': {
         prologue_1: '一個神秘的敵人出現了。這是最後的挑戰，擊敗它！',
+        prologue_2: '我是這些秘密的守護者。證明你的價值，否則將被毀滅！',
         epilogue_1: '你做到了！古代的守護者已被擊敗。銀河系的秘密向你敞開。'
       },
       '5_4': {
@@ -2304,7 +2341,8 @@ export default {
       },
       '5_5': {
         prologue_1: '你的傳奇才剛剛開始。繼續探索，征服更多的星系！',
-        epilogue_1: '銀河系廣闘無垠，還有無數秘密等待你去發現...'
+        epilogue_1: '銀河系廣闘無垠，還有無數秘密等待你去發現...',
+        epilogue_2: '你的旅程還在繼續...新的冒險在星海彼岸等待著你...'
       }
     }
   }

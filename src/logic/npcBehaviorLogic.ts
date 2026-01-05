@@ -17,14 +17,14 @@ import type {
   AllyDefenseNotification,
   AttitudeChangeNotification
 } from '@/types/game'
-import { MissionType, ShipType, TechnologyType, RelationStatus, NPCAIType } from '@/types/game'
+import { MissionType, ShipType, DefenseType, TechnologyType, RelationStatus, NPCAIType } from '@/types/game'
 
 // 重新导出类型供外部使用
 export type { TradeOffer, IntelReport, JointAttackInvite, IntelType, AidNotification, AllyDefenseNotification, AttitudeChangeNotification }
 import * as fleetLogic from './fleetLogic'
 import * as diplomaticLogic from './diplomaticLogic'
 import * as resourceLogic from './resourceLogic'
-import { DIPLOMATIC_CONFIG, SHIPS } from '@/config/gameConfig'
+import { DIPLOMATIC_CONFIG, SHIPS, DEFENSES } from '@/config/gameConfig'
 
 // ========== 敌对NPC增强行为类型定义 ==========
 
@@ -908,11 +908,69 @@ export const processNPCSpyArrival = (
 }
 
 /**
- * 决定NPC攻击舰队组成
- * 基于侦查报告和NPC实力
+ * 计算舰队的战斗力
+ * 使用 attack + shield + armor 作为单位战斗力
  */
-const decideAttackFleet = (_npc: NPC, npcPlanet: Planet, _spyReport: SpyReport, config: DynamicBehaviorConfig): Partial<Fleet> | null => {
-  // 简单策略：派出一定比例的可用舰队
+const calculateFleetCombatPower = (fleet: Partial<Fleet> | undefined): number => {
+  if (!fleet) return 0
+  let power = 0
+  for (const [shipType, count] of Object.entries(fleet)) {
+    if (count && count > 0) {
+      const config = SHIPS[shipType as ShipType]
+      if (config) {
+        // 战斗力 = (攻击力 + 护盾 + 装甲) * 数量
+        power += (config.attack + config.shield + config.armor) * count
+      }
+    }
+  }
+  return power
+}
+
+/**
+ * 计算防御设施的战斗力
+ */
+const calculateDefenseCombatPower = (defense: Partial<Record<DefenseType, number>> | undefined): number => {
+  if (!defense) return 0
+  let power = 0
+  for (const [defenseType, count] of Object.entries(defense)) {
+    if (count && count > 0) {
+      const config = DEFENSES[defenseType as DefenseType]
+      if (config) {
+        // 战斗力 = (攻击力 + 护盾 + 装甲) * 数量
+        power += (config.attack + config.shield + config.armor) * count
+      }
+    }
+  }
+  return power
+}
+
+/**
+ * 评估NPC是否能赢得战斗
+ * 返回NPC战斗力与敌方战斗力的比值
+ */
+export const evaluateWinProbability = (npcFleet: Partial<Fleet>, spyReport: SpyReport): number => {
+  const npcPower = calculateFleetCombatPower(npcFleet)
+  const enemyFleetPower = calculateFleetCombatPower(spyReport.fleet)
+  const enemyDefensePower = calculateDefenseCombatPower(spyReport.defense)
+  const totalEnemyPower = enemyFleetPower + enemyDefensePower
+
+  // 如果敌方没有防御力，返回无限大（可以攻击）
+  if (totalEnemyPower === 0) return Infinity
+
+  return npcPower / totalEnemyPower
+}
+
+/**
+ * 决定NPC攻击舰队组成
+ * 基于侦查报告和NPC实力，只有当有合理胜算时才攻击
+ */
+const decideAttackFleet = (_npc: NPC, npcPlanet: Planet, spyReport: SpyReport, config: DynamicBehaviorConfig): Partial<Fleet> | null => {
+  // 计算敌方总战斗力
+  const enemyFleetPower = calculateFleetCombatPower(spyReport.fleet)
+  const enemyDefensePower = calculateDefenseCombatPower(spyReport.defense)
+  const totalEnemyPower = enemyFleetPower + enemyDefensePower
+
+  // 先计算可用的攻击舰队
   const attackFleet: Partial<Fleet> = {}
   let hasShips = false
 
@@ -939,7 +997,22 @@ const decideAttackFleet = (_npc: NPC, npcPlanet: Planet, _spyReport: SpyReport, 
     }
   }
 
-  return hasShips ? attackFleet : null
+  if (!hasShips) {
+    return null
+  }
+
+  // 计算NPC舰队战斗力
+  const npcPower = calculateFleetCombatPower(attackFleet)
+
+  // 如果敌方有防御力，检查是否有足够的胜算
+  // 要求NPC战斗力至少是敌方的1.2倍才会发动攻击（确保有较大胜算）
+  const MIN_WIN_RATIO = 1.2
+  if (totalEnemyPower > 0 && npcPower < totalEnemyPower * MIN_WIN_RATIO) {
+    // NPC战斗力不足，不发动攻击
+    return null
+  }
+
+  return attackFleet
 }
 
 /**
@@ -1520,6 +1593,25 @@ export const createNPCRecycleMission = (npc: NPC, debris: DebrisField, player: P
     return null
   }
 
+  // 检查残骸位置是否有玩家星球
+  const playerPlanetAtDebris = allPlanets.find(
+    p =>
+      p.ownerId === player.id &&
+      p.position.galaxy === debris.position.galaxy &&
+      p.position.system === debris.position.system &&
+      p.position.position === debris.position.position
+  )
+
+  // 如果残骸在玩家星球位置，检查玩家是否有防御
+  // 如果玩家有防御，NPC不应该只派回收船去送死（会被击毁产生更多残骸，形成恶性循环）
+  if (playerPlanetAtDebris) {
+    // 计算玩家星球的总防御数量
+    const totalDefense = Object.values(playerPlanetAtDebris.defense || {}).reduce((sum, count) => sum + (count || 0), 0)
+    if (totalDefense > 0) {
+      return null // 玩家有防御，不派纯回收船去送死
+    }
+  }
+
   // 检查NPC是否有回收船
   const recyclers = closestPlanet.fleet[ShipType.Recycler] || 0
   if (recyclers === 0) {
@@ -1566,15 +1658,7 @@ export const createNPCRecycleMission = (npc: NPC, debris: DebrisField, player: P
   }
   npc.fleetMissions.push(mission)
 
-  // 检查残骸位置是否有玩家星球，如果有则发送警告
-  const playerPlanetAtDebris = allPlanets.find(
-    p =>
-      p.ownerId === player.id &&
-      p.position.galaxy === debris.position.galaxy &&
-      p.position.system === debris.position.system &&
-      p.position.position === debris.position.position
-  )
-
+  // 如果残骸在玩家星球位置，发送警告（非敌对NPC才会执行到这里）
   if (playerPlanetAtDebris) {
     // 创建即将到来的舰队警告（非敌对）
     const alert = createIncomingFleetAlert(mission, npc, playerPlanetAtDebris)

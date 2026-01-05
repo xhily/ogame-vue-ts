@@ -23,30 +23,44 @@ export const calculateBuildingCost = (buildingType: BuildingType, targetLevel: n
 
 /**
  * 计算建筑升级时间
+ * 使用 2moons 公式（调整版）：
+ * 1. 成本系数 = Σ (资源^0.3 / 0.003)
+ * 2. 时间(秒) = 成本系数 / ((1 + 机器人工厂) × 2^纳米工厂 × 游戏速度)
  * @param buildingType 建筑类型
  * @param targetLevel 目标等级
  * @param buildingSpeedBonus 指挥官等提供的速度加成百分比
  * @param roboticsFactoryLevel 机器人工厂等级
  * @param naniteFactoryLevel 纳米工厂等级
+ * @param gameSpeed 游戏速度（默认1）
  */
 export const calculateBuildingTime = (
   buildingType: BuildingType,
   targetLevel: number,
   buildingSpeedBonus: number = 0,
   roboticsFactoryLevel: number = 0,
-  naniteFactoryLevel: number = 0
+  naniteFactoryLevel: number = 0,
+  gameSpeed: number = 1
 ): number => {
-  const config = BUILDINGS[buildingType]
-  const multiplier = Math.pow(config.costMultiplier, targetLevel - 1)
-  const baseTime = config.baseTime * multiplier
+  // 计算该等级的成本
+  const cost = calculateBuildingCost(buildingType, targetLevel)
 
-  // 机器人工厂和纳米工厂的加速：建造时间 / (1 + 机器人工厂等级 + 纳米工厂等级 × 2)
-  const factorySpeedDivisor = 1 + roboticsFactoryLevel + naniteFactoryLevel * 2
+  // 2moons 公式：成本系数 = Σ (资源^0.3 / 0.003)
+  let elementCost = 0
+  if (cost.metal > 0) elementCost += Math.pow(cost.metal, 0.3) / 0.003
+  if (cost.crystal > 0) elementCost += Math.pow(cost.crystal, 0.3) / 0.003
+  if (cost.deuterium > 0) elementCost += Math.pow(cost.deuterium, 0.3) / 0.003
+
+  // 机器人工厂和纳米工厂的加速
+  const factoryBonus = (1 + roboticsFactoryLevel) * Math.pow(2, naniteFactoryLevel)
+
+  // 简化公式：时间(秒) = 成本系数 / (工厂加成 × 游戏速度)
+  const timeInSeconds = elementCost / (factoryBonus * gameSpeed)
 
   // 指挥官等的百分比加成
   const speedMultiplier = 1 - buildingSpeedBonus / 100
 
-  return Math.floor((baseTime / factorySpeedDivisor) * speedMultiplier)
+  // 确保最小时间为5秒
+  return Math.max(5, Math.floor(timeInSeconds * speedMultiplier))
 }
 
 /**
@@ -78,7 +92,16 @@ export const checkBuildingRequirements = (
   for (const [key, level] of Object.entries(requirements)) {
     const requiredLevel = level as number
     if (Object.values(BuildingType).includes(key as BuildingType)) {
-      if ((planet.buildings[key as BuildingType] || 0) < requiredLevel) {
+      const requiredBuildingType = key as BuildingType
+      const requiredBuildingConfig = BUILDINGS[requiredBuildingType]
+
+      // 如果当前是月球，且所需建筑是星球专属建筑（planetOnly），则跳过此前置条件
+      // 这允许在月球上建造机器人工厂等建筑，即使它们的前置条件是无法在月球建造的矿场
+      if (planet.isMoon && requiredBuildingConfig?.planetOnly) {
+        continue
+      }
+
+      if ((planet.buildings[requiredBuildingType] || 0) < requiredLevel) {
         return false
       }
     } else if (Object.values(TechnologyType).includes(key as TechnologyType)) {
@@ -168,6 +191,12 @@ export const completeBuildQueue = (
         const buildingType = item.itemType as BuildingType
         const currentLevel = planet.buildings[buildingType] || 0
         planet.buildings[buildingType] = Math.max(0, currentLevel - 1)
+      } else if (item.type === 'scrap_ship') {
+        // 舰船拆除完成，减少舰船数量（舰船已在开始拆除时扣除）
+        // 资源返还也在开始拆除时完成，这里不需要额外操作
+        if (onCompleted) {
+          onCompleted('ship', item.itemType, undefined, item.quantity)
+        }
       }
       return false
     }

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"embed"
 	"flag"
 	"fmt"
@@ -10,6 +11,7 @@ import (
 	"os"
 	"os/exec"
 	"runtime"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -20,9 +22,15 @@ var content embed.FS
 
 func main() {
 	// --- 1. 命令行参数配置 ---
-	// 定义 -port 参数，默认为 0（自动分配）
-	portPtr := flag.Int("port", 0, "指定运行端口 (例如: 8080)，不指定则自动分配可用端口")
+	// 定义 -port 参数，默认为 -1（表示未指定，需要交互选择）
+	portPtr := flag.Int("port", -1, "指定运行端口 (例如: 8080)，不指定则显示交互菜单")
 	flag.Parse()
+
+	// 如果没有通过命令行指定端口，显示交互式菜单
+	port := *portPtr
+	if port == -1 {
+		port = showPortMenu()
+	}
 
 	// --- 2. 静态资源处理 ---
 	// 获取 docs 子目录的文件系统句柄
@@ -60,10 +68,10 @@ func main() {
 	})
 
 	// --- 3. 端口监听逻辑 ---
-	addr := fmt.Sprintf("0.0.0.0:%d", *portPtr)
+	addr := fmt.Sprintf("0.0.0.0:%d", port)
 	listener, err := net.Listen("tcp", addr)
 	if err != nil {
-		fmt.Printf("错误: 端口 %d 已被占用或监听失败: %v\n", *portPtr, err)
+		fmt.Printf("错误: 端口 %d 已被占用或监听失败: %v\n", port, err)
 		// 停留 5 秒让用户看到错误信息
 		time.Sleep(5 * time.Second)
 		os.Exit(1)
@@ -79,8 +87,8 @@ func main() {
 	fmt.Printf("启动时间: %s\n", time.Now().Format("2006-01-02 15:04:05"))
 	fmt.Printf("本地访问: %s\n", localUrl)
 	fmt.Printf("局域网访问: %s\n", lanUrl)
-	if *portPtr != 0 {
-		fmt.Printf("运行模式: 固定端口 (%d)\n", *portPtr)
+	if port != 0 {
+		fmt.Printf("运行模式: 固定端口 (%d)\n", port)
 	} else {
 		fmt.Printf("运行模式: 自动分配端口\n")
 	}
@@ -131,4 +139,59 @@ func openBrowser(url string) {
 	}
 
 	_ = exec.Command(cmd, args...).Start()
+}
+
+// 显示端口选择菜单
+func showPortMenu() int {
+	reader := bufio.NewReader(os.Stdin)
+
+	fmt.Println("=======================================")
+	fmt.Println("       OGame Vue Ts 服务器启动")
+	fmt.Println("=======================================")
+	fmt.Println()
+	fmt.Println("请选择端口模式:")
+	fmt.Println("  [1] 随机端口 (自动分配可用端口)")
+	fmt.Println("  [2] 自定义端口 (指定固定端口)")
+	fmt.Println()
+	fmt.Print("请输入选项 (1/2): ")
+
+	for {
+		input, _ := reader.ReadString('\n')
+		input = strings.TrimSpace(input)
+
+		switch input {
+		case "1", "":
+			fmt.Println("\n已选择: 随机端口模式")
+			return 0
+		case "2":
+			return inputCustomPort(reader)
+		default:
+			fmt.Print("无效输入，请输入 1 或 2: ")
+		}
+	}
+}
+
+// 输入自定义端口
+func inputCustomPort(reader *bufio.Reader) int {
+	fmt.Print("请输入端口号 (1-65535，推荐: 8080): ")
+
+	for {
+		input, _ := reader.ReadString('\n')
+		input = strings.TrimSpace(input)
+
+		// 如果直接回车，使用默认端口 8080
+		if input == "" {
+			fmt.Println("\n已选择: 固定端口 8080")
+			return 8080
+		}
+
+		port, err := strconv.Atoi(input)
+		if err != nil || port < 1 || port > 65535 {
+			fmt.Print("无效端口号，请输入 1-65535 之间的数字: ")
+			continue
+		}
+
+		fmt.Printf("\n已选择: 固定端口 %d\n", port)
+		return port
+	}
 }

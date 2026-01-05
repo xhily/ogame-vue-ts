@@ -152,6 +152,7 @@ export default {
     planetDestroyerFactory: 'Fábrica de Destructores de Planetas',
     geoResearchStation: 'Estación de Investigación Geológica',
     deepDrillingFacility: 'Instalación de Perforación Profunda',
+    university: 'Universidad',
     buildTime: 'Tiempo de Construcción',
     production: 'Producción',
     consumption: 'Consumo',
@@ -200,9 +201,10 @@ export default {
     jumpGate: 'Transfiere flotas instantáneamente a otras lunas',
     planetDestroyerFactory: 'Construye armas definitivas capaces de destruir planetas',
     geoResearchStation:
-      'Investiga estructuras geológicas y aumenta la tasa de regeneración de depósitos de mineral. +50% de regeneración por nivel',
+      'Investiga estructuras geológicas y aumenta la tasa de regeneración de depósitos de mineral. +10% de regeneración por nivel',
     deepDrillingFacility:
-      'Perfora profundamente en la corteza para acceder a vetas de mineral más profundas. +20% de capacidad de depósito de mineral por nivel'
+      'Perfora profundamente en la corteza para acceder a vetas de mineral más profundas. +20% de capacidad de depósito de mineral por nivel',
+    university: 'Entrena investigadores para acelerar la velocidad de investigación. -8% de tiempo de investigación por nivel'
   },
   ships: {
     lightFighter: 'Caza Ligero',
@@ -278,7 +280,11 @@ export default {
     colonySlots: 'Espacios de Colonia',
     forAllPlanets: '(Global)',
     speedBonus: 'Bono de Velocidad',
-    researchSpeedBonus: 'Bono de Velocidad de Investigación'
+    researchSpeedBonus: 'Bono de Velocidad de Investigación',
+    // Visualización de bono de producción de recursos
+    mineralResearch: 'Investigación Mineral',
+    crystalResearch: 'Investigación de Cristal',
+    fuelResearch: 'Investigación de Combustible'
   },
   technologies: {
     energyTechnology: 'Tecnología de Energía',
@@ -299,7 +305,11 @@ export default {
     darkMatterTechnology: 'Tecnología de Materia Oscura',
     terraformingTechnology: 'Tecnología de Terraformación',
     planetDestructionTech: 'Tecnología de Destrucción Planetaria',
-    miningTechnology: 'Tecnología de Minería'
+    miningTechnology: 'Tecnología de Minería',
+    intergalacticResearchNetwork: 'Red de Investigación Intergaláctica',
+    mineralResearch: 'Investigación Mineral',
+    crystalResearch: 'Investigación de Cristal',
+    fuelResearch: 'Investigación de Combustible'
   },
   technologyDescriptions: {
     energyTechnology: 'Mejora la eficiencia energética',
@@ -323,7 +333,11 @@ export default {
       'Investigación de tecnología de terraformación planetaria, añade 30 espacios disponibles a todos los planetas por nivel',
     planetDestructionTech: 'Tecnología aterradora para destruir planetas enteros',
     miningTechnology:
-      'Mejora los métodos y equipos de minería, aumenta la capacidad de depósito de mineral en todos los planetas. +15% de capacidad por nivel'
+      'Mejora los métodos y equipos de minería, aumenta la capacidad de depósito de mineral en todos los planetas. +15% de capacidad por nivel',
+    intergalacticResearchNetwork: 'Conecta múltiples laboratorios de investigación entre planetas. Cada nivel conecta 1 laboratorio adicional',
+    mineralResearch: 'Investiga técnicas más eficientes de extracción de metal. +2% de producción de metal por nivel',
+    crystalResearch: 'Investiga técnicas más eficientes de refinamiento de cristal. +2% de producción de cristal por nivel',
+    fuelResearch: 'Investiga técnicas más eficientes de síntesis de deuterio. +2% de producción de deuterio por nivel'
   },
   officers: {
     commander: 'Comandante',
@@ -925,6 +939,9 @@ export default {
     round: 'Ronda {round}',
     attackerRemainingPower: 'Poder restante del atacante',
     defenderRemainingPower: 'Poder restante del defensor',
+    importFromSpyReport: 'Importar desde informe de espionaje',
+    selectSpyReport: 'Seleccionar informe de espionaje',
+    noSpyReports: 'No hay informes de espionaje disponibles',
     // Battle animation
     playAnimation: 'Reproducir Animación',
     showDetails: 'Mostrar Detalles',
@@ -952,6 +969,7 @@ export default {
     exporting: 'Exportando...',
     exportSuccess: 'Exportación exitosa',
     exportSuccessWithPath: 'Exportación exitosa, archivo guardado en: {path}',
+    storagePermissionDenied: 'Permiso de almacenamiento denegado, no se puede exportar el archivo',
     exportFailed: 'Exportación fallida, por favor intenta de nuevo',
     importData: 'Importar Datos',
     importDataDesc: 'Restaurar progreso del juego desde archivo JSON',
@@ -969,6 +987,8 @@ export default {
     gameSettingsDesc: 'Ajustar parámetros y preferencias del juego',
     gamePause: 'Pausa del Juego',
     gamePauseDesc: 'Pausar o reanudar el tiempo del juego y la producción de recursos',
+    battleMode: 'Modo de combate hasta el final',
+    battleModeDesc: 'Cuando está activado, las batallas duran hasta 100 rondas hasta que se decide un ganador. Cuando está desactivado, se usa el modo clásico de 6 rondas',
     pause: 'Pausar',
     resume: 'Reanudar',
     gamePaused: 'Juego pausado',
@@ -1954,13 +1974,19 @@ export default {
       questNotActive: 'Misión no activa',
       questNotCompleted: 'Misión no completada',
       rewardsAlreadyClaimed: 'Recompensas ya reclamadas',
-      prerequisiteNotMet: 'Misión prerequisito no completada'
+      prerequisiteNotMet: 'Misión prerequisito no completada',
+      questLocked: 'Misión bloqueada',
+      notInitialized: 'Campaña no inicializada',
+      questAlreadyCompleted: 'Misión ya completada'
     },
     speakers: {
       ancientVoice: 'Voz Antigua',
       neighborNPC: 'Facción Vecina',
       mysteriousSignal: 'Señal Misteriosa',
-      enemyCommander: 'Comandante Enemigo'
+      enemyCommander: 'Comandante Enemigo',
+      shadowVoice: 'Voz de la Sombra',
+      allyNPC: 'Facción Aliada',
+      ancientGuardian: 'Guardián Antiguo'
     },
     objectiveDescriptions: {
       buildMetalMine: 'Construir Mina de Metal al nivel 2',
@@ -2050,13 +2076,18 @@ export default {
       '2_3': {
         prologue_1:
           'Tu expedición descubrió señales anómalas. Estas señales parecen venir de una civilización antigua... Investiga su origen.',
+        prologue_2: 'Estas señales... llevan ecos de una civilización perdida hace tiempo. Sus secretos esperan ser descubiertos...',
         epilogue_1: 'Estos símbolos... ¡Son ruinas de una civilización antigua! Continúa investigando para descubrir sus secretos.'
       },
       '2_4': {
-        prologue_1: 'Has encontrado la ubicación de ruinas antiguas. Envía tu flota a explorar y ver qué puedes descubrir.'
+        prologue_1: 'Has encontrado la ubicación de ruinas antiguas. Envía tu flota a explorar y ver qué puedes descubrir.',
+        prologue_2: 'Las ruinas guardan muchos secretos... Elige tu camino sabiamente...',
+        choice_1: 'Explorar con cautela - priorizar seguridad',
+        choice_2: 'Explorar agresivamente - priorizar descubrimiento'
       },
       '2_5': {
-        prologue_1: 'Se encontraron archivos de datos en las ruinas. Estudia estos datos, quizás puedas desbloquear nueva tecnología.'
+        prologue_1: 'Se encontraron archivos de datos en las ruinas. Estudia estos datos, quizás puedas desbloquear nueva tecnología.',
+        epilogue_1: '¡Los datos antiguos han sido descifrados! Se han obtenido nuevos conocimientos tecnológicos.'
       },
       '3_1': {
         prologue_1: 'Mientras exploras, no olvides la diplomacia. Mantener buenas relaciones con las facciones circundantes te beneficia.'
@@ -2066,16 +2097,19 @@ export default {
       },
       '3_3': {
         prologue_1:
-          'La inteligencia indica que fuerzas hostiles te están vigilando desde las sombras. Mantente alerta y explora sus movimientos.'
+          'La inteligencia indica que fuerzas hostiles te están vigilando desde las sombras. Mantente alerta y explora sus movimientos.',
+        prologue_2: 'Fuerzas oscuras se agitan en el vacío... Han notado tu poder creciente...'
       },
       '3_4': {
         prologue_1: 'Establece una alianza formal con facciones amigables para apoyarse mutuamente contra las amenazas.'
       },
       '3_5': {
-        prologue_1: 'Las amenazas se acercan. Construye instalaciones de defensa y prepárate para posibles conflictos.'
+        prologue_1: 'Las amenazas se acercan. Construye instalaciones de defensa y prepárate para posibles conflictos.',
+        epilogue_1: 'Tus defensas están listas. La tormenta se acerca, pero estás preparado.'
       },
       '4_1': {
         prologue_1: '¡El enemigo ha lanzado un ataque! ¡Defiende tu planeta!',
+        prologue_2: 'La flota de las sombras se acerca... Ha llegado tu momento de prueba...',
         epilogue_1: 'Repeliste exitosamente la primera ola del enemigo. Pero esto es solo el comienzo...'
       },
       '4_2': {
@@ -2088,7 +2122,8 @@ export default {
         prologue_1: 'Muchos escombros permanecen en el campo de batalla. Recicla estos recursos para prepararte para la próxima batalla.'
       },
       '4_5': {
-        prologue_1: 'La batalla final se acerca. Construye una flota poderosa y prepárate para el desafío definitivo.'
+        prologue_1: 'La batalla final se acerca. Construye una flota poderosa y prepárate para el desafío definitivo.',
+        epilogue_1: 'Tu flota está reunida. El momento decisivo se acerca...'
       },
       '5_1': {
         prologue_1:
@@ -2096,10 +2131,12 @@ export default {
         prologue_2: 'Finalmente has llegado... La verdad pronto será revelada...'
       },
       '5_2': {
-        prologue_1: 'En las profundidades de las ruinas, descubriste tecnología antigua perdida. Investiga y desbloquea su poder.'
+        prologue_1: 'En las profundidades de las ruinas, descubriste tecnología antigua perdida. Investiga y desbloquea su poder.',
+        prologue_2: 'Esta tecnología... es más antigua que todas las civilizaciones conocidas. Manéjala con cuidado...'
       },
       '5_3': {
         prologue_1: 'Ha aparecido un enemigo misterioso. Este es el desafío final. ¡Derrótalo!',
+        prologue_2: '¡Soy el guardián de estos secretos. Demuestra tu valor o serás destruido!',
         epilogue_1: '¡Lo lograste! El guardián antiguo ha sido derrotado. Los secretos de la galaxia ahora están abiertos para ti.'
       },
       '5_4': {
@@ -2107,7 +2144,8 @@ export default {
       },
       '5_5': {
         prologue_1: 'Tu leyenda acaba de comenzar. ¡Continúa explorando y conquistando más sistemas estelares!',
-        epilogue_1: 'La galaxia es vasta e infinita, con innumerables secretos esperando que los descubras...'
+        epilogue_1: 'La galaxia es vasta e infinita, con innumerables secretos esperando que los descubras...',
+        epilogue_2: 'Tu viaje continúa... Nuevas aventuras esperan más allá de las estrellas...'
       }
     }
   },

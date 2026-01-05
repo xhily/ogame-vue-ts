@@ -48,6 +48,8 @@ export default {
     launchFailed: '发射失败',
     fleetMissionsFull: '舰队任务槽位已满',
     insufficientFleet: '舰队数量不足',
+    insufficientShips: '舰船数量不足',
+    invalidQuantity: '无效数量',
     insufficientFuel: '燃料不足',
     planetOnly: '该建筑只能在行星上建造',
     moonOnly: '该建筑只能在月球上建造',
@@ -56,7 +58,12 @@ export default {
     buildingLevelZero: '建筑等级为0，无法拆除',
     researchQueueFull: '研究队列已满',
     moonExists: '已存在月球',
-    insufficientDebris: '残骸场不足'
+    insufficientDebris: '残骸场不足',
+    planetNotFound: '找不到星球',
+    cannotAbandonHomePlanet: '不能放弃母星',
+    hasBuildQueue: '请等待建造队列完成',
+    hasFleetOnPlanet: '请先转移或拆除所有舰船',
+    hasDefenseOnPlanet: '请先拆除所有防御设施'
   },
   nav: {
     overview: '总览',
@@ -124,7 +131,12 @@ export default {
     renamePlanet: '重命名星球',
     renamePlanetTitle: '重命名星球',
     planetNamePlaceholder: '输入新的星球名称',
-    rename: '重命名'
+    rename: '重命名',
+    abandonColony: '放弃殖民地',
+    confirmAbandon: '确认放弃殖民地',
+    abandonWarning: '确定要放弃 "{name}" 吗？\n\n此操作无法撤销！\n所有建筑、资源和月球（如有）都将丢失。',
+    confirmAbandonButton: '放弃',
+    abandonFailed: '放弃失败'
   },
   player: {
     points: '总积分'
@@ -153,6 +165,7 @@ export default {
     planetDestroyerFactory: '行星毁灭者工厂',
     geoResearchStation: '地质研究站',
     deepDrillingFacility: '深层钻探设施',
+    university: '大学',
     buildTime: '建造时间',
     production: '产量',
     consumption: '消耗',
@@ -200,8 +213,9 @@ export default {
     sensorPhalanx: '侦测周围星系的舰队活动',
     jumpGate: '瞬间传送舰队到其他月球',
     planetDestroyerFactory: '建造能够摧毁行星的终极武器',
-    geoResearchStation: '研究地质结构，提高矿脉自然恢复速度。每级增加50%恢复速率',
-    deepDrillingFacility: '深入地壳钻探，解锁更深层的矿脉储量。每级增加20%矿脉上限'
+    geoResearchStation: '研究地质结构，提高矿脉自然恢复速度。每级增加10%恢复速率',
+    deepDrillingFacility: '深入地壳钻探，解锁更深层的矿脉储量。每级增加20%矿脉上限',
+    university: '培养科研人员，加快研究速度。每级减少研究时间8%（与星际研究网络叠加）'
   },
   ships: {
     lightFighter: '轻型战斗机',
@@ -276,7 +290,11 @@ export default {
     researchQueueBonus: '研究队列',
     colonySlots: '殖民地槽位',
     forAllPlanets: '(全局)',
-    speedBonus: '速度加成'
+    speedBonus: '速度加成',
+    // 资源产量加成显示
+    mineralResearch: '矿物研究',
+    crystalResearch: '晶体研究',
+    fuelResearch: '燃料研究'
   },
   technologies: {
     energyTechnology: '能源技术',
@@ -297,7 +315,11 @@ export default {
     darkMatterTechnology: '暗物质技术',
     terraformingTechnology: '地形改造技术',
     planetDestructionTech: '行星毁灭技术',
-    miningTechnology: '采矿技术'
+    miningTechnology: '采矿技术',
+    intergalacticResearchNetwork: '星际研究网络',
+    mineralResearch: '矿物研究',
+    crystalResearch: '晶体研究',
+    fuelResearch: '燃料研究'
   },
   technologyDescriptions: {
     energyTechnology: '提高能源利用效率',
@@ -319,7 +341,11 @@ export default {
     darkMatterTechnology: '研究暗物质的性质和应用',
     terraformingTechnology: '研究行星地形改造技术，每级为所有行星增加30个可用空间',
     planetDestructionTech: '研究如何摧毁整个行星的恐怖技术',
-    miningTechnology: '改进采矿方法和设备，提升所有星球矿脉储量上限。每级增加15%矿脉上限'
+    miningTechnology: '改进采矿方法和设备，提升所有星球矿脉储量上限。每级增加15%矿脉上限',
+    intergalacticResearchNetwork: '连接多个星球的研究实验室，共享研究资源。每级可连接1个额外的研究实验室（取等级最高的N个实验室）',
+    mineralResearch: '研究更高效的金属提取技术，提升金属矿产量。每级增加金属产量2%',
+    crystalResearch: '研究更高效的晶体提炼技术，提升晶体矿产量。每级增加晶体产量2%',
+    fuelResearch: '研究更高效的重氢合成技术，提升重氢产量。每级增加重氢产量2%'
   },
   officers: {
     commander: '指挥官',
@@ -437,7 +463,12 @@ export default {
     inputError: '输入错误',
     inputErrorMessage: '请输入建造数量！',
     buildFailed: '建造失败',
-    buildFailedMessage: '请检查资源是否足够或前置条件是否满足。'
+    buildFailedMessage: '请检查资源是否足够或前置条件是否满足。',
+    scrapQuantity: '拆除数量',
+    scrapRefund: '拆除返还 (50%)',
+    scrap: '拆除',
+    scrapFailed: '拆除失败',
+    scrapFailedMessage: '请检查舰船数量是否足够。'
   },
   defense: {
     attack: '攻击力',
@@ -859,14 +890,14 @@ export default {
     missileAttackFailed: '导弹攻击失败，目标星球不存在',
     missileAttackIntercepted: '所有导弹被拦截',
     hits: '枚命中',
-    expeditionResources: '远征队发现了资源！',
-    expeditionDarkMatter: '远征队发现了暗物质！',
-    expeditionFleet: '远征队发现了废弃的舰船！',
-    expeditionPiratesAttack: '远征队遭遇海盗袭击，损失了部分舰船',
-    expeditionPiratesEscaped: '远征队遭遇海盗，但成功逃脱',
-    expeditionAliensAttack: '远征队遭遇外星人袭击，损失了部分舰船',
-    expeditionAliensEscaped: '远征队遭遇外星人，但成功逃脱',
-    expeditionNothing: '远征队什么也没有发现'
+    expeditionResources: '探险队发现了资源！',
+    expeditionDarkMatter: '探险队发现了暗物质！',
+    expeditionFleet: '探险队发现了废弃的舰船！',
+    expeditionPiratesAttack: '探险队遭遇海盗袭击，损失了部分舰船',
+    expeditionPiratesEscaped: '探险队遭遇海盗，但成功逃脱',
+    expeditionAliensAttack: '探险队遭遇外星人袭击，损失了部分舰船',
+    expeditionAliensEscaped: '探险队遭遇外星人，但成功逃脱',
+    expeditionNothing: '探险队什么也没有发现'
   },
   simulatorView: {
     title: '战斗模拟器',
@@ -903,7 +934,10 @@ export default {
     hideRoundDetails: '隐藏回合详情',
     round: '第 {round} 回合',
     attackerRemainingPower: '攻击方剩余火力',
-    defenderRemainingPower: '防守方剩余火力'
+    defenderRemainingPower: '防守方剩余火力',
+    importFromSpyReport: '从侦查报告导入',
+    selectSpyReport: '选择侦查报告',
+    noSpyReports: '没有侦查报告'
   },
   settings: {
     dataManagement: '数据管理',
@@ -914,6 +948,7 @@ export default {
     exporting: '导出中...',
     exportSuccess: '导出成功',
     exportSuccessWithPath: '导出成功，文件已保存到：{path}',
+    storagePermissionDenied: '存储权限被拒绝，无法导出文件',
     exportFailed: '导出失败，请重试',
     importData: '导入数据',
     importDataDesc: '从JSON文件恢复游戏进度',
@@ -931,6 +966,8 @@ export default {
     gameSettingsDesc: '调整游戏参数和偏好设置',
     gamePause: '游戏暂停',
     gamePauseDesc: '暂停或恢复游戏时间和资源生产',
+    battleMode: '战斗到底模式',
+    battleModeDesc: '启用后战斗最多进行100回合直到分出胜负，关闭则使用经典6回合模式',
     pause: '暂停',
     resume: '恢复',
     gamePaused: '游戏已暂停',
@@ -1738,8 +1775,8 @@ export default {
       colonizer: '成功殖民星球次数',
       spy: '执行侦查任务次数',
       deployer: '执行部署任务次数',
-      explorer: '远征总次数',
-      luckyExplorer: '远征成功次数',
+      explorer: '探险总次数',
+      luckyExplorer: '探险成功次数',
       recycler: '回收任务次数',
       scavenger: '回收资源总量',
       destroyer: '摧毁星球次数',
@@ -1867,7 +1904,7 @@ export default {
       },
       '2_2': {
         title: '深空探险',
-        description: '派遣舰队进行远征探险'
+        description: '派遣舰队进行探险探险'
       },
       '2_3': {
         title: '神秘信号',
@@ -1963,13 +2000,19 @@ export default {
       questNotActive: '任务未激活',
       questNotCompleted: '任务未完成',
       rewardsAlreadyClaimed: '奖励已领取',
-      prerequisiteNotMet: '前置任务未完成'
+      prerequisiteNotMet: '前置任务未完成',
+      questLocked: '任务已锁定',
+      notInitialized: '战役未初始化',
+      questAlreadyCompleted: '任务已完成'
     },
     speakers: {
       ancientVoice: '古代之声',
       neighborNPC: '邻近势力',
       mysteriousSignal: '神秘信号',
-      enemyCommander: '敌方指挥官'
+      enemyCommander: '敌方指挥官',
+      shadowVoice: '暗影之声',
+      allyNPC: '盟友势力',
+      ancientGuardian: '远古守护者'
     },
     objectiveDescriptions: {
       buildMetalMine: '建造金属矿到2级',
@@ -1989,10 +2032,10 @@ export default {
       buildColonyShip: '建造殖民船',
       colonizeNewPlanet: '殖民新星球',
       colonizeMultiple: '殖民5个星球',
-      completeExpedition: '完成3次远征任务',
-      expeditionDeepSpace: '完成2次深空远征',
+      completeExpedition: '完成3次探险任务',
+      expeditionDeepSpace: '完成2次深空探险',
       expeditionUncharted: '探索1次未知区域',
-      expeditionDangerous: '完成3次危险星云远征',
+      expeditionDangerous: '完成3次危险星云探险',
       discoverRuins: '发现古代遗迹',
       researchComputer: '研究电脑技术到4级',
       researchImpulse: '研究脉冲驱动到3级',
@@ -2048,18 +2091,23 @@ export default {
         prologue_2: '宇宙是无限的...更多的星球意味着更多的可能性...'
       },
       '2_2': {
-        prologue_1: '殖民成功！但宇宙深处还有更多秘密等待发现。派遣舰队进行远征探险吧。',
+        prologue_1: '殖民成功！但宇宙深处还有更多秘密等待发现。派遣舰队进行探险探险吧。',
         prologue_2: '远方传来微弱的信号...那里有什么在等待着你...'
       },
       '2_3': {
         prologue_1: '你的探险队发现了异常信号。这些信号似乎来自一个古老的文明...调查它们的来源。',
+        prologue_2: '这些信号...承载着一个早已消逝的文明的回响。它们的秘密等待被发现...',
         epilogue_1: '这些符号...是古代文明的遗迹！继续调查，揭开它们的秘密。'
       },
       '2_4': {
-        prologue_1: '你发现了古代遗迹的位置。派遣舰队前去探索，看看能发现什么。'
+        prologue_1: '你发现了古代遗迹的位置。派遣舰队前去探索，看看能发现什么。',
+        prologue_2: '遗迹中隐藏着许多秘密...明智地选择你的道路...',
+        choice_1: '谨慎探索 - 优先安全',
+        choice_2: '激进探索 - 优先发现'
       },
       '2_5': {
-        prologue_1: '遗迹中发现了大量数据档案。研究这些数据，也许能解锁新的科技。'
+        prologue_1: '遗迹中发现了大量数据档案。研究这些数据，也许能解锁新的科技。',
+        epilogue_1: '古代数据已被解密！获得了新的科技洞见。'
       },
       '3_1': {
         prologue_1: '在探索的同时，也不要忘记外交。与周围的势力保持良好关系对你有益。'
@@ -2068,16 +2116,19 @@ export default {
         prologue_1: '有些势力对你表示了友好。继续加深关系，也许能获得更多支持。'
       },
       '3_3': {
-        prologue_1: '情报显示，有敌对势力正在暗中观察你。保持警惕，侦查他们的动向。'
+        prologue_1: '情报显示，有敌对势力正在暗中观察你。保持警惕，侦查他们的动向。',
+        prologue_2: '黑暗势力在虚空中蠢蠢欲动...他们已经注意到你日益增长的力量...'
       },
       '3_4': {
         prologue_1: '与友好势力建立正式同盟，在面对威胁时互相支持。'
       },
       '3_5': {
-        prologue_1: '威胁正在逼近。建设防御设施，准备迎接可能的冲突。'
+        prologue_1: '威胁正在逼近。建设防御设施，准备迎接可能的冲突。',
+        epilogue_1: '你的防线已经准备就绪。风暴即将来临，但你已经做好了准备。'
       },
       '4_1': {
         prologue_1: '敌人发动了进攻！保卫你的星球！',
+        prologue_2: '暗影舰队正在逼近...你的考验时刻已经到来...',
         epilogue_1: '你成功击退了敌人的第一波进攻。但这只是开始...'
       },
       '4_2': {
@@ -2090,17 +2141,20 @@ export default {
         prologue_1: '战场上留下了大量残骸。回收这些资源，为下一场战斗做准备。'
       },
       '4_5': {
-        prologue_1: '最终决战即将来临。建造强大的舰队，准备迎接最后的挑战。'
+        prologue_1: '最终决战即将来临。建造强大的舰队，准备迎接最后的挑战。',
+        epilogue_1: '你的舰队已经集结完毕。决定性的时刻即将到来...'
       },
       '5_1': {
         prologue_1: '所有线索都指向遗迹的最深处。那里隐藏着古代文明最核心的秘密。',
         prologue_2: '你终于来到了这里...真相即将揭晓...'
       },
       '5_2': {
-        prologue_1: '在遗迹深处，你发现了失落的古代科技。研究并解锁它们的力量。'
+        prologue_1: '在遗迹深处，你发现了失落的古代科技。研究并解锁它们的力量。',
+        prologue_2: '这项科技...比所有已知文明都要古老。小心处理...'
       },
       '5_3': {
         prologue_1: '一个神秘的敌人出现了。这是最后的挑战，击败它！',
+        prologue_2: '我是这些秘密的守护者。证明你的价值，否则将被毁灭！',
         epilogue_1: '你做到了！古代的守护者已被击败。银河系的秘密向你敞开。'
       },
       '5_4': {
@@ -2108,7 +2162,8 @@ export default {
       },
       '5_5': {
         prologue_1: '你的传奇才刚刚开始。继续探索，征服更多的星系！',
-        epilogue_1: '银河系广阔无垠，还有无数秘密等待你去发现...'
+        epilogue_1: '银河系广阔无垠，还有无数秘密等待你去发现...',
+        epilogue_2: '你的旅程仍在继续...新的冒险在群星之外等待着你...'
       }
     }
   },

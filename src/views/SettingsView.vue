@@ -114,6 +114,15 @@
             {{ gameStore.isPaused ? t('settings.resume') : t('settings.pause') }}
           </Button>
         </div>
+
+        <!-- 战斗模式 -->
+        <div class="flex items-center justify-between p-4 border rounded-lg">
+          <div class="space-y-1">
+            <h3 class="font-medium">{{ t('settings.battleMode') }}</h3>
+            <p class="text-sm text-muted-foreground">{{ t('settings.battleModeDesc') }}</p>
+          </div>
+          <Switch :checked="gameStore.battleToFinish" @update:checked="(val: boolean) => (gameStore.battleToFinish = val)" />
+        </div>
       </CardContent>
     </Card>
 
@@ -581,12 +590,22 @@
       const fileName = `${pkg.name}-${new Date().toISOString().slice(0, 10)}-${Date.now()}.json`
       const jsonString = JSON.stringify(exportData, null, 2)
 
-      // Android 保存到 Documents 目录
+      // Android 保存到公共 Downloads 目录
       if (Capacitor.isNativePlatform()) {
+        // 检查并请求存储权限
+        const permStatus = await Filesystem.checkPermissions()
+        if (permStatus.publicStorage !== 'granted') {
+          const reqResult = await Filesystem.requestPermissions()
+          if (reqResult.publicStorage !== 'granted') {
+            toast.error(t('settings.storagePermissionDenied'))
+            return
+          }
+        }
+
         const result = await Filesystem.writeFile({
-          path: fileName,
+          path: `Download/${fileName}`,
           data: jsonString,
-          directory: Directory.Documents,
+          directory: Directory.ExternalStorage,
           encoding: Encoding.UTF8
         })
         toast.success(t('settings.exportSuccessWithPath', { path: result.uri }))

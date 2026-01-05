@@ -150,11 +150,20 @@ export const processGameUpdate = (
   }
 
   // 更新所有星球资源（直接同步计算，避免 Worker 通信开销）
+  // 获取采矿技术等级（用于矿脉恢复上限计算）
+  const miningTechLevel = player.technologies[TechnologyType.MiningTechnology] || 0
+  // 获取资源研究科技等级
+  const techBonuses = {
+    mineralResearchLevel: player.technologies[TechnologyType.MineralResearch] || 0,
+    crystalResearchLevel: player.technologies[TechnologyType.CrystalResearch] || 0,
+    fuelResearchLevel: player.technologies[TechnologyType.FuelResearch] || 0
+  }
+
   player.planets.forEach(planet => {
     // 计算更新前的资源（用于计算生产量）
     const resourcesBefore = { ...planet.resources }
 
-    resourceLogic.updatePlanetResources(planet, now, bonuses, gameSpeed)
+    resourceLogic.updatePlanetResources(planet, now, bonuses, gameSpeed, miningTechLevel, techBonuses)
 
     // 追踪资源生产统计
     if (player.achievementStats) {
@@ -209,6 +218,10 @@ export const processGameUpdate = (
     onCompleted
   )
 
+  // 重要：先更新 player.researchQueue，再处理等待队列
+  // 这样等待队列处理时可以正确 push 新项目到队列中
+  player.researchQueue = updatedResearchQueue
+
   // 处理等待队列自动执行
   const waitingResult = waitingQueueLogic.processAllWaitingQueues(player, now)
   // 如果有等待队列项被执行，可以在这里添加通知（可选）
@@ -244,8 +257,9 @@ export const processGameUpdate = (
     onUnlock(allUnlockedItems)
   }
 
+  // 返回当前的研究队列（包含等待队列处理后添加的新项）
   return {
-    updatedResearchQueue
+    updatedResearchQueue: player.researchQueue
   }
 }
 

@@ -110,7 +110,7 @@ export const triggerQueueAnimation = (event: MouseEvent, type: 'building' | 'tec
 
     el.style.left = `${x}px`
     el.style.top = `${y}px`
-    el.style.transform = `translate(-50%, -50%) scale(${scale})`
+    el.style.transform = `translate3d(-50%, -50%, 0) scale3d(${scale}, ${scale}, 1)`
     el.style.opacity = `${opacity}`
 
     if (progress < 1) {

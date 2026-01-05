@@ -57,9 +57,15 @@
       <!-- 防守方配置 -->
       <TabsContent value="defender" class="mt-4">
         <Card>
-          <CardHeader>
-            <CardTitle>{{ t('simulatorView.defenderConfig') }}</CardTitle>
-            <CardDescription>{{ t('simulatorView.defenderConfigDesc') }}</CardDescription>
+          <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
+            <div class="space-y-1">
+              <CardTitle>{{ t('simulatorView.defenderConfig') }}</CardTitle>
+              <CardDescription>{{ t('simulatorView.defenderConfigDesc') }}</CardDescription>
+            </div>
+            <Button variant="outline" size="sm" @click="showSpyReportSelector = true" :disabled="!gameStore.player?.spyReports?.length">
+              <FileDown class="h-4 w-4 mr-2" />
+              {{ t('simulatorView.importFromSpyReport') }}
+            </Button>
           </CardHeader>
           <CardContent class="space-y-4">
             <!-- 舰队配置 -->
@@ -147,28 +153,80 @@
 
     <!-- 战斗结果对话框 -->
     <BattleReportDialog v-model:open="showResultDialog" :report="simulationResult" />
+
+    <!-- 侦查报告选择对话框 -->
+    <Dialog v-model:open="showSpyReportSelector">
+      <DialogContent class="max-w-2xl max-h-[80vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>{{ t('simulatorView.selectSpyReport') }}</DialogTitle>
+        </DialogHeader>
+        <div class="space-y-2">
+          <div v-if="!sortedSpyReports.length" class="text-center py-8 text-muted-foreground">
+            {{ t('simulatorView.noSpyReports') }}
+          </div>
+          <div
+            v-for="report in sortedSpyReports"
+            :key="report.id"
+            @click="importFromSpyReport(report)"
+            class="p-3 border rounded-lg cursor-pointer hover:bg-accent transition-colors"
+          >
+            <div class="flex justify-between items-start">
+              <div>
+                <div class="font-medium">{{ report.targetPlanetName }}</div>
+                <div class="text-sm text-muted-foreground">
+                  [{{ report.targetPosition.galaxy }}:{{ report.targetPosition.system }}:{{ report.targetPosition.position }}]
+                </div>
+              </div>
+              <div class="text-sm text-muted-foreground">
+                {{ formatTime(report.timestamp) }}
+              </div>
+            </div>
+            <div class="mt-2 flex gap-4 text-xs">
+              <span class="flex items-center gap-1">
+                <ResourceIcon type="metal" size="sm" />
+                {{ formatNumber(report.resources.metal) }}
+              </span>
+              <span class="flex items-center gap-1">
+                <ResourceIcon type="crystal" size="sm" />
+                {{ formatNumber(report.resources.crystal) }}
+              </span>
+              <span class="flex items-center gap-1">
+                <ResourceIcon type="deuterium" size="sm" />
+                {{ formatNumber(report.resources.deuterium) }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-  import { ref, toRaw } from 'vue'
+  import { ref, toRaw, computed } from 'vue'
   import { useI18n } from '@/composables/useI18n'
   import { useGameConfig } from '@/composables/useGameConfig'
+  import { useGameStore } from '@/stores/gameStore'
   import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
   import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
   import { Button } from '@/components/ui/button'
   import { Input } from '@/components/ui/input'
   import { Label } from '@/components/ui/label'
-  import { ShipType, DefenseType } from '@/types/game'
-  import type { Fleet, BattleResult } from '@/types/game'
+  import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+  import { ShipType, DefenseType, TechnologyType } from '@/types/game'
+  import type { Fleet, BattleResult, SpyReport } from '@/types/game'
   import { workerManager } from '@/workers/workerManager'
   import ResourceIcon from '@/components/common/ResourceIcon.vue'
   import BattleReportDialog from '@/components/dialogs/BattleReportDialog.vue'
-  import { Sword, Shield, Zap, RotateCcw } from 'lucide-vue-next'
+  import { Sword, Shield, Zap, RotateCcw, FileDown } from 'lucide-vue-next'
   import * as planetLogic from '@/logic/planetLogic'
 
   const { t } = useI18n()
   const { SHIPS, DEFENSES } = useGameConfig()
+  const gameStore = useGameStore()
+
+  // 侦查报告选择对话框状态
+  const showSpyReportSelector = ref(false)
 
   // 科技类型配置
   const techTypes = ['weapon', 'shield', 'armor'] as const
@@ -249,7 +307,8 @@
     // 使用 Worker 执行战斗模拟
     const result = await workerManager.simulateBattle({
       attacker: attackerSide,
-      defender: defenderSide
+      defender: defenderSide,
+      maxRounds: gameStore.battleToFinish ? 100 : 6
     })
 
     // 计算掠夺和残骸场
@@ -301,5 +360,66 @@
     defenderTech.value = { weapon: 0, shield: 0, armor: 0 }
     simulationResult.value = null
     showResultDialog.value = false
+  }
+
+  // 按时间排序的侦查报告
+  const sortedSpyReports = computed(() => {
+    return [...(gameStore.player?.spyReports || [])].sort((a, b) => b.timestamp - a.timestamp)
+  })
+
+  // 格式化时间
+  const formatTime = (timestamp: number) => {
+    return new Date(timestamp).toLocaleString()
+  }
+
+  // 格式化数字
+  const formatNumber = (num: number) => {
+    if (num >= 1e9) return (num / 1e9).toFixed(1) + 'B'
+    if (num >= 1e6) return (num / 1e6).toFixed(1) + 'M'
+    if (num >= 1e3) return (num / 1e3).toFixed(1) + 'K'
+    return num.toString()
+  }
+
+  // 从侦查报告导入数据
+  const importFromSpyReport = (report: SpyReport) => {
+    // 先重置防守方数据
+    defenderFleet.value = initializeFleet()
+    defenderDefense.value = initializeDefense()
+
+    // 填入资源
+    if (report.resources) {
+      defenderResources.value = {
+        metal: report.resources.metal || 0,
+        crystal: report.resources.crystal || 0,
+        deuterium: report.resources.deuterium || 0,
+        darkMatter: report.resources.darkMatter || 0,
+        energy: 0
+      }
+    }
+
+    // 填入舰队
+    if (report.fleet) {
+      Object.entries(report.fleet).forEach(([key, value]) => {
+        defenderFleet.value[key as keyof Fleet] = value || 0
+      })
+    }
+
+    // 填入防御
+    if (report.defense) {
+      Object.entries(report.defense).forEach(([key, value]) => {
+        defenderDefense.value[key as DefenseType] = value || 0
+      })
+    }
+
+    // 填入科技
+    if (report.technologies) {
+      defenderTech.value.weapon = report.technologies[TechnologyType.WeaponsTechnology] || 0
+      defenderTech.value.shield = report.technologies[TechnologyType.ShieldingTechnology] || 0
+      defenderTech.value.armor = report.technologies[TechnologyType.ArmourTechnology] || 0
+    }
+
+    // 关闭对话框并切换到防守方标签
+    showSpyReportSelector.value = false
+    activeTab.value = 'defender'
   }
 </script>

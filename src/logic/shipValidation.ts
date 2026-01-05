@@ -201,3 +201,66 @@ export const executeFleetDispatch = (
     resourceLogic.deductResources(planet.resources, cargo)
   }
 }
+
+/**
+ * 验证舰船拆除的所有条件
+ */
+export const validateShipScrap = (
+  planet: Planet,
+  shipType: ShipType,
+  quantity: number
+): {
+  valid: boolean
+  reason?: string
+} => {
+  // 检查数量是否有效
+  if (quantity <= 0) {
+    return { valid: false, reason: 'errors.invalidQuantity' }
+  }
+
+  // 检查舰船数量是否足够
+  const available = planet.fleet[shipType] || 0
+  if (available < quantity) {
+    return { valid: false, reason: 'errors.insufficientShips' }
+  }
+
+  return { valid: true }
+}
+
+/**
+ * 执行舰船拆除
+ */
+export const executeShipScrap = (
+  planet: Planet,
+  shipType: ShipType,
+  quantity: number,
+  officers: Record<OfficerType, Officer>
+): BuildQueueItem => {
+  // 计算军官加成
+  const bonuses = officerLogic.calculateActiveBonuses(officers, Date.now())
+
+  // 获取机器人工厂和纳米工厂等级
+  const roboticsFactoryLevel = planet.buildings[BuildingType.RoboticsFactory] || 0
+  const naniteFactoryLevel = planet.buildings[BuildingType.NaniteFactory] || 0
+
+  // 计算拆除时间
+  const scrapTime = shipLogic.calculateShipScrapTime(
+    shipType,
+    quantity,
+    bonuses.buildingSpeedBonus,
+    roboticsFactoryLevel,
+    naniteFactoryLevel
+  )
+
+  // 计算返还资源
+  const refund = shipLogic.calculateShipScrapRefund(shipType, quantity)
+
+  // 扣除舰船（立即扣除，避免拆除过程中派遣）
+  planet.fleet[shipType] = (planet.fleet[shipType] || 0) - quantity
+
+  // 返还资源
+  resourceLogic.addResources(planet.resources, refund)
+
+  // 创建队列项
+  return shipLogic.createShipScrapQueueItem(shipType, quantity, scrapTime)
+}

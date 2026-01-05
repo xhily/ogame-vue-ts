@@ -10,8 +10,8 @@
       <TabsList :class="['grid', 'w-full', showJumpGateTab ? 'grid-cols-3' : 'grid-cols-2']">
         <TabsTrigger v-for="tab in visibleTabs" :key="tab.value" :value="tab.value">
           {{ t(`fleetView.${tab.labelKey}`) }}
-          <Badge v-if="tab.value === 'missions' && gameStore.player.fleetMissions.length > 0" variant="destructive" class="ml-1">
-            {{ gameStore.player.fleetMissions.length }}
+          <Badge v-if="tab.value === 'missions' && totalMissionsCount > 0" variant="destructive" class="ml-1">
+            {{ totalMissionsCount }}
           </Badge>
           <Badge v-if="tab.value === 'jumpGate' && jumpGateReady" variant="default" class="ml-1">✓</Badge>
         </TabsTrigger>
@@ -294,13 +294,14 @@
 
       <!-- 飞行任务 -->
       <TabsContent value="missions" class="mt-4 space-y-4">
-        <Empty v-if="gameStore.player.fleetMissions.length === 0" class="border rounded-lg">
+        <Empty v-if="totalMissionsCount === 0" class="border rounded-lg">
           <EmptyContent>
             <RocketIcon class="h-10 w-10 text-muted-foreground" />
             <EmptyDescription>{{ t('fleetView.noFlightMissions') }}</EmptyDescription>
           </EmptyContent>
         </Empty>
 
+        <!-- 舰队任务 -->
         <Card v-for="mission in gameStore.player.fleetMissions" :key="mission.id">
           <CardHeader>
             <div class="flex justify-between items-start">
@@ -375,6 +376,44 @@
               >
                 {{ t('fleetView.abortMission') }}
               </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        <!-- 导弹攻击任务 -->
+        <Card v-for="missileAttack in flyingMissileAttacks" :key="missileAttack.id">
+          <CardHeader>
+            <div class="flex justify-between items-start">
+              <div>
+                <CardTitle class="text-base sm:text-lg flex items-center gap-2">
+                  <Crosshair class="h-4 w-4 text-destructive" />
+                  {{ t('galaxyView.missileAttackTitle') }}
+                </CardTitle>
+                <CardDescription class="text-xs sm:text-sm">
+                  {{ getPlanetName(missileAttack.originPlanetId) }} → [{{ missileAttack.targetPosition.galaxy }}:{{ missileAttack.targetPosition.system }}:{{
+                    missileAttack.targetPosition.position
+                  }}]
+                </CardDescription>
+              </div>
+              <Badge variant="destructive">
+                {{ t('fleetView.outbound') }}
+              </Badge>
+            </div>
+          </CardHeader>
+          <CardContent class="space-y-3">
+            <!-- 导弹数量 -->
+            <div>
+              <p class="text-xs sm:text-sm font-medium mb-2">{{ t('galaxyView.missileCount') }}:</p>
+              <Badge variant="outline">{{ missileAttack.missileCount }}</Badge>
+            </div>
+
+            <!-- 进度条 -->
+            <div class="space-y-2">
+              <div class="flex justify-between text-xs sm:text-sm">
+                <span>{{ t('fleetView.arrivalTime') }}:</span>
+                <span>{{ formatTime(getMissileRemainingTime(missileAttack)) }}</span>
+              </div>
+              <Progress :model-value="getMissileProgress(missileAttack)" />
             </div>
           </CardContent>
         </Card>
@@ -591,7 +630,8 @@
     Clock,
     Check,
     Globe,
-    Moon
+    Moon,
+    Crosshair
   } from 'lucide-vue-next'
   import { formatNumber, formatTime } from '@/utils/format'
   import * as shipValidation from '@/logic/shipValidation'
@@ -626,6 +666,16 @@
     const bonuses = officerLogic.calculateActiveBonuses(gameStore.player.officers, Date.now())
     const computerTechLevel = gameStore.player.technologies[TechnologyType.ComputerTechnology] || 0
     return publicLogic.getMaxFleetMissions(bonuses.additionalFleetSlots, computerTechLevel)
+  })
+
+  // 飞行中的导弹攻击
+  const flyingMissileAttacks = computed(() => {
+    return gameStore.player.missileAttacks?.filter(m => m.status === 'flying') || []
+  })
+
+  // 总任务数量（舰队任务 + 导弹攻击）
+  const totalMissionsCount = computed(() => {
+    return gameStore.player.fleetMissions.length + flyingMissileAttacks.value.length
   })
 
   const activeTab = ref<'send' | 'missions' | 'jumpGate'>('send')
@@ -837,6 +887,8 @@
         selectedMission.value = MissionType.Attack
       } else if (mission === 'colonize') {
         selectedMission.value = MissionType.Colonize
+      } else if (mission === 'recycle') {
+        selectedMission.value = MissionType.Recycle
       } else if (gift === '1') {
         // 如果有gift参数，设置为运输任务并启用赠送模式
         selectedMission.value = MissionType.Transport
@@ -1412,5 +1464,19 @@
       const elapsed = now - departTime
       return Math.max(0, Math.min(100, (elapsed / total) * 100))
     }
+  }
+
+  // 获取导弹任务剩余时间
+  const getMissileRemainingTime = (missileAttack: any): number => {
+    const now = currentTime.value
+    return Math.max(0, (missileAttack.arrivalTime - now) / 1000)
+  }
+
+  // 获取导弹任务进度
+  const getMissileProgress = (missileAttack: any): number => {
+    const now = currentTime.value
+    const total = missileAttack.arrivalTime - missileAttack.launchTime
+    const elapsed = now - missileAttack.launchTime
+    return Math.max(0, Math.min(100, (elapsed / total) * 100))
   }
 </script>

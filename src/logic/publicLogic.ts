@@ -90,16 +90,27 @@ export const checkRequirements = (
 }
 
 /**
- * 计算星球的资源产量（包含军官加成）
+ * 计算星球的资源产量（包含军官加成和科技加成）
  * @param planet 星球对象
  * @param officers 玩家的军官对象
+ * @param resourceSpeed 游戏速度
+ * @param techBonuses 科技加成（可选，矿物研究/晶体研究/燃料研究）
  * @returns 每小时各类资源的产量
  */
-export const getResourceProduction = (planet: Planet, officers: Record<OfficerType, Officer>, resourceSpeed: number = 1): Resources => {
+export const getResourceProduction = (
+  planet: Planet,
+  officers: Record<OfficerType, Officer>,
+  resourceSpeed: number = 1,
+  techBonuses?: {
+    mineralResearchLevel?: number
+    crystalResearchLevel?: number
+    fuelResearchLevel?: number
+  }
+): Resources => {
   // 计算当前激活的军官加成
   const bonuses = officerLogic.calculateActiveBonuses(officers, Date.now())
   // 根据建筑等级和军官加成计算资源产量
-  const base = resourceLogic.calculateResourceProduction(planet, bonuses)
+  const base = resourceLogic.calculateResourceProduction(planet, bonuses, techBonuses)
   return scaleResources(base, resourceSpeed)
 }
 

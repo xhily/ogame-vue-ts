@@ -50,7 +50,9 @@ export const BuildingType = {
   // 特殊建筑
   PlanetDestroyerFactory: 'planetDestroyerFactory', // 行星毁灭者工厂
   GeoResearchStation: 'geoResearchStation', // 地质研究站（影响矿脉恢复速度）
-  DeepDrillingFacility: 'deepDrillingFacility' // 深层钻探设施（提升矿脉上限）
+  DeepDrillingFacility: 'deepDrillingFacility', // 深层钻探设施（提升矿脉上限）
+  // 2moons新增建筑
+  University: 'university' // 大学（加速研究）
 } as const
 
 export type BuildingType = (typeof BuildingType)[keyof typeof BuildingType]
@@ -98,7 +100,12 @@ export const TechnologyType = {
   DarkMatterTechnology: 'darkMatterTechnology', // 暗物质技术
   TerraformingTechnology: 'terraformingTechnology', // 地形改造技术
   PlanetDestructionTech: 'planetDestructionTech', // 行星毁灭技术
-  MiningTechnology: 'miningTechnology' // 采矿技术（提升矿脉上限）
+  MiningTechnology: 'miningTechnology', // 采矿技术（提升矿脉上限）
+  // 2moons新增科技
+  IntergalacticResearchNetwork: 'intergalacticResearchNetwork', // 星际研究网络（连接多个研究实验室）
+  MineralResearch: 'mineralResearch', // 矿物研究（提升金属产量）
+  CrystalResearch: 'crystalResearch', // 晶体研究（提升晶体产量）
+  FuelResearch: 'fuelResearch' // 燃料研究（提升重氢产量）
 } as const
 
 export type TechnologyType = (typeof TechnologyType)[keyof typeof TechnologyType]
@@ -496,6 +503,8 @@ export interface MissionReport {
     // 毁灭任务：概率和死星损失
     destructionChance?: number
     deathstarsLost?: boolean
+    // 毁灭任务：是否发生了战斗
+    hadBattle?: boolean
     // 部署任务：部署的舰队
     deployedFleet?: Partial<Fleet>
     // 导弹攻击任务：导弹信息
@@ -656,7 +665,7 @@ export interface DebrisField {
 // 建造队列项
 export interface BuildQueueItem {
   id: string
-  type: 'building' | 'technology' | 'ship' | 'defense' | 'demolish'
+  type: 'building' | 'technology' | 'ship' | 'defense' | 'demolish' | 'scrap_ship'
   itemType: BuildingType | TechnologyType | ShipType | DefenseType
   targetLevel?: number // 用于建筑和科技
   quantity?: number // 用于舰船和防御
@@ -667,7 +676,7 @@ export interface BuildQueueItem {
 // 等待队列项（尚未开始执行，不需要 startTime/endTime）
 export interface WaitingQueueItem {
   id: string
-  type: 'building' | 'technology' | 'ship' | 'defense' | 'demolish'
+  type: 'building' | 'technology' | 'ship' | 'defense' | 'demolish' | 'scrap_ship'
   itemType: BuildingType | TechnologyType | ShipType | DefenseType
   targetLevel?: number // 用于建筑和科技
   quantity?: number // 用于舰船和防御

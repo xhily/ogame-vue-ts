@@ -175,7 +175,8 @@
       techType,
       currentLevel,
       gameStore.player.officers,
-      gameStore.player.technologies
+      gameStore.player.technologies,
+      gameStore.player.planets
     )
     gameStore.player.researchQueue.push(queueItem)
     return true
@@ -333,11 +334,33 @@
   const getResearchTime = (techType: TechnologyType): number => {
     if (!planet.value) return 0
     const currentLevel = getTechLevel(techType)
-    const researchLabLevel = planet.value.buildings['researchLab'] || 0
+    const intergalacticResearchNetworkLevel = player.value.technologies[TechnologyType.IntergalacticResearchNetwork] || 0
+
+    // 计算有效研究实验室等级（考虑星际研究网络）
+    let researchLabLevel: number
+    if (intergalacticResearchNetworkLevel > 0) {
+      researchLabLevel = researchLogic.calculateEffectiveLabLevel(
+        gameStore.player.planets,
+        planet.value.id,
+        intergalacticResearchNetworkLevel
+      )
+    } else {
+      researchLabLevel = planet.value.buildings['researchLab'] || 0
+    }
+
     const energyTechLevel = player.value.technologies['energyTechnology'] || 0
+    const universityLevel = planet.value.buildings['university'] || 0
     const bonuses = officerLogic.calculateActiveBonuses(player.value.officers, gameStore.gameTime)
 
-    return researchLogic.calculateTechnologyTime(techType, currentLevel, bonuses.researchSpeedBonus, researchLabLevel, energyTechLevel)
+    return researchLogic.calculateTechnologyTime(
+      techType,
+      currentLevel,
+      bonuses.researchSpeedBonus,
+      researchLabLevel,
+      energyTechLevel,
+      1,
+      universityLevel
+    )
   }
 
   // 检查是否可以添加到等待队列
