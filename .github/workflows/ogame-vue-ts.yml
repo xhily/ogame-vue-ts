@@ -58,3 +58,4 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           outputs: type=image,name=target,annotation-index.org.opencontainers.image.description=OGame Vue Ts
+          no-cache: true
