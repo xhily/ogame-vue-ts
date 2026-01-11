@@ -1,4 +1,4 @@
-name: Docker 多架构构建并发布
+name: 构建并发布 Docker 镜像
 
 on:
   push:
@@ -15,9 +15,112 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: 检出代码
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
+
+      # 设置 Node.js 环境
+      - name: 设置 Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '20'
+
+      # 设置 pnpm
+      - name: 设置 pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: latest
+
+      # 缓存 pnpm 依赖
+      - name: 缓存 pnpm 依赖
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/.pnpm-store
+            node_modules
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-
+
+      # 安装依赖
+      - name: 安装依赖
+        run: pnpm install --frozen-lockfile
+
+      # 构建项目
+      - name: 构建项目
+        run: pnpm run build
+
+      # 验证构建产物
+      - name: 验证构建产物
+        run: |
+          if [ ! -d "docs" ]; then
+            echo "❌ 构建失败：docs 目录不存在"
+            exit 1
+          fi
+          if [ ! -f "docs/index.html" ]; then
+            echo "❌ 构建失败：docs/index.html 不存在"
+            exit 1
+          fi
+          
+          # 检查构建产物的时间戳，确保是最新的
+          BUILD_TIME=$(stat -c %Y docs/index.html 2>/dev/null || stat -f %m docs/index.html 2>/dev/null || echo "0")
+          CURRENT_TIME=$(date +%s)
+          TIME_DIFF=$((CURRENT_TIME - BUILD_TIME))
+          
+          echo "📊 构建产物信息:"
+          echo "   构建时间: $(date -d @$BUILD_TIME 2>/dev/null || date -r $BUILD_TIME 2>/dev/null || echo '未知')"
+          echo "   当前时间: $(date)"
+          echo "   时间差: ${TIME_DIFF}秒"
+          
+          if [ $TIME_DIFF -gt 300 ]; then
+            echo "⚠️  警告: 构建产物可能不是最新的（超过5分钟）"
+          fi
+          
+          echo "✅ 构建产物验证通过"
+          ls -la docs/
+
+      # 获取当前日期
+      - name: 获取当前日期
+        id: date
+        run: echo "date=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_OUTPUT
+
+      # 获取版本号
+      - name: 获取版本号
+        id: version
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "📦 当前版本: $VERSION"
+
+      # 准备 CI 构建环境
+      - name: 准备 CI 构建环境
+        run: |
+          # 使用 CI 专用的 dockerignore
+          cp .dockerignore.ci .dockerignore
+          echo "✅ 已切换到 CI 构建模式"
+          echo "📁 当前构建上下文文件："
+          ls -la | grep -E "(docs|nginx.conf|Dockerfile.ci|\.dockerignore)$"
+
+      # 清理可能冲突的镜像标签
+      - name: 清理可能冲突的镜像标签
+        continue-on-error: true
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          echo "🧹 尝试清理可能冲突的镜像标签..."
+          
+          # 尝试删除 GHCR 中的现有标签（如果存在）
+          echo "清理 GHCR 标签..."
+          docker buildx imagetools inspect ghcr.io/${{ github.repository_owner }}/ogame-vue-ts:$VERSION 2>/dev/null && \
+            echo "发现现有版本标签，将被覆盖" || echo "版本标签不存在，可以安全推送"
+          
+          # 如果配置了 Docker Hub，也尝试检查
+          if [ -n "${{ vars.DOCKERHUB_USERNAME }}" ]; then
+            echo "检查 Docker Hub 标签..."
+            docker buildx imagetools inspect ${{ vars.DOCKERHUB_USERNAME }}/ogame-vue-ts:$VERSION 2>/dev/null && \
+              echo "发现现有 Docker Hub 版本标签，将被覆盖" || echo "Docker Hub 版本标签不存在，可以安全推送"
+          fi
+          
+          echo "✅ 标签冲突检查完成，构建将覆盖任何现有标签"
 
       # QEMU 用于支持多架构构建（必须）
       - name: 设置 QEMU
@@ -43,18 +146,34 @@ jobs:
           username: ${{ vars.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # 真正一键构建 + 推送多架构镜像（amd64 + arm64）
+      # 构建并推送多架构镜像（使用构建产物）
       - name: 构建并推送多架构镜像
         uses: docker/build-push-action@v6
         with:
           context: .
+          file: ./Dockerfile.ci
           platforms: linux/amd64,linux/arm64
           push: true
+          no-cache: false
+          pull: true
           tags: |
             ghcr.io/${{ github.repository_owner }}/ogame-vue-ts:latest
+            ghcr.io/${{ github.repository_owner }}/ogame-vue-ts:${{ steps.version.outputs.version }}
             ghcr.io/${{ github.repository_owner }}/ogame-vue-ts:${{ github.sha }}
-            ${{ vars.DOCKERHUB_USERNAME != '' && format('docker.io/{0}/ogame-vue-ts:latest', vars.DOCKERHUB_USERNAME) || '' }}
-            ${{ vars.DOCKERHUB_USERNAME != '' && format('docker.io/{0}/ogame-vue-ts:{1}', vars.DOCKERHUB_USERNAME, github.sha) || '' }}
+            ${{ vars.DOCKERHUB_USERNAME && format('{0}/ogame-vue-ts:latest', vars.DOCKERHUB_USERNAME) || '' }}
+            ${{ vars.DOCKERHUB_USERNAME && format('{0}/ogame-vue-ts:{1}', vars.DOCKERHUB_USERNAME, steps.version.outputs.version) || '' }}
+            ${{ vars.DOCKERHUB_USERNAME && format('{0}/ogame-vue-ts:{1}', vars.DOCKERHUB_USERNAME, github.sha) || '' }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          outputs: type=image,name=target,annotation-index.org.opencontainers.image.description=OGame Vue Ts
+          build-args: |
+            BUILDKIT_INLINE_CACHE=1
+            BUILD_DATE=${{ steps.date.outputs.date }}
+            VERSION=${{ steps.version.outputs.version }}
+            COMMIT_SHA=${{ github.sha }}
+          labels: |
+            org.opencontainers.image.title=OGame Vue Ts
+            org.opencontainers.image.description=OGame Vue TypeScript Implementation
+            org.opencontainers.image.version=${{ steps.version.outputs.version }}
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.created=${{ steps.date.outputs.date }}
