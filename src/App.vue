@@ -765,7 +765,7 @@
       return
     }
 
-    if (!settings.types[typeKey]) return
+    if (!settings.types[typeKey as keyof typeof settings.types]) return
 
     // 浏览器通知
     if (settings.browser && 'Notification' in window && Notification.permission === 'granted') {
